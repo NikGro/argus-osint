@@ -1,0 +1,51 @@
+"""Graph sizing independent of HTTP and application globals."""
+
+import json
+from pathlib import Path
+
+LAYOUT = json.loads(
+    (Path(__file__).resolve().parents[1] / "static/layout-spec.json").read_text()
+)
+
+
+def node_bounds(node, preferences=None):
+    preferences = preferences or {"tags": [], "language": "de"}
+    appearance = node.get("appearance", {})
+    display = node.get("display", {})
+    size = LAYOUT.get(node["type"], LAYOUT["base"])
+    width, height = size.get("width", LAYOUT["base"]["width"]), size.get(
+        "height", LAYOUT["base"]["height"]
+    )
+    if node["type"] == "note":
+        width, height = appearance.get("width", width), appearance.get("height", height)
+    if node["type"] == "image" and display.get("preview"):
+        height = LAYOUT["imagePreviewHeight"]
+    if node["type"] == "location":
+        from core.node_policy import formatted_address
+
+        address = formatted_address(node.get("data", {})) or node.get("data", {}).get(
+            "formatted_address", ""
+        )
+        height = max(
+            size["height"],
+            size["header"] + size["line"] * max(1, (len(address) + 38) // 39),
+        )
+        if display.get("map"):
+            height += LAYOUT["mapHeight"]
+    from node_metadata import badge_height
+
+    height += badge_height(
+        node, width, preferences.get("tags", []), preferences.get("language", "de")
+    )
+    height += LAYOUT["quickActionHeight"] * sum(
+        bool(display.get(key))
+        for key in (
+            "openButton",
+            "imageButton",
+            "fileButton",
+            "mapsButton",
+            "appleMapsButton",
+            "osmButton",
+        )
+    )
+    return (node.get("x", 0), node.get("y", 0), width, height)

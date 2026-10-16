@@ -1,0 +1,518 @@
+/* Workspace layout: a single place for the current toolbar and panel-edge rules. */
+#home {
+  --home-primary-width: 190px;
+}
+#newProject,
+#homeActive {
+  inline-size: var(--home-primary-width);
+  max-inline-size: 100%;
+  justify-content: center;
+}
+#home > .intro {
+  padding-bottom: 25px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+#workspace > .toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px 10px;
+  overflow: visible;
+}
+#workspace > .toolbar .toolbar-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+#workspace > .toolbar .toolbar-group {
+  flex: 0 0 auto !important;
+  flex-wrap: nowrap;
+  gap: 6px;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border: 0;
+  border-left: 1px solid var(--line);
+  width: max-content;
+  min-width: 0;
+}
+#workspace > .toolbar .toolbar-row > .toolbar-group:first-child {
+  border-left-color: transparent;
+}
+#workspace > .toolbar .toolbar-group.activity-tools {
+  order: 0;
+}
+#workspace > .toolbar .actor-current {
+  width: 140px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#workspace > .toolbar .queue-count {
+  min-width: 80px;
+  font-variant-numeric: tabular-nums;
+}
+#workspace > .toolbar #cancelActor[hidden] {
+  display: inline-flex !important;
+  visibility: hidden;
+}
+#workspace > .toolbar .cleanup-menu > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  min-height: 36px;
+  white-space: nowrap;
+}
+#workspace > .toolbar .cleanup-menu > summary::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  margin-left: 5px;
+}
+#workspace > .toolbar .cleanup-menu[open] > summary::after {
+  transform: translateY(1px) rotate(225deg);
+}
+#workspace > .toolbar .cleanup-menu > div {
+  z-index: 90;
+  min-width: max-content;
+  max-width: calc(100vw - 24px);
+}
+#workspace > .toolbar .toolbar-menu button {
+  display: flex;
+  width: 100%;
+  justify-content: flex-start;
+}
+#workspace > .toolbar .toolbar-menu .danger-filled {
+  color: white;
+}
+.workbody > .panel-rail {
+  position: absolute;
+  align-self: auto;
+  top: 14px;
+  width: 0;
+  height: 0;
+  bottom: auto;
+}
+.workbody > .left-rail {
+  left: var(--left-panel-edge, 0px);
+  right: auto;
+}
+.workbody > .right-rail {
+  left: var(--right-panel-edge, 100%);
+  right: auto;
+}
+.workbody > .left-rail button,
+.workbody > .left-rail:has(#toggleLeft[aria-expanded='false']) button {
+  top: 0;
+  left: 0;
+  right: auto;
+  border-left: 1px solid var(--line);
+}
+.workbody > .right-rail button,
+.workbody > .right-rail:has(#toggleRight[aria-expanded='false']) button {
+  top: 0;
+  right: 0;
+  left: auto;
+  border-right: 1px solid var(--line);
+}
+.connection-pending .ui-icon {
+  animation: connection-turn 1s linear infinite;
+}
+@keyframes connection-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .connection-pending .ui-icon {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+@media (max-width: 700px) {
+  #workspace > .toolbar .toolbar-row {
+    justify-content: space-between;
+    gap: 10px;
+  }
+  #workspace > .toolbar .toolbar-group {
+    padding: 0 6px !important;
+    gap: 3px;
+  }
+  #workspace > .toolbar .actor-current {
+    width: 100px;
+    max-width: 100px;
+  }
+  #workspace > .toolbar .queue-count {
+    min-width: 65px;
+  }
+  #workspace > .toolbar .toolbar-group.activity-tools {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+}
+@media (pointer: coarse) {
+  #workspace > .toolbar .cleanup-menu > summary {
+    height: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Retained by request after reverting the last UI iteration. */
+#workspace > .toolbar #deleteMenu > summary {
+  background: #a42e3b;
+  border-color: #bd4350;
+  color: white;
+}
+#workspace > .toolbar #deleteMenu > summary:hover {
+  background: #bd4350;
+}
+
+/* A deliberate desktop-only entry screen, rather than a reduced mobile editor. */
+#desktopWarning {
+  display: none;
+}
+html.mobile-blocked body > :not(#desktopWarning) {
+  display: none !important;
+}
+html.mobile-blocked #desktopWarning {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 32px 24px;
+  background: var(--bg);
+  color: var(--text);
+}
+#desktopWarning > div {
+  width: 100%;
+  max-width: 42rem;
+}
+#desktopWarning img {
+  display: block;
+  margin-bottom: 28px;
+}
+#desktopWarning h1 {
+  font-size: clamp(28px, 6vw, 40px);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0 0 24px;
+  overflow-wrap: anywhere;
+}
+#desktopWarning p {
+  font-size: 16px;
+  line-height: 1.65;
+  margin: 0 0 20px;
+  color: var(--text);
+}
+#desktopWarning strong {
+  color: var(--accent);
+}
+#desktopWarning .desktop-warning-note {
+  color: var(--muted);
+}
+
+/* Workspace header and balanced toolbar sections. */
+.workspace-mode > header {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  gap: 14px;
+}
+.workspace-mode > header > nav,
+.workspace-mode > header > #settingsTab {
+  display: none;
+}
+#projectHeading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+#projectHeading[hidden] {
+  display: none;
+}
+#projectHeading h1 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 20px;
+  width: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#editProjectTitle {
+  background: transparent;
+  border-color: transparent;
+  flex: none;
+}
+#editProjectTitle:hover {
+  background: var(--panel);
+  border-color: var(--line);
+}
+#workspace > .toolbar .toolbar-row > .toolbar-group {
+  flex: 1 1 auto;
+  justify-content: center;
+  padding-inline: 16px;
+}
+.plugin-settings > .save-indicator {
+  padding-inline: 0;
+  margin-left: 0;
+}
+.plugin-config-section,
+.plugin-default-section {
+  margin: 20px 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.plugin-config-section h4,
+.plugin-default-section h4 {
+  margin: 0 0 8px;
+}
+
+.research-profiles > label {
+  display: block;
+  margin-bottom: 12px;
+}
+.profile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.profile-item {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px;
+}
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.profile-row > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.profile-row button {
+  padding: 6px;
+  flex: none;
+}
+.profile-row button:first-child {
+  cursor: grab;
+}
+.profile-item textarea {
+  display: block;
+  margin-top: 8px;
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+}
+.research-profiles .source-help {
+  margin: 12px 0 0;
+}
+
+.header-start {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: none;
+}
+.workspace-mode > header {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr);
+}
+.workspace-mode > header > #status {
+  justify-self: end;
+}
+#workspace > .toolbar .toolbar-row > .toolbar-group {
+  flex: 0 0 auto !important;
+  padding-inline: 9px !important;
+}
+
+#homeActive {
+  inline-size: auto;
+}
+#projectHeading {
+  overflow: visible;
+}
+#projectHeading h1 {
+  flex: 0 1 auto;
+  padding: 2px 4px 3px;
+  line-height: 1.4;
+}
+#projectHeading #editProjectTitle {
+  margin: 0;
+}
+#editProjectTitle,
+#editProjectTitle:hover,
+#editProjectTitle:active,
+.borderless,
+.borderless:hover,
+.borderless:active,
+.source-row button.source-move:hover,
+.source-row button.source-move:active,
+.source-expand:hover,
+.plugin-expand:hover {
+  border-color: transparent !important;
+  background: transparent;
+  box-shadow: none;
+}
+#editProjectTitle:hover,
+.borderless:hover,
+.source-row button.source-move:hover,
+.source-expand:hover,
+.plugin-expand:hover {
+  color: var(--accent);
+}
+#workspace > .toolbar .toolbar-row {
+  justify-content: flex-start;
+  gap: 10px;
+}
+#workspace > .toolbar .toolbar-row > .toolbar-group {
+  flex: 0 0 auto !important;
+  padding-inline: 9px !important;
+  justify-content: center;
+}
+#workspace > .toolbar .toolbar-row > .toolbar-group:first-child {
+  padding-left: 0 !important;
+}
+.profile-item {
+  border: 0;
+  padding: 0;
+}
+.profile-row.source-row {
+  padding: 6px;
+}
+.profile-row .source-handle {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  width: 18px;
+  min-width: 18px;
+  min-height: 28px;
+  color: var(--accent);
+  flex: none;
+}
+.profile-row .source-move {
+  background: transparent;
+  border-color: transparent;
+  padding: 3px;
+  width: 28px;
+  min-width: 28px;
+  min-height: 28px;
+}
+.profile-row .danger-filled {
+  flex: none;
+}
+.provider-profiles {
+  margin: 12px 0;
+  min-width: 0;
+}
+.provider-profiles > summary {
+  cursor: pointer;
+  padding: 8px 0;
+  color: var(--text);
+}
+.provider-profiles > .research-profiles {
+  margin-top: 10px;
+}
+#inspector .save-indicator {
+  padding-inline: 0;
+  margin-left: 0;
+}
+#inspector > .node-delete {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: 16px;
+}
+#paletteSplit {
+  box-sizing: border-box;
+  height: 1px;
+  min-height: 1px;
+  margin: 24px 0;
+  border: 0;
+  background: var(--line);
+  position: relative;
+  overflow: visible;
+}
+#paletteSplit::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6px;
+  bottom: -6px;
+}
+#actorWindow {
+  padding-top: 0;
+}
+.selected-tag-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0 0 10px;
+}
+.selected-tag-badges:empty {
+  display: none;
+}
+.selected-tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  border: 0.7px solid var(--tag-color, var(--line));
+  background: color-mix(in srgb, var(--tag-color, var(--line)) 20%, transparent);
+  border-radius: 5px;
+  padding: 0 1px 0 6px;
+  font-size: 10px;
+  line-height: 1;
+}
+.selected-tag-badge .tag-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  min-width: 16px;
+  color: #f07989;
+}
+.selected-tag-badge .tag-remove:hover {
+  color: #ff8895;
+}
+.tag-remove .ui-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.palette-tools button:hover,
+.palette-tools button:active {
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent);
+}
+.source-expand:hover,
+.plugin-expand:hover {
+  background: transparent !important;
+  color: #ffd091 !important;
+}
+.profile-row .source-handle:hover {
+  color: #ffd091;
+}
+#palette .palette-list {
+  padding-bottom: 0;
+}
+
+#workspace > .toolbar .activity-tools:has(.inactive) {
+  border-left-color: transparent;
+}

@@ -1,0 +1,81 @@
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0c121b;
+  color: #e4ecf7;
+  font: 12px system-ui;
+  touch-action: none;
+}
+#tiles {
+  position: absolute;
+  inset: 0;
+}
+#tiles img {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  filter: invert(0.91) hue-rotate(180deg);
+}
+#marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  color: #ff9d45;
+  font-size: 22px;
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none;
+}
+#zoom {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 4px;
+}
+button {
+  background: #192537;
+  color: #e4ecf7;
+  border: 1px solid #304159;
+  border-radius: 5px;
+  font-size: 18px;
+  width: 30px;
+  height: 30px;
+}
+small {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #121c29e8;
+  padding: 3px 5px;
+}
+a {
+  color: #ff9d45;
+}
+.snapshot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  filter: invert(0.91) hue-rotate(180deg);
+}
+
+button {
+  border-radius: 7px;
+  min-width: 32px;
+  min-height: 32px;
+  cursor: pointer;
+}
+button:hover {
+  background: #24364c;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #ffd5a9;
+  outline-offset: 2px;
+}
+small {
+  font-size: 11px;
+  line-height: 1.5;
+}

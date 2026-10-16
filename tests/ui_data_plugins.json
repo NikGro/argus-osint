@@ -1,0 +1,624 @@
+[
+  {
+    "id": "data_datetime",
+    "name": "Datum / Zeit",
+    "description": "Daten-Node: Datum / Zeit",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "datetime",
+        "name": "Datum / Zeit",
+        "new_label": "Neues Datum / Zeit",
+        "icon": "calendar",
+        "category": "Orte und Zeit",
+        "defaults": {
+          "date": "",
+          "time": "",
+          "timezone": "UTC"
+        },
+        "display_defaults": {}
+      }
+    ],
+    "translations": {
+      "de": {
+        "Datum / Zeit": "Datum / Zeit",
+        "Daten-Node: Datum / Zeit": "Daten-Node: Datum / Zeit",
+        "Neues Datum / Zeit": "Neues Datum / Zeit",
+        "Orte und Zeit": "Orte und Zeit",
+        "Datum": "Datum",
+        "Uhrzeit": "Uhrzeit",
+        "Zeitzone": "Zeitzone"
+      },
+      "en": {
+        "Datum / Zeit": "Date / time",
+        "Daten-Node: Datum / Zeit": "Data node: Date / time",
+        "Neues Datum / Zeit": "New date / time",
+        "Orte und Zeit": "Places and time",
+        "Datum": "Date",
+        "Uhrzeit": "Time",
+        "Zeitzone": "Time zone"
+      }
+    }
+  },
+  {
+    "id": "data_email",
+    "name": "E-Mail",
+    "description": "Daten-Node: E-Mail",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "email",
+        "name": "E-Mail",
+        "new_label": "Neue E-Mail",
+        "icon": "email",
+        "category": "Kennungen",
+        "defaults": {
+          "value": ""
+        },
+        "display_defaults": {}
+      }
+    ],
+    "translations": {
+      "de": {
+        "E-Mail": "E-Mail",
+        "Daten-Node: E-Mail": "Daten-Node: E-Mail",
+        "Neue E-Mail": "Neue E-Mail",
+        "Kennungen": "Kennungen",
+        "Inhalt": "Inhalt"
+      },
+      "en": {
+        "E-Mail": "Email",
+        "Daten-Node: E-Mail": "Data node: Email",
+        "Neue E-Mail": "New email",
+        "Kennungen": "Identifiers",
+        "Inhalt": "Value"
+      }
+    }
+  },
+  {
+    "id": "data_error",
+    "name": "Fehler",
+    "description": "Nachvollziehbare Fehlermeldung oder ergebnislose Recherche.",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "error",
+        "name": "Fehler",
+        "new_label": "Neuer Fehler",
+        "icon": "alert",
+        "category": "Dokumentation",
+        "defaults": {
+          "title": "",
+          "message": ""
+        }
+      }
+    ],
+    "translations": {
+      "de": {
+        "Fehler": "Fehler",
+        "Neuer Fehler": "Neuer Fehler",
+        "Dokumentation": "Dokumentation",
+        "title": "Fehlerbezeichnung",
+        "message": "Information zum Fehler"
+      },
+      "en": {
+        "Fehler": "Error",
+        "Neuer Fehler": "New error",
+        "Dokumentation": "Documentation",
+        "title": "Error title",
+        "message": "Error information",
+        "Nachvollziehbare Fehlermeldung oder ergebnislose Recherche.": "An explanation of a failed or empty research step."
+      }
+    }
+  },
+  {
+    "id": "data_file",
+    "name": "Datei",
+    "description": "Daten-Node: Datei",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "file",
+        "name": "Datei",
+        "new_label": "Neue Datei",
+        "icon": "file",
+        "category": "Medien",
+        "defaults": {
+          "filename": "",
+          "file_id": "",
+          "mime": "",
+          "size": 0
+        },
+        "display_defaults": {
+          "fileButton": false
+        }
+      }
+    ],
+    "translations": {
+      "de": {
+        "Datei": "Datei",
+        "Daten-Node: Datei": "Daten-Node: Datei",
+        "Neue Datei": "Neue Datei",
+        "Medien": "Medien",
+        "filename": "filename",
+        "file_id": "file_id",
+        "Dateityp": "Dateityp",
+        "Dateigröße (Bytes)": "Dateigröße (Bytes)",
+        "Quick Action: Datei öffnen": "Quick Action: Datei öffnen"
+      },
+      "en": {
+        "Datei": "File",
+        "Daten-Node: Datei": "Data node: File",
+        "Neue Datei": "New file",
+        "Medien": "Media",
+        "filename": "filename",
+        "file_id": "file_id",
+        "Dateityp": "File type",
+        "Dateigröße (Bytes)": "File size (bytes)",
+        "Quick Action: Datei öffnen": "Quick Action: Open file"
+      }
+    }
+  },
+  {
+    "id": "data_image",
+    "name": "Bild",
+    "description": "Daten-Node: Bild",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "image",
+        "name": "Bild",
+        "new_label": "Neues Bild",
+        "icon": "image",
+        "category": "Medien",
+        "defaults": {
+          "filename": "",
+          "file_id": "",
+          "url": ""
+        },
+        "display_defaults": {
+          "preview": false,
+          "imageButton": false
+        }
+      }
+    ],
+    "translations": {
+      "de": {
+        "Bild": "Bild",
+        "Daten-Node: Bild": "Daten-Node: Bild",
+        "Neues Bild": "Neues Bild",
+        "Medien": "Medien",
+        "filename": "filename",
+        "file_id": "file_id",
+        "Glance: Bildvorschau": "Glance: Bildvorschau",
+        "Quick Action: Bild anzeigen": "Quick Action: Bild anzeigen",
+        "url": "Bild-URL",
+        "URL": "Bild-URL"
+      },
+      "en": {
+        "Bild": "Image",
+        "Daten-Node: Bild": "Data node: Image",
+        "Neues Bild": "New image",
+        "Medien": "Media",
+        "filename": "filename",
+        "file_id": "file_id",
+        "Glance: Bildvorschau": "Glance: Image preview",
+        "Quick Action: Bild anzeigen": "Quick Action: View image",
+        "url": "Image URL",
+        "URL": "Image URL"
+      }
+    }
+  },
+  {
+    "id": "data_location",
+    "name": "Ort",
+    "description": "Daten-Node: Ort",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "location",
+        "name": "Ort",
+        "new_label": "Neuer Ort",
+        "icon": "map",
+        "category": "Orte und Zeit",
+        "defaults": {
+          "country_code": "",
+          "country": "",
+          "admin_area_1": "",
+          "admin_area_2": "",
+          "admin_area_3": "",
+          "locality": "",
+          "dependent_locality": "",
+          "postal_code": "",
+          "street": "",
+          "house_number": "",
+          "building": "",
+          "unit": "",
+          "po_box": "",
+          "formatted_address": "",
+          "original_input": "",
+          "granularity": "",
+          "coordinate_role": "",
+          "latitude": null,
+          "longitude": null
+        },
+        "display_defaults": {
+          "map": false,
+          "mapsButton": false,
+          "appleMapsButton": false,
+          "osmButton": false
+        },
+        "map_preview_sources": [
+          {
+            "id": "google",
+            "name": "Google Maps",
+            "enabled": true
+          },
+          {
+            "id": "osm",
+            "name": "OpenStreetMap",
+            "enabled": true
+          }
+        ],
+        "map_action_sources": [
+          {
+            "id": "google",
+            "name": "Google Maps",
+            "enabled": true
+          },
+          {
+            "id": "apple",
+            "name": "Apple Maps",
+            "enabled": true
+          },
+          {
+            "id": "osm",
+            "name": "OpenStreetMap",
+            "enabled": true
+          }
+        ]
+      }
+    ],
+    "translations": {
+      "de": {
+        "Ort": "Ort",
+        "Daten-Node: Ort": "Daten-Node: Ort",
+        "Neuer Ort": "Neuer Ort",
+        "Orte und Zeit": "Orte und Zeit",
+        "Ländercode": "Ländercode",
+        "Land": "Land",
+        "admin_area_1": "admin_area_1",
+        "admin_area_2": "admin_area_2",
+        "admin_area_3": "admin_area_3",
+        "Stadt / Ort": "Stadt / Ort",
+        "Stadtteil / Untergeordneter Ort": "Stadtteil / Untergeordneter Ort",
+        "Postleitzahl": "Postleitzahl",
+        "Straße": "Straße",
+        "Hausnummer": "Hausnummer",
+        "Gebäude": "Gebäude",
+        "Wohnung / Einheit": "Wohnung / Einheit",
+        "Postfach": "Postfach",
+        "Vollständige Adresse": "Vollständige Adresse",
+        "Ursprüngliche Ortsangabe": "Ursprüngliche Ortsangabe",
+        "Genauigkeit": "Genauigkeit",
+        "coordinate_role": "coordinate_role",
+        "Breitengrad": "Breitengrad",
+        "Längengrad": "Längengrad",
+        "Glance: Kartenvorschau": "Glance: Kartenvorschau",
+        "Quick Action: Google Maps": "Quick Action: Google Maps",
+        "Quick Action: Apple Maps": "Quick Action: Apple Maps",
+        "Quick Action: OpenStreetMap": "Quick Action: OpenStreetMap"
+      },
+      "en": {
+        "Ort": "Location",
+        "Daten-Node: Ort": "Data node: Location",
+        "Neuer Ort": "New location",
+        "Orte und Zeit": "Places and time",
+        "Ländercode": "Country code",
+        "Land": "Country",
+        "admin_area_1": "admin_area_1",
+        "admin_area_2": "admin_area_2",
+        "admin_area_3": "admin_area_3",
+        "Stadt / Ort": "City / Town",
+        "Stadtteil / Untergeordneter Ort": "District / Sub-locality",
+        "Postleitzahl": "Postal code",
+        "Straße": "Street",
+        "Hausnummer": "House number",
+        "Gebäude": "Building",
+        "Wohnung / Einheit": "Apartment / Unit",
+        "Postfach": "PO box",
+        "Vollständige Adresse": "Formatted address",
+        "Ursprüngliche Ortsangabe": "Original location input",
+        "Genauigkeit": "Granularity",
+        "coordinate_role": "coordinate_role",
+        "Breitengrad": "Latitude",
+        "Längengrad": "Longitude",
+        "Glance: Kartenvorschau": "Glance: map preview",
+        "Quick Action: Google Maps": "Quick Action: Google Maps",
+        "Quick Action: Apple Maps": "Quick Action: Apple Maps",
+        "Quick Action: OpenStreetMap": "Quick Action: OpenStreetMap"
+      }
+    }
+  },
+  {
+    "id": "data_note",
+    "name": "Notiz",
+    "description": "Daten-Node: Notiz",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "note",
+        "name": "Notiz",
+        "new_label": "Neue Notiz",
+        "icon": "note",
+        "category": "Eigene Angaben",
+        "defaults": {
+          "text": ""
+        },
+        "display_defaults": {}
+      }
+    ],
+    "translations": {
+      "de": {
+        "Notiz": "Notiz",
+        "Daten-Node: Notiz": "Daten-Node: Notiz",
+        "Neue Notiz": "Neue Notiz",
+        "Eigene Angaben": "Eigene Angaben",
+        "Text": "Text"
+      },
+      "en": {
+        "Notiz": "Note",
+        "Daten-Node: Notiz": "Data node: Note",
+        "Neue Notiz": "New note",
+        "Eigene Angaben": "Custom data",
+        "Text": "Text"
+      }
+    }
+  },
+  {
+    "id": "data_person",
+    "name": "Person",
+    "description": "Name und Geburtsangaben; Adressen gehören in verbundene Ort-Nodes.",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "person",
+        "name": "Person",
+        "new_label": "Neue Person",
+        "icon": "account",
+        "category": "Personen",
+        "defaults": {
+          "first_name": "",
+          "middle_name": "",
+          "last_name": "",
+          "birth_date": "",
+          "birth_place": "",
+          "birth_country": ""
+        }
+      }
+    ],
+    "translations": {
+      "de": {
+        "Person": "Person",
+        "Neue Person": "Neue Person",
+        "Personen": "Personen",
+        "first_name": "Vorname",
+        "middle_name": "Zweitname",
+        "last_name": "Nachname",
+        "birth_date": "Geburtsdatum",
+        "birth_place": "Geburtsort",
+        "birth_country": "Geburtsland"
+      },
+      "en": {
+        "Person": "Person",
+        "Neue Person": "New person",
+        "Personen": "People",
+        "first_name": "First name",
+        "middle_name": "Middle name",
+        "last_name": "Last name",
+        "birth_date": "Date of birth",
+        "birth_place": "Place of birth",
+        "birth_country": "Country of birth"
+      }
+    }
+  },
+  {
+    "id": "data_phone",
+    "name": "Telefonnummer",
+    "description": "Daten-Node: Telefonnummer",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "phone",
+        "name": "Telefonnummer",
+        "new_label": "Neue Telefonnummer",
+        "icon": "phone",
+        "category": "Kennungen",
+        "defaults": {
+          "value": ""
+        },
+        "display_defaults": {}
+      }
+    ],
+    "translations": {
+      "de": {
+        "Telefonnummer": "Telefonnummer",
+        "Daten-Node: Telefonnummer": "Daten-Node: Telefonnummer",
+        "Neue Telefonnummer": "Neue Telefonnummer",
+        "Kennungen": "Kennungen",
+        "Inhalt": "Inhalt"
+      },
+      "en": {
+        "Telefonnummer": "Phone number",
+        "Daten-Node: Telefonnummer": "Data node: Phone number",
+        "Neue Telefonnummer": "New phone number",
+        "Kennungen": "Identifiers",
+        "Inhalt": "Value"
+      }
+    }
+  },
+  {
+    "id": "data_profile",
+    "name": "Profil",
+    "description": "Profil mit zentraler Anbieter-ID, URL und Identifier; eigene Anbieter sind möglich.",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "profile",
+        "name": "Profil",
+        "new_label": "Neues Profil",
+        "icon": "account",
+        "category": "Kennungen",
+        "defaults": {
+          "provider": "",
+          "url": "",
+          "identifier": ""
+        },
+        "display_defaults": {
+          "openButton": false
+        }
+      }
+    ],
+    "translations": {
+      "de": {
+        "Profil": "Profil",
+        "Neues Profil": "Neues Profil",
+        "Kennungen": "Kennungen",
+        "provider": "Anbieter",
+        "url": "Profil-URL",
+        "identifier": "Identifier",
+        "Anbieter, Profil-URL und Identifier eines gefundenen Kontos.": "Anbieter, Profil-URL und Identifier eines gefundenen Kontos.",
+        "Quick Action: Link öffnen": "Quick Action: Link öffnen",
+        "Anbieter": "Anbieter",
+        "Profil-URL": "Profil-URL",
+        "Identifier": "Identifier",
+        "URL": "Profil-URL",
+        "Profil mit zentraler Anbieter-ID, URL und Identifier; eigene Anbieter sind möglich.": "Profil mit zentraler Anbieter-ID, URL und Identifier; eigene Anbieter sind möglich."
+      },
+      "en": {
+        "Profil": "Profile",
+        "Neues Profil": "New profile",
+        "Kennungen": "Identifiers",
+        "provider": "Provider",
+        "url": "Profile URL",
+        "identifier": "Identifier",
+        "Anbieter, Profil-URL und Identifier eines gefundenen Kontos.": "Provider, profile URL and identifier of a discovered account.",
+        "Quick Action: Link öffnen": "Quick Action: Open link",
+        "Anbieter": "Provider",
+        "Profil-URL": "Profile URL",
+        "Identifier": "Identifier",
+        "URL": "Profile URL",
+        "Profil mit zentraler Anbieter-ID, URL und Identifier; eigene Anbieter sind möglich.": "Profile with shared provider ID, URL and identifier; custom providers are supported."
+      }
+    }
+  },
+  {
+    "id": "data_url",
+    "name": "URL",
+    "description": "Daten-Node: URL",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "url",
+        "name": "URL",
+        "new_label": "Neue URL",
+        "icon": "link",
+        "category": "Kennungen",
+        "defaults": {
+          "value": ""
+        },
+        "display_defaults": {
+          "openButton": false
+        }
+      }
+    ],
+    "translations": {
+      "de": {
+        "URL": "URL",
+        "Daten-Node: URL": "Daten-Node: URL",
+        "Neue URL": "Neue URL",
+        "Kennungen": "Kennungen",
+        "Inhalt": "Inhalt",
+        "Quick Action: Link öffnen": "Quick Action: Link öffnen"
+      },
+      "en": {
+        "URL": "URL",
+        "Daten-Node: URL": "Data node: URL",
+        "Neue URL": "New url",
+        "Kennungen": "Identifiers",
+        "Inhalt": "Value",
+        "Quick Action: Link öffnen": "Quick Action: Open link"
+      }
+    }
+  },
+  {
+    "id": "data_username",
+    "name": "Benutzername",
+    "description": "Daten-Node: Benutzername",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "username",
+        "name": "Benutzername",
+        "new_label": "Neuer Benutzername",
+        "icon": "account",
+        "category": "Kennungen",
+        "defaults": {
+          "value": ""
+        },
+        "display_defaults": {}
+      }
+    ],
+    "translations": {
+      "de": {
+        "Benutzername": "Benutzername",
+        "Daten-Node: Benutzername": "Daten-Node: Benutzername",
+        "Neuer Benutzername": "Neuer Benutzername",
+        "Kennungen": "Kennungen",
+        "Inhalt": "Inhalt"
+      },
+      "en": {
+        "Benutzername": "Username",
+        "Daten-Node: Benutzername": "Data node: Username",
+        "Neuer Benutzername": "New username",
+        "Kennungen": "Identifiers",
+        "Inhalt": "Value"
+      }
+    }
+  },
+  {
+    "id": "data_value",
+    "name": "Eigener Wert",
+    "description": "Daten-Node: Eigener Wert",
+    "actions": [],
+    "nodes": [
+      {
+        "type": "value",
+        "name": "Eigener Wert",
+        "new_label": "Neuer Wert",
+        "icon": "value",
+        "category": "Eigene Angaben",
+        "defaults": {
+          "value": ""
+        },
+        "display_defaults": {}
+      }
+    ],
+    "translations": {
+      "de": {
+        "Eigener Wert": "Eigener Wert",
+        "Daten-Node: Eigener Wert": "Daten-Node: Eigener Wert",
+        "Neuer Wert": "Neuer Wert",
+        "Eigene Angaben": "Eigene Angaben",
+        "Inhalt": "Inhalt"
+      },
+      "en": {
+        "Eigener Wert": "Custom value",
+        "Daten-Node: Eigener Wert": "Data node: Custom value",
+        "Neuer Wert": "New custom value",
+        "Eigene Angaben": "Custom data",
+        "Inhalt": "Value"
+      }
+    }
+  }
+]

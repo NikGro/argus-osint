@@ -1,0 +1,13 @@
+[tool.black]
+line-length = 88
+target-version = ['py312']
+extend-exclude = '(data|node_modules|\.development)/'
+
+[tool.ruff]
+line-length = 88
+target-version = 'py312'
+exclude = ['.development', 'node_modules', 'data']
+
+[tool.ruff.lint]
+select = ['E4', 'E7', 'E9', 'F']
+

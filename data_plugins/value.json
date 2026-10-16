@@ -1,0 +1,35 @@
+{
+  "id": "data_value",
+  "name": "Eigener Wert",
+  "description": "Daten-Node: Eigener Wert",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "value",
+      "name": "Eigener Wert",
+      "new_label": "Neuer Wert",
+      "icon": "value",
+      "category": "Eigene Angaben",
+      "defaults": {
+        "value": ""
+      },
+      "display_defaults": {}
+    }
+  ],
+  "translations": {
+    "de": {
+      "Eigener Wert": "Eigener Wert",
+      "Daten-Node: Eigener Wert": "Daten-Node: Eigener Wert",
+      "Neuer Wert": "Neuer Wert",
+      "Eigene Angaben": "Eigene Angaben",
+      "Inhalt": "Inhalt"
+    },
+    "en": {
+      "Eigener Wert": "Custom value",
+      "Daten-Node: Eigener Wert": "Data node: Custom value",
+      "Neuer Wert": "New custom value",
+      "Eigene Angaben": "Custom data",
+      "Inhalt": "Value"
+    }
+  }
+}

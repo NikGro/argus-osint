@@ -1,0 +1,9 @@
+{
+  "x": {"name":"X (Twitter)","aliases":["Twitter","X","X (Twitter)","twitter.com","x.com"],"hosts":["twitter.com","x.com"],"case_insensitive":true},
+  "twitch": {"name":"Twitch","aliases":["Twitch","Twitch.tv","TwitchTV"],"hosts":["twitch.tv"],"case_insensitive":true},
+  "roblox": {"name":"Roblox","aliases":["Roblox","Roblox.com"],"hosts":["roblox.com"],"case_insensitive":true},
+  "instagram": {"name":"Instagram","aliases":["Instagram","Instagram.com"],"hosts":["instagram.com"],"case_insensitive":true},
+  "facebook": {"name":"Facebook","aliases":["Facebook","Facebook.com"],"hosts":["facebook.com","fb.com"],"case_insensitive":true},
+  "github": {"name":"GitHub","aliases":["Github","GitHub.com"],"hosts":["github.com"],"case_insensitive":true},
+  "discord": {"name":"Discord","aliases":["Discord","Discord.com"],"hosts":["discord.com"],"case_insensitive":false}
+}

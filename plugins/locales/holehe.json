@@ -1,0 +1,40 @@
+{
+  "de": {
+    "Anbieter": "Anbieter",
+    "Check E-Mail - Holehe": "Check E-Mail - Holehe",
+    "Datum": "Datum",
+    "Die E-Mail-Adresse wird an die ausgewählten Anbieter gesendet.": "Die E-Mail-Adresse wird an die ausgewählten Anbieter gesendet.",
+    "E-Mail mit Holehe prüfen": "E-Mail mit Holehe prüfen",
+    "E-Mail-Adressen auf Registrierung bei unterstützten Anbietern prüfen.": "E-Mail-Adressen auf Registrierung bei unterstützten Anbietern prüfen.",
+    "Ja": "Ja",
+    "Konto besteht?": "Konto besteht?",
+    "Nummer": "Nummer",
+    "Profiladresse": "Profiladresse",
+    "Registrierung": "Registrierung",
+    "Rufnummer": "Rufnummer",
+    "Uhrzeit": "Uhrzeit",
+    "Zeitzone": "Zeitzone",
+    "request_timeout": "request_timeout",
+    "run_timeout": "run_timeout",
+    "sites": "sites"
+  },
+  "en": {
+    "Anbieter": "Provider",
+    "Check E-Mail - Holehe": "Check email - Holehe",
+    "Datum": "Date",
+    "Die E-Mail-Adresse wird an die ausgewählten Anbieter gesendet.": "The email address is sent to the selected providers.",
+    "E-Mail mit Holehe prüfen": "Check email with Holehe",
+    "E-Mail-Adressen auf Registrierung bei unterstützten Anbietern prüfen.": "Check email registration with supported providers.",
+    "Ja": "Yes",
+    "Konto besteht?": "Account exists?",
+    "Nummer": "Nummer",
+    "Profiladresse": "Profiladresse",
+    "Registrierung": "Registrierung",
+    "Rufnummer": "Rufnummer",
+    "Uhrzeit": "Time",
+    "Zeitzone": "Time zone",
+    "request_timeout": "request_timeout",
+    "run_timeout": "run_timeout",
+    "sites": "sites"
+  }
+}

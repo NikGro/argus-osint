@@ -1,0 +1,50 @@
+{
+  "id": "data_image",
+  "name": "Bild",
+  "description": "Daten-Node: Bild",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "image",
+      "name": "Bild",
+      "new_label": "Neues Bild",
+      "icon": "image",
+      "category": "Medien",
+      "defaults": {
+        "filename": "",
+        "file_id": "",
+        "url": ""
+      },
+      "display_defaults": {
+        "preview": false,
+        "imageButton": false
+      }
+    }
+  ],
+  "translations": {
+    "de": {
+      "Bild": "Bild",
+      "Daten-Node: Bild": "Daten-Node: Bild",
+      "Neues Bild": "Neues Bild",
+      "Medien": "Medien",
+      "filename": "filename",
+      "file_id": "file_id",
+      "Glance: Bildvorschau": "Glance: Bildvorschau",
+      "Quick Action: Bild anzeigen": "Quick Action: Bild anzeigen",
+      "url": "Bild-URL",
+      "URL": "Bild-URL"
+    },
+    "en": {
+      "Bild": "Image",
+      "Daten-Node: Bild": "Data node: Image",
+      "Neues Bild": "New image",
+      "Medien": "Media",
+      "filename": "filename",
+      "file_id": "file_id",
+      "Glance: Bildvorschau": "Glance: Image preview",
+      "Quick Action: Bild anzeigen": "Quick Action: View image",
+      "url": "Image URL",
+      "URL": "Image URL"
+    }
+  }
+}

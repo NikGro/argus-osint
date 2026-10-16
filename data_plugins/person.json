@@ -1,0 +1,47 @@
+{
+  "id": "data_person",
+  "name": "Person",
+  "description": "Name und Geburtsangaben; Adressen gehören in verbundene Ort-Nodes.",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "person",
+      "name": "Person",
+      "new_label": "Neue Person",
+      "icon": "account",
+      "category": "Personen",
+      "defaults": {
+        "first_name": "",
+        "middle_name": "",
+        "last_name": "",
+        "birth_date": "",
+        "birth_place": "",
+        "birth_country": ""
+      }
+    }
+  ],
+  "translations": {
+    "de": {
+      "Person": "Person",
+      "Neue Person": "Neue Person",
+      "Personen": "Personen",
+      "first_name": "Vorname",
+      "middle_name": "Zweitname",
+      "last_name": "Nachname",
+      "birth_date": "Geburtsdatum",
+      "birth_place": "Geburtsort",
+      "birth_country": "Geburtsland"
+    },
+    "en": {
+      "Person": "Person",
+      "Neue Person": "New person",
+      "Personen": "People",
+      "first_name": "First name",
+      "middle_name": "Middle name",
+      "last_name": "Last name",
+      "birth_date": "Date of birth",
+      "birth_place": "Place of birth",
+      "birth_country": "Country of birth"
+    }
+  }
+}

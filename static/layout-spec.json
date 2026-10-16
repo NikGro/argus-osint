@@ -1,0 +1,11 @@
+{
+  "base": { "width": 210, "height": 76 },
+  "profile": { "width": 280, "height": 96 },
+  "person": { "width": 280, "height": 76 },
+  "error": { "width": 300, "height": 112 },
+  "note": { "width": 320, "height": 180 },
+  "location": { "width": 300, "height": 76, "header": 64, "line": 16 },
+  "imagePreviewHeight": 210,
+  "mapHeight": 228,
+  "quickActionHeight": 32
+}

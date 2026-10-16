@@ -1,0 +1,42 @@
+{
+  "de": {
+    "Anbieter": "Anbieter",
+    "Datum": "Datum",
+    "Ja": "Ja",
+    "Konto besteht?": "Konto besteht?",
+    "Nummer": "Nummer",
+    "Ort mit Photon und einem konfigurierbaren Nominatim-Endpunkt normalisieren.": "Ort mit Photon und einem konfigurierbaren Nominatim-Endpunkt normalisieren.",
+    "Ort normalisieren & vervollständigen": "Ort normalisieren & vervollständigen",
+    "Ortsangaben werden an aktivierte Adressdienste gesendet. Nominatim-Endpunkt passend zu Datenschutz und Nutzungsbedingungen konfigurieren.": "Ortsangaben werden an aktivierte Adressdienste gesendet. Nominatim-Endpunkt passend zu Datenschutz und Nutzungsbedingungen konfigurieren.",
+    "Photon-Endpunkt": "Photon-Endpunkt",
+    "Profiladresse": "Profiladresse",
+    "Registrierung": "Registrierung",
+    "Rufnummer": "Rufnummer",
+    "Uhrzeit": "Uhrzeit",
+    "Zeitzone": "Zeitzone",
+    "nominatim_url": "nominatim_url",
+    "source_order": "source_order",
+    "use_nominatim": "use_nominatim",
+    "use_photon": "use_photon"
+  },
+  "en": {
+    "Anbieter": "Provider",
+    "Datum": "Date",
+    "Ja": "Yes",
+    "Konto besteht?": "Account exists?",
+    "Nummer": "Nummer",
+    "Ort mit Photon und einem konfigurierbaren Nominatim-Endpunkt normalisieren.": "Normalize a place using Photon and a configurable Nominatim endpoint.",
+    "Ort normalisieren & vervollständigen": "Normalize and complete place",
+    "Ortsangaben werden an aktivierte Adressdienste gesendet. Nominatim-Endpunkt passend zu Datenschutz und Nutzungsbedingungen konfigurieren.": "Place details are sent to enabled address services. Configure a Nominatim endpoint suitable for privacy and its usage terms.",
+    "Photon-Endpunkt": "Photon endpoint",
+    "Profiladresse": "Profiladresse",
+    "Registrierung": "Registrierung",
+    "Rufnummer": "Rufnummer",
+    "Uhrzeit": "Time",
+    "Zeitzone": "Time zone",
+    "nominatim_url": "nominatim_url",
+    "source_order": "source_order",
+    "use_nominatim": "use_nominatim",
+    "use_photon": "use_photon"
+  }
+}

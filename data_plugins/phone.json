@@ -1,0 +1,35 @@
+{
+  "id": "data_phone",
+  "name": "Telefonnummer",
+  "description": "Daten-Node: Telefonnummer",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "phone",
+      "name": "Telefonnummer",
+      "new_label": "Neue Telefonnummer",
+      "icon": "phone",
+      "category": "Kennungen",
+      "defaults": {
+        "value": ""
+      },
+      "display_defaults": {}
+    }
+  ],
+  "translations": {
+    "de": {
+      "Telefonnummer": "Telefonnummer",
+      "Daten-Node: Telefonnummer": "Daten-Node: Telefonnummer",
+      "Neue Telefonnummer": "Neue Telefonnummer",
+      "Kennungen": "Kennungen",
+      "Inhalt": "Inhalt"
+    },
+    "en": {
+      "Telefonnummer": "Phone number",
+      "Daten-Node: Telefonnummer": "Data node: Phone number",
+      "Neue Telefonnummer": "New phone number",
+      "Kennungen": "Identifiers",
+      "Inhalt": "Value"
+    }
+  }
+}

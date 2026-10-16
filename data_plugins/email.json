@@ -1,0 +1,35 @@
+{
+  "id": "data_email",
+  "name": "E-Mail",
+  "description": "Daten-Node: E-Mail",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "email",
+      "name": "E-Mail",
+      "new_label": "Neue E-Mail",
+      "icon": "email",
+      "category": "Kennungen",
+      "defaults": {
+        "value": ""
+      },
+      "display_defaults": {}
+    }
+  ],
+  "translations": {
+    "de": {
+      "E-Mail": "E-Mail",
+      "Daten-Node: E-Mail": "Daten-Node: E-Mail",
+      "Neue E-Mail": "Neue E-Mail",
+      "Kennungen": "Kennungen",
+      "Inhalt": "Inhalt"
+    },
+    "en": {
+      "E-Mail": "Email",
+      "Daten-Node: E-Mail": "Data node: Email",
+      "Neue E-Mail": "New email",
+      "Kennungen": "Identifiers",
+      "Inhalt": "Value"
+    }
+  }
+}

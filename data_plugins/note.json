@@ -1,0 +1,35 @@
+{
+  "id": "data_note",
+  "name": "Notiz",
+  "description": "Daten-Node: Notiz",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "note",
+      "name": "Notiz",
+      "new_label": "Neue Notiz",
+      "icon": "note",
+      "category": "Eigene Angaben",
+      "defaults": {
+        "text": ""
+      },
+      "display_defaults": {}
+    }
+  ],
+  "translations": {
+    "de": {
+      "Notiz": "Notiz",
+      "Daten-Node: Notiz": "Daten-Node: Notiz",
+      "Neue Notiz": "Neue Notiz",
+      "Eigene Angaben": "Eigene Angaben",
+      "Text": "Text"
+    },
+    "en": {
+      "Notiz": "Note",
+      "Daten-Node: Notiz": "Data node: Note",
+      "Neue Notiz": "New note",
+      "Eigene Angaben": "Custom data",
+      "Text": "Text"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "plugins": [
+    {
+      "id": "example",
+      "name": "Information zusammenfassen",
+      "category": "Datenbearbeitung",
+      "description": "Kleine lokale Beispielaktion ohne externe Abfragen.",
+      "module": "template.py",
+      "sha256": "72f7ee66ba114101f6589721df4948838543bc4f2e23dfcb557d85c8b8fc9bf9",
+      "actions": [
+        {
+          "id": "summarize",
+          "name": "Information zusammenfassen",
+          "inputs": [
+            "*"
+          ],
+          "external": false,
+          "default_params": {
+            "prefix": "Angabe"
+          },
+          "input_prompt": {
+            "title": "Bezeichnung wählen",
+            "fields": [
+              {
+                "key": "prefix",
+                "label": "Präfix",
+                "type": "text",
+                "required": true,
+                "default": "Angabe"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+.git
+.development
+data
+tests
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.env*
+*.zip
+*.tar.gz
+
+node_modules
+.coverage
+.pytest_cache
+.ruff_cache
+dist

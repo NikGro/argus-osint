@@ -1,0 +1,30 @@
+{
+  "de": {
+    "Anbieter": "Anbieter",
+    "Dateimetadaten lokal aus Bildern, PDFs, Dokumenten und Medien extrahieren.": "Dateimetadaten lokal aus Bildern, PDFs, Dokumenten und Medien extrahieren.",
+    "Datum": "Datum",
+    "Ja": "Ja",
+    "Konto besteht?": "Konto besteht?",
+    "Metadaten extrahieren": "Metadaten extrahieren",
+    "Nummer": "Nummer",
+    "Profiladresse": "Profiladresse",
+    "Registrierung": "Registrierung",
+    "Rufnummer": "Rufnummer",
+    "Uhrzeit": "Uhrzeit",
+    "Zeitzone": "Zeitzone"
+  },
+  "en": {
+    "Anbieter": "Provider",
+    "Dateimetadaten lokal aus Bildern, PDFs, Dokumenten und Medien extrahieren.": "Extract local metadata from images, PDFs, documents and media.",
+    "Datum": "Date",
+    "Ja": "Yes",
+    "Konto besteht?": "Account exists?",
+    "Metadaten extrahieren": "Extract metadata",
+    "Nummer": "Nummer",
+    "Profiladresse": "Profiladresse",
+    "Registrierung": "Registrierung",
+    "Rufnummer": "Rufnummer",
+    "Uhrzeit": "Time",
+    "Zeitzone": "Time zone"
+  }
+}

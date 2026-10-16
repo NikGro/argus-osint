@@ -1,0 +1,55 @@
+{
+  "id": "data_profile",
+  "name": "Profil",
+  "description": "Profil mit zentraler Anbieter-ID, URL und Identifier; eigene Anbieter sind möglich.",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "profile",
+      "name": "Profil",
+      "new_label": "Neues Profil",
+      "icon": "account",
+      "category": "Kennungen",
+      "defaults": {
+        "provider": "",
+        "url": "",
+        "identifier": ""
+      },
+      "display_defaults": {
+        "openButton": false
+      }
+    }
+  ],
+  "translations": {
+    "de": {
+      "Profil": "Profil",
+      "Neues Profil": "Neues Profil",
+      "Kennungen": "Kennungen",
+      "provider": "Anbieter",
+      "url": "Profil-URL",
+      "identifier": "Identifier",
+      "Anbieter, Profil-URL und Identifier eines gefundenen Kontos.": "Anbieter, Profil-URL und Identifier eines gefundenen Kontos.",
+      "Quick Action: Link öffnen": "Quick Action: Link öffnen",
+      "Anbieter": "Anbieter",
+      "Profil-URL": "Profil-URL",
+      "Identifier": "Identifier",
+      "URL": "Profil-URL",
+      "Profil mit zentraler Anbieter-ID, URL und Identifier; eigene Anbieter sind möglich.": "Profil mit zentraler Anbieter-ID, URL und Identifier; eigene Anbieter sind möglich."
+    },
+    "en": {
+      "Profil": "Profile",
+      "Neues Profil": "New profile",
+      "Kennungen": "Identifiers",
+      "provider": "Provider",
+      "url": "Profile URL",
+      "identifier": "Identifier",
+      "Anbieter, Profil-URL und Identifier eines gefundenen Kontos.": "Provider, profile URL and identifier of a discovered account.",
+      "Quick Action: Link öffnen": "Quick Action: Open link",
+      "Anbieter": "Provider",
+      "Profil-URL": "Profile URL",
+      "Identifier": "Identifier",
+      "URL": "Profile URL",
+      "Profil mit zentraler Anbieter-ID, URL und Identifier; eigene Anbieter sind möglich.": "Profile with shared provider ID, URL and identifier; custom providers are supported."
+    }
+  }
+}

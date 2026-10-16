@@ -1,0 +1,42 @@
+{
+  "de": {
+    "Anbieter": "Anbieter",
+    "Breite Benutzernamensuche; Treffer als URL und Value in Anbietergruppen.": "Breite Benutzernamensuche; Treffer als URL und Value in Anbietergruppen.",
+    "Datum": "Datum",
+    "Der Benutzername wird an die ausgewählten Websites gesendet. Gleiche Benutzernamen beweisen keine gemeinsame Identität.": "Der Benutzername wird an die ausgewählten Websites gesendet. Gleiche Benutzernamen beweisen keine gemeinsame Identität.",
+    "Ja": "Ja",
+    "Konto besteht?": "Konto besteht?",
+    "Nummer": "Nummer",
+    "Profiladresse": "Profiladresse",
+    "Profile suchen - Sherlock": "Profile suchen - Sherlock",
+    "Profile zum Benutzernamen suchen": "Profile zum Benutzernamen suchen",
+    "Registrierung": "Registrierung",
+    "Rufnummer": "Rufnummer",
+    "Uhrzeit": "Uhrzeit",
+    "Zeitzone": "Zeitzone",
+    "max_results": "max_results",
+    "request_timeout": "request_timeout",
+    "run_timeout": "run_timeout",
+    "sites": "sites"
+  },
+  "en": {
+    "Anbieter": "Provider",
+    "Breite Benutzernamensuche; Treffer als URL und Value in Anbietergruppen.": "Broad username search; results are URLs and values grouped by provider.",
+    "Datum": "Date",
+    "Der Benutzername wird an die ausgewählten Websites gesendet. Gleiche Benutzernamen beweisen keine gemeinsame Identität.": "The username is sent to the selected websites. Matching usernames do not prove a shared identity.",
+    "Ja": "Yes",
+    "Konto besteht?": "Account exists?",
+    "Nummer": "Nummer",
+    "Profiladresse": "Profiladresse",
+    "Profile suchen - Sherlock": "Find profiles - Sherlock",
+    "Profile zum Benutzernamen suchen": "Find profiles for username",
+    "Registrierung": "Registrierung",
+    "Rufnummer": "Rufnummer",
+    "Uhrzeit": "Time",
+    "Zeitzone": "Time zone",
+    "max_results": "max_results",
+    "request_timeout": "request_timeout",
+    "run_timeout": "run_timeout",
+    "sites": "sites"
+  }
+}

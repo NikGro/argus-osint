@@ -1,0 +1,7 @@
+FROM python:3.12-slim
+RUN apt-get update && apt-get install -y --no-install-recommends openvpn wireguard-tools iproute2 iptables curl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir cryptography==50.0.2
+WORKDIR /gateway
+COPY core/__init__.py core/secrets.py core/vpn_gateway.py ./core/
+HEALTHCHECK --interval=10s --timeout=3s CMD python -c "import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect('/run/argus-vpn/control.sock'); s.sendall(b'{\"action\":\"status\"}\n'); assert s.recv(8192)"
+CMD ["python", "-m", "core.vpn_gateway"]

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "plugins": [
+    {
+      "id": "reference",
+      "name": "Referenz",
+      "description": "Beispiel eines reinen Datenplugins.",
+      "version": "1.0.0",
+      "actions": [],
+      "nodes": [
+        {
+          "type": "community_reference",
+          "name": "Referenz",
+          "new_label": "Neue Referenz",
+          "category": "Eigene Angaben",
+          "icon": "value",
+          "defaults": {
+            "value": ""
+          },
+          "display_defaults": {}
+        }
+      ],
+      "translations": {
+        "de": {
+          "Referenz": "Referenz",
+          "Neue Referenz": "Neue Referenz",
+          "value": "Wert"
+        },
+        "en": {
+          "Referenz": "Reference",
+          "Neue Referenz": "New reference",
+          "value": "Value"
+        }
+      }
+    }
+  ]
+}

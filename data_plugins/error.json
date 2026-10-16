@@ -1,0 +1,36 @@
+{
+  "id": "data_error",
+  "name": "Fehler",
+  "description": "Nachvollziehbare Fehlermeldung oder ergebnislose Recherche.",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "error",
+      "name": "Fehler",
+      "new_label": "Neuer Fehler",
+      "icon": "alert",
+      "category": "Dokumentation",
+      "defaults": {
+        "title": "",
+        "message": ""
+      }
+    }
+  ],
+  "translations": {
+    "de": {
+      "Fehler": "Fehler",
+      "Neuer Fehler": "Neuer Fehler",
+      "Dokumentation": "Dokumentation",
+      "title": "Fehlerbezeichnung",
+      "message": "Information zum Fehler"
+    },
+    "en": {
+      "Fehler": "Error",
+      "Neuer Fehler": "New error",
+      "Dokumentation": "Documentation",
+      "title": "Error title",
+      "message": "Error information",
+      "Nachvollziehbare Fehlermeldung oder ergebnislose Recherche.": "An explanation of a failed or empty research step."
+    }
+  }
+}

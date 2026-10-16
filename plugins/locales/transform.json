@@ -1,0 +1,32 @@
+{
+  "de": {
+    "Anbieter": "Anbieter",
+    "Datum": "Datum",
+    "JSON-Transform": "JSON-Transform",
+    "Ja": "Ja",
+    "JavaScript im Browser-Worker; JSON-Eingaben in Datenknoten umformen.": "JavaScript im Browser-Worker; JSON-Eingaben in Datenknoten umformen.",
+    "JavaScript-Transform": "JavaScript-Transform",
+    "Konto besteht?": "Konto besteht?",
+    "Nummer": "Nummer",
+    "Profiladresse": "Profiladresse",
+    "Registrierung": "Registrierung",
+    "Rufnummer": "Rufnummer",
+    "Uhrzeit": "Uhrzeit",
+    "Zeitzone": "Zeitzone"
+  },
+  "en": {
+    "Anbieter": "Provider",
+    "Datum": "Date",
+    "JSON-Transform": "Data transform",
+    "Ja": "Yes",
+    "JavaScript im Browser-Worker; JSON-Eingaben in Datenknoten umformen.": "JavaScript in a browser worker; turn inputs into data nodes.",
+    "JavaScript-Transform": "JavaScript transform",
+    "Konto besteht?": "Account exists?",
+    "Nummer": "Nummer",
+    "Profiladresse": "Profiladresse",
+    "Registrierung": "Registrierung",
+    "Rufnummer": "Rufnummer",
+    "Uhrzeit": "Time",
+    "Zeitzone": "Time zone"
+  }
+}

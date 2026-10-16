@@ -1,0 +1,39 @@
+{
+  "id": "data_url",
+  "name": "URL",
+  "description": "Daten-Node: URL",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "url",
+      "name": "URL",
+      "new_label": "Neue URL",
+      "icon": "link",
+      "category": "Kennungen",
+      "defaults": {
+        "value": ""
+      },
+      "display_defaults": {
+        "openButton": false
+      }
+    }
+  ],
+  "translations": {
+    "de": {
+      "URL": "URL",
+      "Daten-Node: URL": "Daten-Node: URL",
+      "Neue URL": "Neue URL",
+      "Kennungen": "Kennungen",
+      "Inhalt": "Inhalt",
+      "Quick Action: Link öffnen": "Quick Action: Link öffnen"
+    },
+    "en": {
+      "URL": "URL",
+      "Daten-Node: URL": "Data node: URL",
+      "Neue URL": "New url",
+      "Kennungen": "Identifiers",
+      "Inhalt": "Value",
+      "Quick Action: Link öffnen": "Quick Action: Open link"
+    }
+  }
+}

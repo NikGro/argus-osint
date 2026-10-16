@@ -1,0 +1,41 @@
+{
+  "id": "data_datetime",
+  "name": "Datum / Zeit",
+  "description": "Daten-Node: Datum / Zeit",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "datetime",
+      "name": "Datum / Zeit",
+      "new_label": "Neues Datum / Zeit",
+      "icon": "calendar",
+      "category": "Orte und Zeit",
+      "defaults": {
+        "date": "",
+        "time": "",
+        "timezone": "UTC"
+      },
+      "display_defaults": {}
+    }
+  ],
+  "translations": {
+    "de": {
+      "Datum / Zeit": "Datum / Zeit",
+      "Daten-Node: Datum / Zeit": "Daten-Node: Datum / Zeit",
+      "Neues Datum / Zeit": "Neues Datum / Zeit",
+      "Orte und Zeit": "Orte und Zeit",
+      "Datum": "Datum",
+      "Uhrzeit": "Uhrzeit",
+      "Zeitzone": "Zeitzone"
+    },
+    "en": {
+      "Datum / Zeit": "Date / time",
+      "Daten-Node: Datum / Zeit": "Data node: Date / time",
+      "Neues Datum / Zeit": "New date / time",
+      "Orte und Zeit": "Places and time",
+      "Datum": "Date",
+      "Uhrzeit": "Time",
+      "Zeitzone": "Time zone"
+    }
+  }
+}

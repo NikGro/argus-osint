@@ -1,0 +1,48 @@
+{
+  "id": "data_file",
+  "name": "Datei",
+  "description": "Daten-Node: Datei",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "file",
+      "name": "Datei",
+      "new_label": "Neue Datei",
+      "icon": "file",
+      "category": "Medien",
+      "defaults": {
+        "filename": "",
+        "file_id": "",
+        "mime": "",
+        "size": 0
+      },
+      "display_defaults": {
+        "fileButton": false
+      }
+    }
+  ],
+  "translations": {
+    "de": {
+      "Datei": "Datei",
+      "Daten-Node: Datei": "Daten-Node: Datei",
+      "Neue Datei": "Neue Datei",
+      "Medien": "Medien",
+      "filename": "filename",
+      "file_id": "file_id",
+      "Dateityp": "Dateityp",
+      "Dateigröße (Bytes)": "Dateigröße (Bytes)",
+      "Quick Action: Datei öffnen": "Quick Action: Datei öffnen"
+    },
+    "en": {
+      "Datei": "File",
+      "Daten-Node: Datei": "Data node: File",
+      "Neue Datei": "New file",
+      "Medien": "Media",
+      "filename": "filename",
+      "file_id": "file_id",
+      "Dateityp": "File type",
+      "Dateigröße (Bytes)": "File size (bytes)",
+      "Quick Action: Datei öffnen": "Quick Action: Open file"
+    }
+  }
+}

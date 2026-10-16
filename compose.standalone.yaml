@@ -1,0 +1,20 @@
+services:
+  argus:
+    build: .
+    user: "0:0"
+    cap_drop: [ALL]
+    cap_add: [SYS_ADMIN, NET_ADMIN, SETUID, SETGID, CHOWN, KILL]
+    security_opt: [no-new-privileges:true]
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8080}:8080"
+    volumes:
+      - argus-data:/data
+    environment:
+      DATA_DIR: /data
+      GEOCODER_URL: ${GEOCODER_URL:-}
+      GEOCODER_USER_AGENT: ${GEOCODER_USER_AGENT:-}
+    shm_size: 1gb
+    restart: unless-stopped
+
+volumes:
+  argus-data:
