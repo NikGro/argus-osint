@@ -692,7 +692,7 @@ dialog {
   background: var(--danger-hover);
   border-color: var(--danger-hover);
 }
-.drop-target rect {
+.node.drop-target > rect:first-child {
   stroke: #ffcf91;
   stroke-width: 3;
 }

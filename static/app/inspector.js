@@ -166,13 +166,26 @@ var inspector_default = {
               'wide'
             )
           );
-        panel.append(
-          button(t('In Report aufnehmen'), () => {
-            for (const node2 of nodes) node2.report = true;
-            change();
-          }),
-          button(t('Knoten l\xF6schen'), () => deleteNodes(nodes.map((n) => n.id)), 'danger-filled')
+        const report = el('input', { type: 'checkbox' });
+        report.checked = nodes.every((node) => node.report);
+        report.indeterminate = nodes.some((node) => node.report) && !report.checked;
+        const label = el('label', { class: 'checkbox-label' });
+        label.append(report, document.createTextNode(t('In Report aufnehmen')));
+        report.addEventListener('change', () => {
+          for (const node of nodes) node.report = report.checked;
+          change();
+        });
+        const actions = el('section', { class: 'multi-selection-actions node-report-section' });
+        actions.append(
+          label,
+          iconActionButton(
+            t('Knoten l\xF6schen'),
+            () => deleteNodes(nodes.map((n) => n.id)),
+            'trash',
+            'danger-filled wide'
+          )
         );
+        panel.append(actions);
         return;
       }
       const node = nodes[0],
@@ -193,40 +206,39 @@ var inspector_default = {
         el('h2', {}, t('Knotendetails'))
       );
       const name = inputField(panel, t('Titel'), node.label, 'node-label');
-      const readers =
-        node.type === 'note'
-          ? []
-          : editFields(
-              panel,
-              node.type === 'actor'
-                ? Object.fromEntries(
-                    Object.entries({ ...actorAction?.default_params, ...node.data.params }).filter(
-                      ([key]) =>
-                        !key.startsWith('_merge_') &&
-                        !(
-                          actorAction?.default_params?.source_order &&
-                          (key === 'source' || key === 'source_order' || key.startsWith('use_'))
-                        ) &&
-                        key !== 'search_profiles' &&
-                        !(actorAction?.settings_only || []).includes(key)
-                    )
+      const readers = ['note', 'marker'].includes(node.type)
+        ? []
+        : editFields(
+            panel,
+            node.type === 'actor'
+              ? Object.fromEntries(
+                  Object.entries({ ...actorAction?.default_params, ...node.data.params }).filter(
+                    ([key]) =>
+                      !key.startsWith('_merge_') &&
+                      !(
+                        actorAction?.default_params?.source_order &&
+                        (key === 'source' || key === 'source_order' || key.startsWith('use_'))
+                      ) &&
+                      key !== 'search_profiles' &&
+                      !(actorAction?.settings_only || []).includes(key)
                   )
-                : editableNodeData(node),
-              [],
-              (key) =>
-                pluginText(
-                  node.type === 'actor'
-                    ? pluginsState.catalog.find((p) => p.id === node.data.plugin)
-                    : nodePlugin(node.type),
-                  key
-                ),
-              {
-                schema: actorAction?.parameter_schema,
-                sections: actorAction?.parameter_sections,
-                help: actorAction?.parameter_help
-              }
-            );
-      if (node.type === 'note') noteControls(panel, node);
+                )
+              : editableNodeData(node),
+            [],
+            (key) =>
+              pluginText(
+                node.type === 'actor'
+                  ? pluginsState.catalog.find((p) => p.id === node.data.plugin)
+                  : nodePlugin(node.type),
+                key
+              ),
+            {
+              schema: actorAction?.parameter_schema,
+              sections: actorAction?.parameter_sections,
+              help: actorAction?.parameter_help
+            }
+          );
+      if (['note', 'marker'].includes(node.type)) noteControls(panel, node);
       if (['url', 'profile', 'image', 'location', 'file'].includes(node.type))
         displayControls(panel, node);
       if (node.type === 'phone') phoneControls(panel, node, readers);
@@ -546,7 +558,8 @@ var inspector_default = {
       return rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114 > 140 ? '#30271b' : '#f7f7f7';
     }
     function noteControls(panel, node) {
-      panel.append(el('p', {}, t('Notiz direkt auf der Arbeitsfl\xE4che bearbeiten.')));
+      if (node.type === 'note')
+        panel.append(el('p', {}, t('Notiz direkt auf der Arbeitsfl\xE4che bearbeiten.')));
       for (const [key, label, min, max] of [
         ['width', 'Breite', 200, 900],
         ['height', 'H\xF6he', 120, 800]

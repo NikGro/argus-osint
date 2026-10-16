@@ -243,7 +243,7 @@ class RevisionSources(unittest.TestCase):
         ids = {p["id"]: p for p in server.MANAGER.installed()}
         self.assertTrue({"username", "email", "phone"} <= ids.keys())
         self.assertFalse({"profiles", "maigret", "holehe", "phoneinfoga"} & ids.keys())
-        for key, count in [("username", 4), ("email", 3), ("phone", 2)]:
+        for key, count in [("username", 1), ("email", 1), ("phone", 2)]:
             defaults = ids[key]["actions"][0]["default_params"]
             self.assertEqual(
                 sum(k.startswith("use_") and v is True for k, v in defaults.items()),
@@ -344,7 +344,14 @@ class RevisionSources(unittest.TestCase):
                 "index": 0,
             },
         )
-        self.assertEqual(final["document"]["nodes"][-1]["data"]["locality"], "Hamburg")
+        self.assertEqual(
+            next(
+                n
+                for n in reversed(final["document"]["nodes"])
+                if n["type"] == "location"
+            )["data"]["locality"],
+            "Hamburg",
+        )
         self.assertEqual(final["document"]["nodes"][0], p["document"]["nodes"][0])
 
     def test_location_source_order_cache_and_attribution(self):

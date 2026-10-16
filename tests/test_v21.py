@@ -521,7 +521,8 @@ class InstagramCollectionContracts(unittest.TestCase):
             o["group_path"][0]["id"] for o in result["outputs"] if o.get("group_path")
         }
         self.assertEqual(
-            roots, {"profile", "contacts", "followers", "following", "stories"}
+            roots,
+            {"profile", "contacts", "followers", "following", "stories", "recovery"},
         )
         self.assertTrue(
             any(

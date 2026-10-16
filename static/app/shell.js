@@ -236,7 +236,8 @@ var shell_default = {
         label = t('Noch zu speichern');
       } else if (shellState.backendOnline === true) {
         state = 'green';
-        label = workspaceState.project ? t('Gespeichert') : t('Verbunden');
+        label =
+          workspaceState.project || !$('settingsView').hidden ? t('Gespeichert') : t('Verbunden');
       }
       $('statusLight').dataset.state = state;
       $('statusText').textContent = label;

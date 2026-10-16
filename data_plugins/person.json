@@ -41,7 +41,8 @@
       "last_name": "Last name",
       "birth_date": "Date of birth",
       "birth_place": "Place of birth",
-      "birth_country": "Country of birth"
+      "birth_country": "Country of birth",
+      "Name und Geburtsangaben; Adressen gehören in verbundene Ort-Nodes.": "Name and birth details; store addresses in connected location nodes."
     }
   }
 }

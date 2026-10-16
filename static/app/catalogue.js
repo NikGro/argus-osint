@@ -1,5 +1,5 @@
 import { language } from '../i18n.js';
-import { t } from '../i18n.js';
+import { t, diagnostic } from '../i18n.js';
 import { nodeLabels } from './labels.js';
 var catalogue_default = {
   name: 'catalogue',
@@ -45,7 +45,7 @@ var catalogue_default = {
       return (
         plugin?.translations?.en?.[key] ??
         plugin?.translations?.[plugin.default_language || 'de']?.[key] ??
-        common
+        diagnostic(common)
       );
     }
     function nodePlugin(type) {

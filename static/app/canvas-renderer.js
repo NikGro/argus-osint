@@ -98,7 +98,7 @@ var canvas_renderer_default = {
       const size = layout_spec_default[node.type] || layout_spec_default.base;
       let w = size.width,
         h = size.height;
-      if (node.type === 'note') {
+      if (['note', 'marker'].includes(node.type)) {
         w = node.appearance?.width || w;
         h = node.appearance?.height || h;
       }
@@ -109,7 +109,19 @@ var canvas_renderer_default = {
           size.height,
           size.header + locationDisplayLines(node.data || {}, w).length * size.line
         );
-        if (node.display?.map) h += layout_spec_default.mapHeight;
+        if (
+          node.display?.map &&
+          (formatLocation(node.data || {}) ||
+            node.data.formatted_address ||
+            node.data.original_input ||
+            (node.data.latitude !== null &&
+              node.data.latitude !== '' &&
+              node.data.latitude !== undefined &&
+              node.data.longitude !== null &&
+              node.data.longitude !== '' &&
+              node.data.longitude !== undefined))
+        )
+          h += layout_spec_default.mapHeight;
       }
       h += nodeBadgeHeight(node, w);
       h +=
@@ -119,7 +131,16 @@ var canvas_renderer_default = {
         x: node.x,
         y: node.y,
         w,
-        h
+        h,
+        inputCount:
+          node.type === 'actor'
+            ? Math.max(
+                1,
+                pluginsState.catalog
+                  .find((p) => p.id === node.data.plugin)
+                  ?.actions.find((a) => a.id === node.data.action)?.min_inputs || 1
+              )
+            : 1
       };
     }
     function nodeIcon(g, node) {

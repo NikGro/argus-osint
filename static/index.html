@@ -8,24 +8,30 @@
     <link rel="stylesheet" href="/style.css" />
     <link rel="stylesheet" href="/iteration.css" />
     <link rel="stylesheet" href="/ui-rhythm.css" />
+    <link rel="stylesheet" href="/alpha1.css" />
     <link rel="icon" href="/argus-logo.svg" type="image/svg+xml" />
   </head>
   <body>
     <section id="desktopWarning" role="main" aria-labelledby="desktopWarningTitle">
       <div>
         <img src="/argus-logo.svg" alt="ARGUS" width="44" height="44" />
-        <h1 id="desktopWarningTitle">ARGUS ist für den Desktop gemacht</h1>
-        <p>
+        <h1 id="desktopWarningTitle" data-i18n="ARGUS ist für den Desktop gemacht">
+          ARGUS ist für den Desktop gemacht
+        </h1>
+        <p
+          data-i18n="Diese Anwendung ist nur für die Nutzung im Desktop-Modus vorgesehen. Auf dem Handy bleibt die Oberfläche deshalb verborgen."
+        >
           Diese Anwendung ist nur für die Nutzung im Desktop-Modus vorgesehen. Auf dem Handy bleibt
           die Oberfläche deshalb verborgen.
         </p>
-        <p>
-          Du möchtest sie trotzdem verwenden? Aktiviere im Menü deines Browsers
-          <strong>„Desktopwebsite“</strong> beziehungsweise
-          <strong>„Desktop-Version anfordern“</strong> und lade die Seite neu. Du darfst diese
-          Sperre damit ausdrücklich umgehen.
+        <p
+          data-i18n="Du möchtest sie trotzdem verwenden? Aktiviere im Menü deines Browsers „Desktopwebsite“ beziehungsweise „Desktop-Version anfordern“ und lade die Seite neu. Du darfst diese Sperre damit ausdrücklich umgehen."
+        >
+          Du möchtest sie trotzdem verwenden? Aktiviere im Menü deines Browsers „Desktopwebsite“
+          beziehungsweise „Desktop-Version anfordern“ und lade die Seite neu. Du darfst diese Sperre
+          damit ausdrücklich umgehen.
         </p>
-        <p class="desktop-warning-note">
+        <p data-i18n="Die Bedienung auf einem kleinen Bildschirm kann eingeschränkt sein.">
           Die Bedienung auf einem kleinen Bildschirm kann eingeschränkt sein.
         </p>
       </div>
@@ -39,7 +45,7 @@
           data-i18n-aria-label="Argus Hauptmenü"
         >
           <img class="brand-logo" src="/argus-logo.svg" alt="" /> ARGUS
-          <span>Workbench · v0.29</span>
+          <span>Workbench · v1.0.0-alpha.1</span>
         </button>
       </div>
       <div id="projectHeading" hidden>

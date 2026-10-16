@@ -16,7 +16,7 @@ def node_bounds(node, preferences=None):
     width, height = size.get("width", LAYOUT["base"]["width"]), size.get(
         "height", LAYOUT["base"]["height"]
     )
-    if node["type"] == "note":
+    if node["type"] in ("note", "marker"):
         width, height = appearance.get("width", width), appearance.get("height", height)
     if node["type"] == "image" and display.get("preview"):
         height = LAYOUT["imagePreviewHeight"]
@@ -30,7 +30,14 @@ def node_bounds(node, preferences=None):
             size["height"],
             size["header"] + size["line"] * max(1, (len(address) + 38) // 39),
         )
-        if display.get("map"):
+        if display.get("map") and (
+            address
+            or node.get("data", {}).get("original_input")
+            or all(
+                node.get("data", {}).get(k) not in (None, "")
+                for k in ("latitude", "longitude")
+            )
+        ):
             height += LAYOUT["mapHeight"]
     from node_metadata import badge_height
 

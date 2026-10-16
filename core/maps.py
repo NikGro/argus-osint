@@ -14,8 +14,13 @@ class Maps:
     def __init__(self, data):
         self.directory = Path(data) / "map-tiles"
         self.directory.mkdir(exist_ok=True)
+        self.previews = {}
 
     def preview(self, lat, lon, query, provider="osm"):
+        key = (str(lat), str(lon), str(query), provider)
+        cached = self.previews.get(key)
+        if cached and time.monotonic() - cached[0] < 600:
+            return cached[1]
         if provider == "google" and Path("/run/argus/worker.sock").exists():
             try:
                 from core.isolation import invoke
@@ -35,13 +40,19 @@ class Maps:
                 picture = result.get("image_base64")
                 if picture and len(picture) < 8 * 1024 * 1024:
                     base64.b64decode(picture, validate=True)
-                    return (
+                    html = (
                         '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/map-view.css"><img class="snapshot" alt="Google Maps" src="data:image/png;base64,'
                         + picture
                         + '">'
                     ).encode()
+                    if len(self.previews) >= 64:
+                        self.previews.pop(next(iter(self.previews)))
+                    self.previews[key] = (time.monotonic(), html)
+                    return html
             except Exception:
                 pass
+        if provider == "google":
+            raise AppError("map_unavailable", 502)
         try:
             latitude = float(lat)
             longitude = float(lon)

@@ -1,13 +1,9 @@
-# Worker runtime
+# Integrated browser and community runtime
 
-The app works as a single Python service with a persistent queue. Built-in trusted adapters operate inside its deployment boundary. Community Python and browser-backed research require the optional isolated-worker broker.
+The standard ARGUS image includes Chromium, ChromeDriver, Xvfb, FlareSolverr and isolated community workers. They run in the same container as ARGUS, supervised by the entrypoint. No separate service or installation is needed. Use the supplied Compose file so the container receives the required Linux capabilities; the app itself runs as UID 10001.
 
-The public standalone Compose file explicitly starts the supervisor as root with the listed Linux capabilities. The supervisor checks namespace support, starts its local Unix-socket broker/egress proxy and runs the app as UID/GID 10001. If namespace creation fails, it exits. `/api/health` reports `worker_isolation`; it must be `true` before those execution paths are available. Never replace the check with unrestricted execution or `privileged: true`.
+Browser/community jobs run in separate network, mount and PID namespaces under temporary identities. User data and the app process table are hidden. Their only egress is a restricted proxy in the main container network namespace, so enabling VPN also protects worker traffic. Community scripts cannot access saved ARGUS credentials.
 
-On hosts unable to supply this boundary, run the app as `10001:10001` with all capabilities dropped. Built-in functionality remains subject to each adapter's requirements; community and browser research fail closed. The existing managed development installation uses this reduced mode until its host operator updates the lifecycle controller's policy.
+The built-in browser renders JavaScript and handles supported challenge pages. Website challenges, account restrictions, interactive reCAPTCHA and upstream rate limits cannot be guaranteed to succeed automatically. ARGUS retains partial results and emits warnings/errors rather than reporting blocked pages as genuine matches. Do not repeatedly retry a site that refuses access.
 
-The optional VPN Compose stack is also unprivileged on the app side. Its gateway is a separate network control boundary, not a substitute for worker isolation. See [vpn.md](vpn.md).
-
-There is currently no token-entry/pairing dialog. Browser sessions are automatically established with same-origin and CSRF checks. This does not provide multiuser authentication. Keep the service bound to localhost or a trusted private environment. Preserve the whole data volume, including its encryption keys, during migration and backup.
-
-There is one application process and one persistent execution queue, not a multi-replica distributed scheduler. A restart marks unfinished jobs interrupted rather than replaying external operations. Cancellation cannot undo a request already sent to a provider. Community code receives its selected inputs and own configured parameters; namespace/resource separation is not a guarantee against every kernel or dependency vulnerability.
+`worker_isolation` in `/api/health` reports whether the internal worker socket is ready. Starting without the supplied Compose configuration leaves the app unprivileged and isolated features unavailable. Explicitly requesting the supervisor with insufficient namespace permissions fails at startup. There is no unrestricted worker fallback. No external browser listener or community execution endpoint is exposed.

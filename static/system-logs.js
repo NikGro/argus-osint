@@ -1,6 +1,7 @@
 import { t } from './i18n.js';
 
 export function systemLogs(container, { api, el, iconActionButton, toast }) {
+  clearTimeout(container.logTimer);
   container.replaceChildren();
   container.append(el('h2', {}, t('Systemlogs')));
   const search = el('input', {
@@ -20,8 +21,28 @@ export function systemLogs(container, { api, el, iconActionButton, toast }) {
   const more = iconActionButton(t('Weitere laden'), () => load(true), 'plus');
   let offset = 0,
     generation = 0,
-    timer;
+    timer,
+    loading = false;
+  const automatic = el('input', { type: 'checkbox' });
+  const follow = el('input', { type: 'checkbox' });
+  automatic.checked = localStorage.getItem('argus.logs.autoRefresh') === 'true';
+  follow.checked = localStorage.getItem('argus.logs.autoScroll') !== 'false';
+  const options = el('div', { class: 'system-log-options' });
+  for (const [input, text, key] of [
+    [automatic, 'Automatisch aktualisieren', 'autoRefresh'],
+    [follow, 'Automatisch nach unten scrollen', 'autoScroll']
+  ]) {
+    const label = el('label', { class: 'checkbox-label' });
+    label.append(input, document.createTextNode(t(text)));
+    input.addEventListener('change', () => {
+      localStorage.setItem('argus.logs.' + key, String(input.checked));
+      if (input === follow && follow.checked) output.scrollTop = output.scrollHeight;
+    });
+    options.append(label);
+  }
   async function load(append = false) {
+    if (loading) return;
+    loading = true;
     const revision = ++generation;
     try {
       const data = await api(
@@ -31,15 +52,24 @@ export function systemLogs(container, { api, el, iconActionButton, toast }) {
           (append ? offset : 0)
       );
       if (revision !== generation || !container.isConnected) return;
-      if (!append) output.textContent = '';
-      output.textContent +=
-        (data.lines || []).map((row) => row.text).join('\n') +
-        ((data.lines || []).length ? '\n' : '');
+      const lines = [...(data.lines || [])]
+        .reverse()
+        .map((row) => row.text)
+        .join('\n');
+      const oldTop = output.scrollTop,
+        oldHeight = output.scrollHeight;
+      if (append) output.textContent = lines + '\n' + output.textContent;
+      else output.textContent = lines;
+      if (append) output.scrollTop = oldTop + output.scrollHeight - oldHeight;
+      else if (follow.checked) output.scrollTop = output.scrollHeight;
+      else output.scrollTop = oldTop;
       offset = (append ? offset : 0) + (data.lines || []).length;
       status.textContent = t('Logzeilen: {count}', { count: data.total || 0 });
       more.hidden = offset >= (data.total || 0);
     } catch (error) {
       toast(error.message);
+    } finally {
+      loading = false;
     }
   }
   search.addEventListener('input', () => {
@@ -88,6 +118,12 @@ export function systemLogs(container, { api, el, iconActionButton, toast }) {
     exportButton,
     clear
   );
-  container.append(controls, status, output, more);
+  container.append(controls, options, status, output, more);
   load();
+  const refresh = async () => {
+    if (!container.isConnected) return;
+    if (automatic.checked && !document.hidden && !container.closest('main')?.hidden) await load();
+    container.logTimer = setTimeout(refresh, 5000);
+  };
+  container.logTimer = setTimeout(refresh, 5000);
 }

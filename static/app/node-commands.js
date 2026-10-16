@@ -48,7 +48,7 @@ var node_commands_default = {
         label,
         data,
         display: structuredClone(preferencesState.appSettings.node_display_defaults?.[type] || {}),
-        ...(type === 'note'
+        ...(['note', 'marker'].includes(type)
           ? {
               appearance: {
                 width: 320,
@@ -71,7 +71,7 @@ var node_commands_default = {
             : {})
         }
       };
-      const spot = freeNodeSpot(nodeRect(n));
+      const spot = type === 'marker' ? { x: n.x, y: n.y } : freeNodeSpot(nodeRect(n));
       n.x = spot.x;
       n.y = spot.y;
       workspaceState.project.document.nodes.push(n);
@@ -131,11 +131,13 @@ var node_commands_default = {
         x,
         y
       );
-      for (const n of inputs)
+      for (const [index, n] of inputs.entries())
         workspaceState.project.document.edges.push({
           id: uid(),
           source: n.id,
           target: actor.id,
+          source_port: 'right',
+          target_port: `left:${index}:${Math.max(1, action.min_inputs || 1)}`,
           label: t('Eingabe')
         });
       change(actor.id);

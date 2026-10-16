@@ -21,16 +21,20 @@ def normalize(node):
 
 
 def badge_height(node, width, tags=None, language="de"):
-    if node.get("type") == "actor":
+    if node.get("type") in ("actor", "marker"):
         return 0
     names = (
         {"unverified": "Unverifiziert", "unclear": "Unklar", "verified": "Verifiziert"}
         if language == "de"
         else {"unverified": "Unverified", "unclear": "Unclear", "verified": "Verified"}
     )
-    labels = [
-        names.get(node.get("verification", "unverified"), names["unverified"])
-    ] + [tag["name"] for tag in (tags or []) if tag["id"] in node.get("tags", [])]
+    labels = (
+        []
+        if node.get("type") in ("note", "error")
+        else [names.get(node.get("verification", "unverified"), names["unverified"])]
+    ) + [tag["name"] for tag in (tags or []) if tag["id"] in node.get("tags", [])]
+    if not labels:
+        return 0
     used = 0
     rows = 1
     for name in labels:

@@ -260,6 +260,7 @@ async function setLanguage(code) {
   language = code;
   messages = pack.messages;
   document.documentElement.lang = code;
+  localStorage.setItem('argus.language', code);
   for (const element of document.querySelectorAll('[data-i18n]'))
     element.textContent = t(element.dataset.i18n);
   for (const attr of ['placeholder', 'aria-label', 'title'])
@@ -270,6 +271,13 @@ async function setLanguage(code) {
 
 // static/icons.js
 var ICON_PATHS = {
+  refresh: [
+    'M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.09A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h8V3z'
+  ],
+  download: ['M5 20h14v-2H5m14-9h-4V3H9v6H5l7 7z'],
+  vpn: [
+    'M12 2 3 6v6c0 5 3.8 9.5 9 11 5.2-1.5 9-6 9-11V6l-9-4m0 2.2 7 3.1V12c0 3.9-2.8 7.5-7 8.9C7.8 19.5 5 15.9 5 12V7.3l7-3.1m-1 4.8v5l4 2 1-1.7-3-1.6V9z'
+  ],
   close: [
     'M18.3 5.7L12 12L5.7 5.7L4.3 7.1L10.6 13.4L4.3 19.7L5.7 21.1L12 14.8L18.3 21.1L19.7 19.7L13.4 13.4L19.7 7.1Z'
   ],
@@ -1257,14 +1265,16 @@ var node_renderer_default = {
         visibleNodes.find((item) => item.id === canvasState.keyboardNode) ||
         visibleNodes.find((item) => selectionState.selected.has(item.id)) ||
         visibleNodes[0];
-      for (const node of doc.nodes) {
+      for (const node of [...doc.nodes].sort(
+        (a, b) => Number(b.type === 'marker') - Number(a.type === 'marker')
+      )) {
         if (hidden.has(node.id)) continue;
         const bounds = nodeRect(node),
           g = svg('g', {
             class:
               'node ' +
               (node.type === 'actor' ? 'actor ' : '') +
-              (node.type === 'note' ? 'note ' : '') +
+              (node.type === 'note' ? 'note ' : node.type === 'marker' ? 'marker ' : '') +
               (node.type === 'error' ? 'error ' : '') +
               (selectionState.selected.has(node.id) ? 'selected' : ''),
             transform: `translate(${node.x} ${node.y})`,
@@ -1292,7 +1302,7 @@ var node_renderer_default = {
             rx: 20
           })
         );
-        if (node.type === 'note') {
+        if (['note', 'marker'].includes(node.type)) {
           const color = node.appearance?.color || '#ffcc70',
             ink = noteInk(color);
           rect.style.fill = color;
@@ -1301,9 +1311,10 @@ var node_renderer_default = {
             svg(
               'text',
               {
-                x: 12,
+                x: node.type === 'marker' ? bounds.w / 2 : 12,
+                'text-anchor': node.type === 'marker' ? 'middle' : 'start',
                 y: 25,
-                fill: ink,
+                fill: node.type === 'marker' ? color : ink,
                 'font-size': 13
               },
               short(node.label, Math.floor((bounds.w - 24) / 8))
@@ -1341,7 +1352,7 @@ var node_renderer_default = {
             change(node.id);
           });
           foreign.append(editor);
-          g.append(foreign);
+          if (node.type === 'note') g.append(foreign);
           const grip = svg('g', {
             class: 'note-resize',
             role: 'button',
@@ -1585,11 +1596,14 @@ var node_renderer_default = {
           render();
           inspect(event.shiftKey || canvasState.touchSelection);
         });
-        nodeExtras(g, node, bounds);
-        nodeIcon(g, node);
-        nodePorts(g, node, bounds);
+        if (node.type !== 'marker') {
+          nodeExtras(g, node, bounds);
+          nodeIcon(g, node);
+          nodePorts(g, node, bounds);
+        }
         const owner = (groupModel.nodePaths.get(node.id) || []).at(-1);
-        (groupViews.get(owner) || scene).append(g);
+        if (node.type === 'marker') (groupViews.get(owner) || scene).prepend(g);
+        else (groupViews.get(owner) || scene).append(g);
         const old = previousPositions.get(node.id);
         if (
           old &&
@@ -1679,7 +1693,7 @@ var edge_renderer_default = {
             )
           : [];
         const labelObstacles = [
-          ...doc.nodes.filter((n) => !hidden.has(n.id)).map(nodeRect),
+          ...doc.nodes.filter((n) => n.type !== 'marker' && !hidden.has(n.id)).map(nodeRect),
           ...groupModel.groups
             .filter((g) => !ancestorIds.includes(g.id))
             .map((g) => groupModel.rects.get(g.id)),
@@ -1696,14 +1710,28 @@ var edge_renderer_default = {
           'data-edge-label': edge.id
         });
         labelOverlay.append(labelLayer);
-        const labelText = String(edge.label || '');
+        const labelText = t(String(edge.label || ''));
         const route = routeConnection(
             a,
             b,
             labelText,
             labelObstacles,
             occupiedLabels,
-            edge,
+            {
+              ...edge,
+              source_port: 'right',
+              target_port:
+                b.inputCount > 1 && visual.b.key.startsWith('node:')
+                  ? `left:${
+                      Math.max(
+                        0,
+                        doc.edges
+                          .filter((e) => e.target === edge.target)
+                          .findIndex((e) => e.id === edge.id)
+                      ) % b.inputCount
+                    }:${b.inputCount}`
+                  : 'left'
+            },
             measureEdgeText(labelText)
           ),
           { labelX, labelY } = route;
@@ -1959,6 +1987,15 @@ var group_renderer_default = {
             rx: 10
           })
         );
+        for (const x of [b.x, b.x + (group.collapsed ? 220 : b.w)])
+          g.append(
+            svg('circle', {
+              class: 'group-port',
+              cx: x,
+              cy: b.y + (group.collapsed ? 76 : b.h) / 2,
+              r: 5
+            })
+          );
         const toggle = svg('g', {
           class: 'group-toggle',
           role: 'button',
@@ -2314,7 +2351,8 @@ var shell_default = {
         label = t('Noch zu speichern');
       } else if (shellState.backendOnline === true) {
         state = 'green';
-        label = workspaceState.project ? t('Gespeichert') : t('Verbunden');
+        label =
+          workspaceState.project || !$('settingsView').hidden ? t('Gespeichert') : t('Verbunden');
       }
       $('statusLight').dataset.state = state;
       $('statusText').textContent = label;
@@ -3118,7 +3156,7 @@ var node_commands_default = {
         label,
         data,
         display: structuredClone(preferencesState.appSettings.node_display_defaults?.[type] || {}),
-        ...(type === 'note'
+        ...(['note', 'marker'].includes(type)
           ? {
               appearance: {
                 width: 320,
@@ -3141,7 +3179,7 @@ var node_commands_default = {
             : {})
         }
       };
-      const spot = freeNodeSpot(nodeRect(n));
+      const spot = type === 'marker' ? { x: n.x, y: n.y } : freeNodeSpot(nodeRect(n));
       n.x = spot.x;
       n.y = spot.y;
       workspaceState.project.document.nodes.push(n);
@@ -3201,11 +3239,13 @@ var node_commands_default = {
         x,
         y
       );
-      for (const n of inputs)
+      for (const [index, n] of inputs.entries())
         workspaceState.project.document.edges.push({
           id: uid(),
           source: n.id,
           target: actor.id,
+          source_port: 'right',
+          target_port: `left:${index}:${Math.max(1, action.min_inputs || 1)}`,
           label: t('Eingabe')
         });
       change(actor.id);
@@ -3474,9 +3514,34 @@ var layout_default = {
           if (!columns.has(level)) columns.set(level, []);
           columns.get(level).push(u);
         }
+        const orderedLevels = [...columns.keys()].sort((a, b) => a - b);
+        const rank = /* @__PURE__ */ new Map();
+        const updateRanks = () => {
+          for (const column of columns.values()) column.forEach((u, i) => rank.set(u.id, i));
+        };
+        updateRanks();
+        for (let pass = 0; pass < 4; pass++) {
+          const forward = pass % 2 === 0;
+          for (const level of forward ? orderedLevels : [...orderedLevels].reverse()) {
+            const score = (id) => {
+              const neighbors = edges
+                .filter(([a, b]) => (forward ? b === id : a === id))
+                .map(([a, b]) => (forward ? a : b))
+                .filter((n) => rank.has(n));
+              return neighbors.length
+                ? neighbors.reduce((sum, n) => sum + rank.get(n), 0) / neighbors.length
+                : rank.get(id);
+            };
+            columns.get(level).sort((a, b) => score(a.id) - score(b.id));
+            updateRanks();
+          }
+        }
+        const maxHeight = Math.max(
+          ...[...columns.values()].map((column) => column.reduce((sum, u) => sum + u.h + 60, -60))
+        );
         let x = 0;
-        for (const level of [...columns.keys()].sort((a, b) => a - b)) {
-          let y = 0,
+        for (const level of orderedLevels) {
+          let y = (maxHeight - columns.get(level).reduce((sum, u) => sum + u.h + 60, -60)) / 2,
             width = 0;
           for (const u of columns.get(level)) {
             positions.set(u.id, {
@@ -3493,7 +3558,7 @@ var layout_default = {
     }
     function arrangeProject(mode) {
       if (!workspaceState.project || persistenceState.busy) return;
-      if (mode !== 'hierarchical') arrangeGroupContents(mode);
+      arrangeGroupContents(mode);
       const doc = workspaceState.project.document,
         owners = /* @__PURE__ */ new Map(),
         units = [];
@@ -3514,7 +3579,7 @@ var layout_default = {
         });
       }
       for (const n of doc.nodes)
-        if (!owners.has(n.id)) {
+        if (!owners.has(n.id) && n.type !== 'marker') {
           owners.set(n.id, n.id);
           units.push({
             id: n.id,
@@ -3526,7 +3591,63 @@ var layout_default = {
           });
         }
       const edges = doc.edges.map((e) => [owners.get(e.source), owners.get(e.target)]);
-      const positions = layoutPositions(units, edges, mode);
+      let positions;
+      if (mode === 'hierarchical') positions = layoutPositions(units, edges, mode);
+      else {
+        const byId = new Map(units.map((u) => [u.id, u]));
+        const claimed = /* @__PURE__ */ new Set(),
+          clusters = [],
+          clusterOwner = /* @__PURE__ */ new Map();
+        for (const unit of units.filter(
+          (u) => u.members.length === 1 && u.members[0].type === 'actor'
+        )) {
+          const outputs = edges
+            .filter(([from, to]) => from === unit.id && to !== unit.id)
+            .map(([, to]) => byId.get(to))
+            .filter(
+              (u) =>
+                u && u.members.length === 1 && u.members[0].type !== 'actor' && !claimed.has(u.id)
+            );
+          const members = [unit, ...new Map(outputs.map((u) => [u.id, u])).values()];
+          const local = layoutPositions(members, [], mode);
+          const left = Math.min(...members.map((u) => local.get(u.id).x)),
+            top = Math.min(...members.map((u) => local.get(u.id).y));
+          const cluster = {
+            id: unit.id,
+            members,
+            local,
+            x: left,
+            y: top,
+            w: Math.max(...members.map((u) => local.get(u.id).x + u.w)) - left,
+            h: Math.max(...members.map((u) => local.get(u.id).y + u.h)) - top
+          };
+          clusters.push(cluster);
+          for (const member of members) {
+            claimed.add(member.id);
+            clusterOwner.set(member.id, cluster.id);
+          }
+        }
+        for (const unit of units)
+          if (!claimed.has(unit.id)) {
+            clusters.push({
+              ...unit,
+              members: [unit],
+              local: /* @__PURE__ */ new Map([[unit.id, { x: 0, y: 0 }]]),
+              x: 0,
+              y: 0
+            });
+            clusterOwner.set(unit.id, unit.id);
+          }
+        const clusterEdges = edges.map(([a, b]) => [clusterOwner.get(a), clusterOwner.get(b)]);
+        const blocks = layoutPositions(clusters, clusterEdges, 'hierarchical');
+        positions = /* @__PURE__ */ new Map();
+        for (const cluster of clusters)
+          for (const unit of cluster.members)
+            positions.set(unit.id, {
+              x: blocks.get(cluster.id).x + cluster.local.get(unit.id).x - cluster.x,
+              y: blocks.get(cluster.id).y + cluster.local.get(unit.id).y - cluster.y
+            });
+      }
       for (const unit of units) {
         const pos = positions.get(unit.id);
         for (const node of unit.members) {
@@ -3596,7 +3717,7 @@ var layout_default = {
         for (const id of groupNodeIds(group)) hidden.add(id);
       }
       for (const node of workspaceState.project.document.nodes)
-        if (!hidden.has(node.id)) obstacles.push(nodeRect(node));
+        if (node.type !== 'marker' && !hidden.has(node.id)) obstacles.push(nodeRect(node));
       const spot = {
         ...rect
       };
@@ -3648,7 +3769,7 @@ var layout_default = {
         });
       }
       for (const node of workspaceState.project.document.nodes)
-        if (!owned.has(node.id))
+        if (node.type !== 'marker' && !owned.has(node.id))
           units.push({
             nodes: [node],
             rect: nodeRect(node)
@@ -3695,7 +3816,12 @@ var layout_default = {
           });
         }
         if (units.length < 2) continue;
-        const positions = layoutPositions(units, [], mode),
+        const unitOwners = new Map(units.flatMap((u) => u.members.map((n) => [n.id, u.id]))),
+          edges = workspaceState.project.document.edges.map((e) => [
+            unitOwners.get(e.source),
+            unitOwners.get(e.target)
+          ]),
+          positions = layoutPositions(units, edges, mode),
           minX = Math.min(...[...positions.values()].map((p) => p.x)),
           minY = Math.min(...[...positions.values()].map((p) => p.y));
         for (const unit of units) {
@@ -4051,6 +4177,11 @@ var groups_default = {
               ? [selectionState.selectedGroup]
               : []
         );
+      for (const group2 of orderedGroups()) {
+        const ids = [...groupNodeIds(group2)];
+        if (ids.length && ids.every((id) => selectionState.selected.has(id)))
+          groupIds.add(group2.id);
+      }
       for (const id of [...groupIds]) {
         if ([...groupIds].some((other) => other !== id && groupDescendantIds(other).has(id)))
           groupIds.delete(id);
@@ -4187,15 +4318,39 @@ var groups_default2 = groups_default;
 
 // static/layout-spec.json
 var layout_spec_default = {
-  base: { width: 210, height: 76 },
-  profile: { width: 280, height: 96 },
-  person: { width: 280, height: 76 },
-  error: { width: 300, height: 112 },
-  note: { width: 320, height: 180 },
-  location: { width: 300, height: 76, header: 64, line: 16 },
+  base: {
+    width: 210,
+    height: 76
+  },
+  profile: {
+    width: 280,
+    height: 96
+  },
+  person: {
+    width: 280,
+    height: 76
+  },
+  error: {
+    width: 300,
+    height: 112
+  },
+  note: {
+    width: 320,
+    height: 180
+  },
+  location: {
+    width: 300,
+    height: 76,
+    header: 64,
+    line: 16
+  },
   imagePreviewHeight: 210,
   mapHeight: 228,
-  quickActionHeight: 32
+  quickActionHeight: 48,
+  marker: {
+    width: 400,
+    height: 240
+  }
 };
 
 // static/app/canvas-renderer.js
@@ -4295,7 +4450,7 @@ var canvas_renderer_default = {
       const size = layout_spec_default[node.type] || layout_spec_default.base;
       let w = size.width,
         h = size.height;
-      if (node.type === 'note') {
+      if (['note', 'marker'].includes(node.type)) {
         w = node.appearance?.width || w;
         h = node.appearance?.height || h;
       }
@@ -4306,7 +4461,19 @@ var canvas_renderer_default = {
           size.height,
           size.header + locationDisplayLines(node.data || {}, w).length * size.line
         );
-        if (node.display?.map) h += layout_spec_default.mapHeight;
+        if (
+          node.display?.map &&
+          (formatLocation(node.data || {}) ||
+            node.data.formatted_address ||
+            node.data.original_input ||
+            (node.data.latitude !== null &&
+              node.data.latitude !== '' &&
+              node.data.latitude !== void 0 &&
+              node.data.longitude !== null &&
+              node.data.longitude !== '' &&
+              node.data.longitude !== void 0))
+        )
+          h += layout_spec_default.mapHeight;
       }
       h += nodeBadgeHeight(node, w);
       h +=
@@ -4316,7 +4483,16 @@ var canvas_renderer_default = {
         x: node.x,
         y: node.y,
         w,
-        h
+        h,
+        inputCount:
+          node.type === 'actor'
+            ? Math.max(
+                1,
+                pluginsState.catalog
+                  .find((p) => p.id === node.data.plugin)
+                  ?.actions.find((a) => a.id === node.data.action)?.min_inputs || 1
+              )
+            : 1
       };
     }
     function nodeIcon(g, node) {
@@ -4529,6 +4705,352 @@ var canvas_renderer_default = {
   }
 };
 var canvas_renderer_default2 = canvas_renderer_default;
+
+// static/graph-routing.js
+var ArgusRouting = (() => {
+  function automaticBoundary(rect, toward) {
+    const center = {
+      x: rect.x + rect.w / 2,
+      y: rect.y + rect.h / 2
+    };
+    let dx = toward.x - center.x,
+      dy = toward.y - center.y;
+    if (!dx && !dy) dx = 1;
+    const factor = Math.min(
+      dx ? rect.w / 2 / Math.abs(dx) : Infinity,
+      dy ? rect.h / 2 / Math.abs(dy) : Infinity
+    );
+    let x = center.x + dx * factor,
+      y = center.y + dy * factor;
+    const horizontal = Math.abs(x - center.x) >= rect.w / 2 - 0.01;
+    const inset = Math.min(12, rect.w / 4, rect.h / 4);
+    if (horizontal) y = Math.max(rect.y + inset, Math.min(rect.y + rect.h - inset, y));
+    else x = Math.max(rect.x + inset, Math.min(rect.x + rect.w - inset, x));
+    return {
+      x,
+      y,
+      nx: horizontal ? Math.sign(dx) : 0,
+      ny: horizontal ? 0 : Math.sign(dy)
+    };
+  }
+  function connectionGeometry(a, b, sourcePort = null, targetPort = null) {
+    const from = portPosition(a, sourcePort?.startsWith('right') ? sourcePort : 'right'),
+      to = portPosition(b, targetPort?.startsWith('left') ? targetPort : 'left'),
+      distance = Math.min(180, Math.max(35, Math.hypot(to.x - from.x, to.y - from.y) * 0.42));
+    const c1x = from.x + from.nx * distance,
+      c1y = from.y + from.ny * distance,
+      c2x = to.x + to.nx * distance,
+      c2y = to.y + to.ny * distance;
+    return {
+      sx: from.x,
+      sy: from.y,
+      tx: to.x,
+      ty: to.y,
+      c1x,
+      c1y,
+      c2x,
+      c2y,
+      labelX: (from.x + 3 * c1x + 3 * c2x + to.x) / 8,
+      labelY: (from.y + 3 * c1y + 3 * c2y + to.y) / 8
+    };
+  }
+  function intersects(a, b, padding = 0) {
+    return (
+      a.x < b.x + b.w + padding &&
+      a.x + a.w > b.x - padding &&
+      a.y < b.y + b.h + padding &&
+      a.y + a.h > b.y - padding
+    );
+  }
+  function cubicPoint(points, t2) {
+    const u = 1 - t2;
+    return {
+      x:
+        u * u * u * points[0].x +
+        3 * u * u * t2 * points[1].x +
+        3 * u * t2 * t2 * points[2].x +
+        t2 * t2 * t2 * points[3].x,
+      y:
+        u * u * u * points[0].y +
+        3 * u * u * t2 * points[1].y +
+        3 * u * t2 * t2 * points[2].y +
+        t2 * t2 * t2 * points[3].y
+    };
+  }
+  function splitCubic(points, t2) {
+    const lerp = (a2, b2) => ({
+        x: a2.x + (b2.x - a2.x) * t2,
+        y: a2.y + (b2.y - a2.y) * t2
+      }),
+      a = lerp(points[0], points[1]),
+      b = lerp(points[1], points[2]),
+      c = lerp(points[2], points[3]),
+      d = lerp(a, b),
+      e = lerp(b, c),
+      f = lerp(d, e);
+    return [
+      [points[0], a, d, f],
+      [f, e, c, points[3]]
+    ];
+  }
+  function cubicSlice(points, start, end) {
+    const left = splitCubic(points, end)[0];
+    return start ? splitCubic(left, start / end)[1] : left;
+  }
+  function curvePath(segments) {
+    if (!segments.length) return '';
+    let path = `M ${segments[0][0].x} ${segments[0][0].y}`;
+    for (const segment of segments)
+      path += ` C ${segment[1].x} ${segment[1].y}, ${segment[2].x} ${segment[2].y}, ${segment[3].x} ${segment[3].y}`;
+    return path;
+  }
+  function curveLabelGap(segments, width, height = 28, labelPoint = null) {
+    const table = [
+        {
+          length: 0,
+          segment: 0,
+          t: 0
+        }
+      ],
+      starts = [];
+    let length = 0,
+      anchor = 0;
+    for (const [index, segment] of segments.entries()) {
+      starts.push(length);
+      let previous = segment[0];
+      for (let step = 1; step <= 64; step++) {
+        const t2 = step / 64,
+          p = cubicPoint(segment, t2);
+        length += Math.hypot(p.x - previous.x, p.y - previous.y);
+        table.push({
+          length,
+          segment: index,
+          t: t2
+        });
+        previous = p;
+        if (segments.length === 1 && step === 32) anchor = length;
+      }
+      if (segments.length === 2 && index === 0) anchor = length;
+    }
+    if (labelPoint) {
+      let nearest = Infinity;
+      for (const entry of table) {
+        const p = cubicPoint(segments[entry.segment], entry.t),
+          distance = Math.hypot(p.x - labelPoint.x, p.y - labelPoint.y);
+        if (distance < nearest) {
+          nearest = distance;
+          anchor = entry.length;
+        }
+      }
+    }
+    const anchorPoint =
+        labelPoint || (segments.length === 2 ? segments[0][3] : cubicPoint(segments[0], 0.5)),
+      inside = (p) =>
+        Math.abs(p.x - anchorPoint.x) <= width / 2 && Math.abs(p.y - anchorPoint.y) <= height / 2;
+    let leftExtent = 0,
+      rightExtent = 0;
+    for (const entry of [...table].reverse()) {
+      if (entry.length > anchor) continue;
+      leftExtent = anchor - entry.length;
+      if (!inside(cubicPoint(segments[entry.segment], entry.t))) break;
+    }
+    for (const entry of table) {
+      if (entry.length < anchor) continue;
+      rightExtent = entry.length - anchor;
+      if (!inside(cubicPoint(segments[entry.segment], entry.t))) break;
+    }
+    const half = Math.max(
+        0,
+        Math.min(Math.max(leftExtent, rightExtent) + 2, anchor - 10, length - anchor - 10)
+      ),
+      left = anchor - half,
+      right = anchor + half;
+    const parameter = (distance) => {
+      const index = table.findIndex((p) => p.length >= distance);
+      if (index <= 0)
+        return {
+          segment: 0,
+          t: 0
+        };
+      const a = table[index - 1],
+        b = table[index],
+        start = a.segment === b.segment ? a.t : 0,
+        portion = (distance - a.length) / (b.length - a.length || 1);
+      return {
+        segment: b.segment,
+        t: start + (b.t - start) * portion
+      };
+    };
+    function between(begin, end) {
+      if (end <= begin) return [];
+      const a = parameter(begin),
+        b = parameter(end),
+        out = [];
+      for (let index = a.segment; index <= b.segment; index++) {
+        const from = index === a.segment ? a.t : 0,
+          to = index === b.segment ? b.t : 1;
+        if (to > from) out.push(cubicSlice(segments[index], from, to));
+      }
+      return out;
+    }
+    return {
+      before: curvePath(between(0, left)),
+      after: curvePath(between(right, length)),
+      anchor,
+      half,
+      total: length
+    };
+  }
+  function roundedRoute(points, radius = 16) {
+    const clean = points.filter((p, i) => !i || p.x !== points[i - 1].x || p.y !== points[i - 1].y);
+    const segments = [];
+    const line = (a, b) => {
+      if (a.x !== b.x || a.y !== b.y) segments.push([a, a, b, b]);
+    };
+    let previous = clean[0];
+    for (let i = 1; i < clean.length - 1; i++) {
+      const a = clean[i - 1],
+        b = clean[i],
+        c = clean[i + 1];
+      const before = Math.hypot(b.x - a.x, b.y - a.y),
+        after = Math.hypot(c.x - b.x, c.y - b.y);
+      const r = Math.min(radius, before / 2, after / 2);
+      const entry = { x: b.x + ((a.x - b.x) * r) / before, y: b.y + ((a.y - b.y) * r) / before };
+      const exit = { x: b.x + ((c.x - b.x) * r) / after, y: b.y + ((c.y - b.y) * r) / after };
+      line(previous, entry);
+      segments.push([
+        entry,
+        { x: entry.x + ((b.x - entry.x) * 2) / 3, y: entry.y + ((b.y - entry.y) * 2) / 3 },
+        { x: exit.x + ((b.x - exit.x) * 2) / 3, y: exit.y + ((b.y - exit.y) * 2) / 3 },
+        exit
+      ]);
+      previous = exit;
+    }
+    line(previous, clean.at(-1));
+    return segments;
+  }
+  function routeConnection(a, b, label, obstacles, labels, edge = {}, measuredWidth = null) {
+    const from = portPosition(a, edge.source_port || 'right'),
+      to = portPosition(b, edge.target_port || 'left'),
+      width = Math.max(0, measuredWidth ?? label.length * 7) + 66,
+      height = 28,
+      backwards = to.x - from.x < 80,
+      middle = (from.x + to.x) / 2;
+    const base = {
+      x: middle,
+      y: backwards ? Math.max(a.y + a.h, b.y + b.h) + 80 : (from.y + to.y) / 2
+    };
+    const clear = (p) => {
+      const box = { x: p.x - width / 2, y: p.y - height / 2, w: width, h: height };
+      return (
+        !obstacles.some((r) => intersects(box, r, 8)) && !labels.some((r) => intersects(box, r, 8))
+      );
+    };
+    let point = base;
+    if (!clear(point)) {
+      let found = false;
+      for (let radius = 32; radius <= 640 && !found; radius += 32) {
+        for (const dy of [-1, 1]) {
+          const candidate = { x: base.x, y: base.y + dy * radius };
+          if (clear(candidate)) {
+            point = candidate;
+            found = true;
+            break;
+          }
+        }
+      }
+      if (!found)
+        point = {
+          x: base.x,
+          y:
+            Math.min(a.y, b.y, ...obstacles.map((r) => r.y), ...labels.map((r) => r.y)) -
+            height -
+            32
+        };
+    }
+    let points;
+    if (!backwards && point === base) {
+      points = [from, { x: middle, y: from.y }, { x: middle, y: to.y }, to];
+    } else {
+      const lead = from.x + 40,
+        tail = to.x - 40;
+      points = [
+        from,
+        { x: lead, y: from.y },
+        { x: lead, y: point.y },
+        point,
+        { x: tail, y: point.y },
+        { x: tail, y: to.y },
+        to
+      ];
+    }
+    const segments = roundedRoute(points);
+    labels.push({ x: point.x - width / 2, y: point.y - height / 2, w: width, h: height });
+    const gap = curveLabelGap(
+      segments,
+      Math.max(0, measuredWidth ?? label.length * 7) + 16,
+      height,
+      point
+    );
+    return {
+      path: curvePath(segments),
+      labelX: point.x,
+      labelY: point.y,
+      visiblePaths: [
+        { path: gap.before, arrow: false },
+        { path: gap.after, arrow: true }
+      ],
+      gap
+    };
+  }
+  function portPosition(rect, side) {
+    const points = {
+      left: {
+        x: rect.x,
+        y: rect.y + rect.h / 2,
+        nx: -1,
+        ny: 0
+      },
+      right: {
+        x: rect.x + rect.w,
+        y: rect.y + rect.h / 2,
+        nx: 1,
+        ny: 0
+      },
+      top: {
+        x: rect.x + rect.w / 2,
+        y: rect.y,
+        nx: 0,
+        ny: -1
+      },
+      bottom: {
+        x: rect.x + rect.w / 2,
+        y: rect.y + rect.h,
+        nx: 0,
+        ny: 1
+      }
+    };
+    const [name, index, count] = String(side || 'right').split(':');
+    const position = points[name] || points.right;
+    if (count && (name === 'left' || name === 'right'))
+      position.y = rect.y + (rect.h * (Number(index) + 1)) / (Number(count) + 1);
+    return position;
+  }
+  return Object.freeze({
+    automaticBoundary,
+    connectionGeometry,
+    intersects,
+    cubicPoint,
+    splitCubic,
+    cubicSlice,
+    curvePath,
+    curveLabelGap,
+    routeConnection,
+    portPosition,
+    roundedRoute
+  });
+})();
+var graph_routing_default = ArgusRouting;
 
 // static/app/canvas-input.js
 var canvas_input_default = {
@@ -4893,7 +5415,11 @@ var canvas_input_default = {
       }
     }
     function nodePorts(g, node, bounds) {
-      for (const side of ['left', 'right', 'top', 'bottom']) {
+      const count = Math.min(32, bounds.inputCount || 1);
+      for (const side of [
+        ...Array.from({ length: count }, (_, i) => `left:${i}:${count}`),
+        'right'
+      ]) {
         const pos = portPosition(
             {
               x: 0,
@@ -4908,7 +5434,9 @@ var canvas_input_default = {
             'data-port': side,
             role: 'button',
             tabindex: 0,
-            'aria-label': t('Verbindung ziehen') + ' \xB7 ' + side
+            'aria-label':
+              t(side.startsWith('left') ? 'Eingang' : 'Ausgang') +
+              (side.startsWith('left') ? ' ' + (Number(side.split(':')[1]) + 1) : '')
           });
         dock.append(
           svg('circle', {
@@ -4949,12 +5477,16 @@ var canvas_input_default = {
       let best = null,
         distance = Infinity;
       for (const node of nodes) {
-        if (node.id === source || !visibleIds.has(node.id)) continue;
+        if (node.id === source || node.type === 'marker' || !visibleIds.has(node.id)) continue;
         const bounds = nodeRect(node),
           dx = Math.max(bounds.x - point.x, 0, point.x - bounds.x - bounds.w),
           dy = Math.max(bounds.y - point.y, 0, point.y - bounds.y - bounds.h);
         if (Math.hypot(dx, dy) > 30 / scale) continue;
-        for (const side of ['left', 'right', 'top', 'bottom']) {
+        const count = Math.min(32, bounds.inputCount || 1);
+        const sides = canvasState.connecting?.port.startsWith('left')
+          ? ['right']
+          : Array.from({ length: count }, (_, i) => `left:${i}:${count}`);
+        for (const side of sides) {
           const port = portPosition(bounds, side),
             d = Math.hypot(point.x - port.x, point.y - port.y);
           if (d < distance) {
@@ -5004,7 +5536,7 @@ var canvas_input_default = {
           nx: -from.nx,
           ny: -from.ny
         },
-        distance = Math.min(120, Math.max(35, Math.hypot(to.x - from.x, to.y - from.y) * 0.35));
+        middle = (from.x + to.x) / 2;
       let path = $('connectionPreview');
       if (!path) {
         path = svg('path', {
@@ -5013,9 +5545,22 @@ var canvas_input_default = {
         });
         $('scene').append(path);
       }
+      const start = from.nx < 0 ? to : from,
+        end = from.nx < 0 ? from : to;
+      const points =
+        end.x - start.x >= 80
+          ? [start, { x: middle, y: start.y }, { x: middle, y: end.y }, end]
+          : [
+              start,
+              { x: start.x + 40, y: start.y },
+              { x: start.x + 40, y: Math.max(start.y, end.y) + 130 },
+              { x: end.x - 40, y: Math.max(start.y, end.y) + 130 },
+              { x: end.x - 40, y: end.y },
+              end
+            ];
       path.setAttribute(
         'd',
-        `M ${from.x} ${from.y} C ${from.x + from.nx * distance} ${from.y + from.ny * distance}, ${to.x + to.nx * distance} ${to.y + to.ny * distance}, ${to.x} ${to.y}`
+        graph_routing_default.curvePath(graph_routing_default.roundedRoute(points))
       );
     }
     function finishConnection(event) {
@@ -5026,13 +5571,15 @@ var canvas_input_default = {
         $('graph').releasePointerCapture(event.pointerId);
       if (!state?.target) return;
       const doc = workspaceState.project.document;
-      if (doc.edges.some((e) => e.source === state.source && e.target === state.target)) return;
+      const source = state.port.startsWith('left') ? state.target : state.source;
+      const target = state.port.startsWith('left') ? state.source : state.target;
+      if (doc.edges.some((e) => e.source === source && e.target === target)) return;
       doc.edges.push({
         id: uid(),
-        source: state.source,
-        target: state.target,
-        source_port: state.port,
-        target_port: state.targetPort,
+        source,
+        target,
+        source_port: 'right',
+        target_port: state.port.startsWith('left') ? state.port : state.targetPort,
         label: t('verbunden mit')
       });
       change();
@@ -5070,386 +5617,6 @@ var canvas_input_default = {
   }
 };
 var canvas_input_default2 = canvas_input_default;
-
-// static/graph-routing.js
-var ArgusRouting = (() => {
-  function automaticBoundary(rect, toward) {
-    const center = {
-      x: rect.x + rect.w / 2,
-      y: rect.y + rect.h / 2
-    };
-    let dx = toward.x - center.x,
-      dy = toward.y - center.y;
-    if (!dx && !dy) dx = 1;
-    const factor = Math.min(
-      dx ? rect.w / 2 / Math.abs(dx) : Infinity,
-      dy ? rect.h / 2 / Math.abs(dy) : Infinity
-    );
-    let x = center.x + dx * factor,
-      y = center.y + dy * factor;
-    const horizontal = Math.abs(x - center.x) >= rect.w / 2 - 0.01;
-    const inset = Math.min(12, rect.w / 4, rect.h / 4);
-    if (horizontal) y = Math.max(rect.y + inset, Math.min(rect.y + rect.h - inset, y));
-    else x = Math.max(rect.x + inset, Math.min(rect.x + rect.w - inset, x));
-    return {
-      x,
-      y,
-      nx: horizontal ? Math.sign(dx) : 0,
-      ny: horizontal ? 0 : Math.sign(dy)
-    };
-  }
-  function connectionGeometry(a, b, sourcePort = null, targetPort = null) {
-    const ac = {
-        x: a.x + a.w / 2,
-        y: a.y + a.h / 2
-      },
-      bc = {
-        x: b.x + b.w / 2,
-        y: b.y + b.h / 2
-      };
-    const from = sourcePort ? portPosition(a, sourcePort) : automaticBoundary(a, bc),
-      to = targetPort ? portPosition(b, targetPort) : automaticBoundary(b, ac),
-      distance = Math.min(180, Math.max(35, Math.hypot(to.x - from.x, to.y - from.y) * 0.42));
-    const c1x = from.x + from.nx * distance,
-      c1y = from.y + from.ny * distance,
-      c2x = to.x + to.nx * distance,
-      c2y = to.y + to.ny * distance;
-    return {
-      sx: from.x,
-      sy: from.y,
-      tx: to.x,
-      ty: to.y,
-      c1x,
-      c1y,
-      c2x,
-      c2y,
-      labelX: (from.x + 3 * c1x + 3 * c2x + to.x) / 8,
-      labelY: (from.y + 3 * c1y + 3 * c2y + to.y) / 8
-    };
-  }
-  function intersects(a, b, padding = 0) {
-    return (
-      a.x < b.x + b.w + padding &&
-      a.x + a.w > b.x - padding &&
-      a.y < b.y + b.h + padding &&
-      a.y + a.h > b.y - padding
-    );
-  }
-  function cubicPoint(points, t2) {
-    const u = 1 - t2;
-    return {
-      x:
-        u * u * u * points[0].x +
-        3 * u * u * t2 * points[1].x +
-        3 * u * t2 * t2 * points[2].x +
-        t2 * t2 * t2 * points[3].x,
-      y:
-        u * u * u * points[0].y +
-        3 * u * u * t2 * points[1].y +
-        3 * u * t2 * t2 * points[2].y +
-        t2 * t2 * t2 * points[3].y
-    };
-  }
-  function splitCubic(points, t2) {
-    const lerp = (a2, b2) => ({
-        x: a2.x + (b2.x - a2.x) * t2,
-        y: a2.y + (b2.y - a2.y) * t2
-      }),
-      a = lerp(points[0], points[1]),
-      b = lerp(points[1], points[2]),
-      c = lerp(points[2], points[3]),
-      d = lerp(a, b),
-      e = lerp(b, c),
-      f = lerp(d, e);
-    return [
-      [points[0], a, d, f],
-      [f, e, c, points[3]]
-    ];
-  }
-  function cubicSlice(points, start, end) {
-    const left = splitCubic(points, end)[0];
-    return start ? splitCubic(left, start / end)[1] : left;
-  }
-  function curvePath(segments) {
-    if (!segments.length) return '';
-    let path = `M ${segments[0][0].x} ${segments[0][0].y}`;
-    for (const segment of segments)
-      path += ` C ${segment[1].x} ${segment[1].y}, ${segment[2].x} ${segment[2].y}, ${segment[3].x} ${segment[3].y}`;
-    return path;
-  }
-  function curveLabelGap(segments, width, height = 28) {
-    const table = [
-        {
-          length: 0,
-          segment: 0,
-          t: 0
-        }
-      ],
-      starts = [];
-    let length = 0,
-      anchor = 0;
-    for (const [index, segment] of segments.entries()) {
-      starts.push(length);
-      let previous = segment[0];
-      for (let step = 1; step <= 64; step++) {
-        const t2 = step / 64,
-          p = cubicPoint(segment, t2);
-        length += Math.hypot(p.x - previous.x, p.y - previous.y);
-        table.push({
-          length,
-          segment: index,
-          t: t2
-        });
-        previous = p;
-        if (segments.length === 1 && step === 32) anchor = length;
-      }
-      if (segments.length === 2 && index === 0) anchor = length;
-    }
-    const anchorPoint = segments.length === 2 ? segments[0][3] : cubicPoint(segments[0], 0.5),
-      inside = (p) =>
-        Math.abs(p.x - anchorPoint.x) <= width / 2 && Math.abs(p.y - anchorPoint.y) <= height / 2;
-    let leftExtent = 0,
-      rightExtent = 0;
-    for (const entry of [...table].reverse()) {
-      if (entry.length > anchor) continue;
-      leftExtent = anchor - entry.length;
-      if (!inside(cubicPoint(segments[entry.segment], entry.t))) break;
-    }
-    for (const entry of table) {
-      if (entry.length < anchor) continue;
-      rightExtent = entry.length - anchor;
-      if (!inside(cubicPoint(segments[entry.segment], entry.t))) break;
-    }
-    const half = Math.max(
-        0,
-        Math.min(Math.max(leftExtent, rightExtent) + 2, anchor - 10, length - anchor - 10)
-      ),
-      left = anchor - half,
-      right = anchor + half;
-    const parameter = (distance) => {
-      const index = table.findIndex((p) => p.length >= distance);
-      if (index <= 0)
-        return {
-          segment: 0,
-          t: 0
-        };
-      const a = table[index - 1],
-        b = table[index],
-        start = a.segment === b.segment ? a.t : 0,
-        portion = (distance - a.length) / (b.length - a.length || 1);
-      return {
-        segment: b.segment,
-        t: start + (b.t - start) * portion
-      };
-    };
-    function between(begin, end) {
-      if (end <= begin) return [];
-      const a = parameter(begin),
-        b = parameter(end),
-        out = [];
-      for (let index = a.segment; index <= b.segment; index++) {
-        const from = index === a.segment ? a.t : 0,
-          to = index === b.segment ? b.t : 1;
-        if (to > from) out.push(cubicSlice(segments[index], from, to));
-      }
-      return out;
-    }
-    return {
-      before: curvePath(between(0, left)),
-      after: curvePath(between(right, length)),
-      anchor,
-      half,
-      total: length
-    };
-  }
-  function routeConnection(a, b, label, obstacles, labels, edge = {}, measuredWidth = null) {
-    const g = connectionGeometry(a, b),
-      width = Math.max(0, measuredWidth ?? label.length * 7) + 66,
-      height = 28,
-      base = {
-        x: g.labelX,
-        y: g.labelY
-      };
-    const clear = (p) => {
-      const box = {
-        x: p.x - width / 2,
-        y: p.y - height / 2,
-        w: width,
-        h: height
-      };
-      return (
-        !obstacles.some((r) => intersects(box, r, 8)) && !labels.some((r) => intersects(box, r, 8))
-      );
-    };
-    let point = base,
-      segments = [
-        [
-          {
-            x: g.sx,
-            y: g.sy
-          },
-          {
-            x: g.c1x,
-            y: g.c1y
-          },
-          {
-            x: g.c2x,
-            y: g.c2y
-          },
-          {
-            x: g.tx,
-            y: g.ty
-          }
-        ]
-      ];
-    if (!clear(point)) {
-      let found = false;
-      for (let radius = 32; radius <= 640 && !found; radius += 32) {
-        for (const [dx2, dy2] of [
-          [0, -1],
-          [0, 1],
-          [-1, 0],
-          [1, 0],
-          [-0.707, -0.707],
-          [0.707, -0.707],
-          [-0.707, 0.707],
-          [0.707, 0.707]
-        ]) {
-          const candidate = {
-            x: base.x + dx2 * radius,
-            y: base.y + dy2 * radius
-          };
-          if (clear(candidate)) {
-            point = candidate;
-            found = true;
-            break;
-          }
-        }
-      }
-      if (!found) {
-        const top =
-          Math.min(a.y, b.y, ...obstacles.map((r) => r.y), ...labels.map((r) => r.y)) - height - 20;
-        for (let i = 0; i <= labels.length + 1; i++) {
-          const candidate = {
-            x: base.x + i * (width + 20),
-            y: top
-          };
-          if (clear(candidate)) {
-            point = candidate;
-            found = true;
-            break;
-          }
-        }
-      }
-      const from = automaticBoundary(a, point),
-        to = automaticBoundary(b, point),
-        dx = to.x - from.x,
-        dy = to.y - from.y,
-        distance = Math.hypot(dx, dy) || 1,
-        tangent = {
-          x: dx / distance,
-          y: dy / distance
-        },
-        first = Math.hypot(point.x - from.x, point.y - from.y),
-        second = Math.hypot(point.x - to.x, point.y - to.y),
-        midHandle = Math.max(16, Math.min(180, first * 0.35, second * 0.35)),
-        lead = Math.max(25, Math.min(200, first * 0.45)),
-        tail = Math.max(25, Math.min(200, second * 0.45));
-      segments = [
-        [
-          from,
-          {
-            x: from.x + from.nx * lead,
-            y: from.y + from.ny * lead
-          },
-          {
-            x: point.x - tangent.x * midHandle,
-            y: point.y - tangent.y * midHandle
-          },
-          point
-        ],
-        [
-          point,
-          {
-            x: point.x + tangent.x * midHandle,
-            y: point.y + tangent.y * midHandle
-          },
-          {
-            x: to.x + to.nx * tail,
-            y: to.y + to.ny * tail
-          },
-          to
-        ]
-      ];
-    }
-    labels.push({
-      x: point.x - width / 2,
-      y: point.y - height / 2,
-      w: width,
-      h: height
-    });
-    const path = curvePath(segments),
-      gap = curveLabelGap(segments, Math.max(0, measuredWidth ?? label.length * 7) + 16);
-    return {
-      path,
-      labelX: point.x,
-      labelY: point.y,
-      visiblePaths: [
-        {
-          path: gap.before,
-          arrow: false
-        },
-        {
-          path: gap.after,
-          arrow: true
-        }
-      ],
-      gap
-    };
-  }
-  function portPosition(rect, side) {
-    const points = {
-      left:{
-        x: rect.x,
-        y: rect.y + rect.h / 2,
-        nx: -1,
-        ny: 0
-      },
-      right: {
-        x: rect.x + rect.w,
-        y: rect.y + rect.h / 2,
-        nx: 1,
-        ny: 0
-      },
-      top: {
-        x: rect.x + rect.w / 2,
-        y: rect.y,
-        nx: 0,
-        ny: -1
-      },
-      bottom: {
-        x: rect.x + rect.w / 2,
-        y: rect.y + rect.h,
-        nx: 0,
-        ny: 1
-      }
-    };
-    return points[side] || points.right;
-  }
-  return Object.freeze({
-    automaticBoundary,
-    connectionGeometry,
-    intersects,
-    cubicPoint,
-    splitCubic,
-    cubicSlice,
-    curvePath,
-    curveLabelGap,
-    routeConnection,
-    portPosition
-  });
-})();
-var graph_routing_default = ArgusRouting;
 
 // static/app/geometry.js
 var geometry_default = {
@@ -5796,13 +5963,26 @@ var inspector_default = {
               'wide'
             )
           );
-        panel.append(
-          button(t('In Report aufnehmen'), () => {
-            for (const node2 of nodes) node2.report = true;
-            change();
-          }),
-          button(t('Knoten l\xF6schen'), () => deleteNodes(nodes.map((n) => n.id)), 'danger-filled')
+        const report = el('input', { type: 'checkbox' });
+        report.checked = nodes.every((node2) => node2.report);
+        report.indeterminate = nodes.some((node2) => node2.report) && !report.checked;
+        const label = el('label', { class: 'checkbox-label' });
+        label.append(report, document.createTextNode(t('In Report aufnehmen')));
+        report.addEventListener('change', () => {
+          for (const node2 of nodes) node2.report = report.checked;
+          change();
+        });
+        const actions = el('section', { class: 'multi-selection-actions node-report-section' });
+        actions.append(
+          label,
+          iconActionButton(
+            t('Knoten l\xF6schen'),
+            () => deleteNodes(nodes.map((n) => n.id)),
+            'trash',
+            'danger-filled wide'
+          )
         );
+        panel.append(actions);
         return;
       }
       const node = nodes[0],
@@ -5823,40 +6003,39 @@ var inspector_default = {
         el('h2', {}, t('Knotendetails'))
       );
       const name = inputField(panel, t('Titel'), node.label, 'node-label');
-      const readers =
-        node.type === 'note'
-          ? []
-          : editFields(
-              panel,
-              node.type === 'actor'
-                ? Object.fromEntries(
-                    Object.entries({ ...actorAction?.default_params, ...node.data.params }).filter(
-                      ([key]) =>
-                        !key.startsWith('_merge_') &&
-                        !(
-                          actorAction?.default_params?.source_order &&
-                          (key === 'source' || key === 'source_order' || key.startsWith('use_'))
-                        ) &&
-                        key !== 'search_profiles' &&
-                        !(actorAction?.settings_only || []).includes(key)
-                    )
+      const readers = ['note', 'marker'].includes(node.type)
+        ? []
+        : editFields(
+            panel,
+            node.type === 'actor'
+              ? Object.fromEntries(
+                  Object.entries({ ...actorAction?.default_params, ...node.data.params }).filter(
+                    ([key]) =>
+                      !key.startsWith('_merge_') &&
+                      !(
+                        actorAction?.default_params?.source_order &&
+                        (key === 'source' || key === 'source_order' || key.startsWith('use_'))
+                      ) &&
+                      key !== 'search_profiles' &&
+                      !(actorAction?.settings_only || []).includes(key)
                   )
-                : editableNodeData(node),
-              [],
-              (key) =>
-                pluginText(
-                  node.type === 'actor'
-                    ? pluginsState.catalog.find((p) => p.id === node.data.plugin)
-                    : nodePlugin(node.type),
-                  key
-                ),
-              {
-                schema: actorAction?.parameter_schema,
-                sections: actorAction?.parameter_sections,
-                help: actorAction?.parameter_help
-              }
-            );
-      if (node.type === 'note') noteControls(panel, node);
+                )
+              : editableNodeData(node),
+            [],
+            (key) =>
+              pluginText(
+                node.type === 'actor'
+                  ? pluginsState.catalog.find((p) => p.id === node.data.plugin)
+                  : nodePlugin(node.type),
+                key
+              ),
+            {
+              schema: actorAction?.parameter_schema,
+              sections: actorAction?.parameter_sections,
+              help: actorAction?.parameter_help
+            }
+          );
+      if (['note', 'marker'].includes(node.type)) noteControls(panel, node);
       if (['url', 'profile', 'image', 'location', 'file'].includes(node.type))
         displayControls(panel, node);
       if (node.type === 'phone') phoneControls(panel, node, readers);
@@ -6176,7 +6355,8 @@ var inspector_default = {
       return rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114 > 140 ? '#30271b' : '#f7f7f7';
     }
     function noteControls(panel, node) {
-      panel.append(el('p', {}, t('Notiz direkt auf der Arbeitsfl\xE4che bearbeiten.')));
+      if (node.type === 'note')
+        panel.append(el('p', {}, t('Notiz direkt auf der Arbeitsfl\xE4che bearbeiten.')));
       for (const [key, label, min, max] of [
         ['width', 'Breite', 200, 900],
         ['height', 'H\xF6he', 120, 800]
@@ -7371,7 +7551,7 @@ var palette_default = {
             button2.textContent
           );
           document.body.append(ghost);
-     }
+        }
         ghost.style.left = e.clientX + 12 + 'px';
         ghost.style.top = e.clientY + 12 + 'px';
       });
@@ -7615,13 +7795,16 @@ var actors_default = {
           })
           .catch((error) => toast(error.message));
       syncActorJobs().catch(() => {});
-      setInterval(
-        () =>
-          syncActorJobs()
-            .catch(() => {})
-            .catch(() => {}),
-        2e3
-      );
+      const monitor = async () => {
+        try {
+          if (!document.hidden) await syncActorJobs();
+        } catch {}
+        setTimeout(
+          monitor,
+          executionState.queueRunning || executionState.actorQueue.length ? 2e3 : 15e3
+        );
+      };
+      setTimeout(monitor, 15e3);
     }
     async function performActorJob(job) {
       let transient = {};
@@ -7670,7 +7853,6 @@ var actors_default = {
                 }
               : {})
           };
-        transient = {};
         if (node.data.plugin === 'transform') {
           try {
             body.outputs = await transform(node, current.document);
@@ -7898,13 +8080,11 @@ var history_default = {
         historyState.lastSnapshot &&
         JSON.stringify(snapshot) !== JSON.stringify(historyState.lastSnapshot)
       ) {
-        if (
-          !(
-            scope &&
-            historyState.lastHistoryScope === scope &&
-            at - historyState.lastHistoryAt < 700
-          )
-        )
+        if (!(
+          scope &&
+          historyState.lastHistoryScope === scope &&
+          at - historyState.lastHistoryAt < 700
+        ))
           historyState.undoStack.push(historyState.lastSnapshot);
         if (historyState.undoStack.length > 60) historyState.undoStack.shift();
         historyState.redoStack = [];
@@ -8208,7 +8388,7 @@ var catalogue_default = {
       return (
         plugin?.translations?.en?.[key] ??
         plugin?.translations?.[plugin.default_language || 'de']?.[key] ??
-        common
+        diagnostic(common)
       );
     }
     function nodePlugin(type) {
@@ -8801,17 +8981,17 @@ var plugin_settings_default = {
                 'p',
                 { class: 'source-help' },
                 t(
-                  'Gilt f\xFCr das gesamte Plugin, zum Beispiel Zugangsdaten und Quellenkonfiguration.'
+                  'Gilt f\xC3\xBCr das gesamte Plugin, zum Beispiel Zugangsdaten und Quellenkonfiguration.'
                 )
               )
             );
             preset.append(
-              el('h4', {}, t('Standardwerte f\xFCr neue Tools')),
+              el('h4', {}, t('Standardwerte f\xC3\xBCr neue Tools')),
               el(
                 'p',
                 { class: 'source-help' },
                 t(
-                  'Diese Werte kannst du sp\xE4ter f\xFCr jedes Tool in den Knotendetails \xE4ndern.'
+                  'Diese Werte kannst du sp\xC3\xA4ter f\xC3\xBCr jedes Tool in den Knotendetails \xC3\xA4ndern.'
                 )
               )
             );
@@ -8881,11 +9061,12 @@ var plugin_settings_default = {
             form.hidden = !form.hidden;
             if (form.hidden) pluginsState.pluginSettingsOpen.delete(plugin.id);
             else pluginsState.pluginSettingsOpen.add(plugin.id);
-            expand.textContent = form.hidden ? '\u25B8' : '\u25BE';
+            expand.replaceChildren(icon(form.hidden ? 'chevron-right' : 'chevron-down'));
             expand.setAttribute('aria-expanded', String(!form.hidden));
           },
           'plugin-expand'
         );
+        expand.replaceChildren(icon(form.hidden ? 'chevron-right' : 'chevron-down'));
         expand.setAttribute('aria-label', t('Plugin-Einstellungen'));
         expand.setAttribute('aria-expanded', String(!form.hidden));
         expand.setAttribute('aria-controls', form.id);
@@ -9213,6 +9394,7 @@ var plugin_library_default2 = plugin_library_default;
 
 // static/system-logs.js
 function systemLogs(container, { api, el, iconActionButton, toast }) {
+  clearTimeout(container.logTimer);
   container.replaceChildren();
   container.append(el('h2', {}, t('Systemlogs')));
   const search = el('input', {
@@ -9232,8 +9414,28 @@ function systemLogs(container, { api, el, iconActionButton, toast }) {
   const more = iconActionButton(t('Weitere laden'), () => load(true), 'plus');
   let offset = 0,
     generation = 0,
-    timer;
+    timer,
+    loading = false;
+  const automatic = el('input', { type: 'checkbox' });
+  const follow = el('input', { type: 'checkbox' });
+  automatic.checked = localStorage.getItem('argus.logs.autoRefresh') === 'true';
+  follow.checked = localStorage.getItem('argus.logs.autoScroll') !== 'false';
+  const options = el('div', { class: 'system-log-options' });
+  for (const [input, text, key] of [
+    [automatic, 'Automatisch aktualisieren', 'autoRefresh'],
+    [follow, 'Automatisch nach unten scrollen', 'autoScroll']
+  ]) {
+    const label = el('label', { class: 'checkbox-label' });
+    label.append(input, document.createTextNode(t(text)));
+    input.addEventListener('change', () => {
+      localStorage.setItem('argus.logs.' + key, String(input.checked));
+      if (input === follow && follow.checked) output.scrollTop = output.scrollHeight;
+    });
+    options.append(label);
+  }
   async function load(append = false) {
+    if (loading) return;
+    loading = true;
     const revision = ++generation;
     try {
       const data = await api(
@@ -9243,15 +9445,24 @@ function systemLogs(container, { api, el, iconActionButton, toast }) {
           (append ? offset : 0)
       );
       if (revision !== generation || !container.isConnected) return;
-      if (!append) output.textContent = '';
-      output.textContent +=
-        (data.lines || []).map((row) => row.text).join('\n') +
-        ((data.lines || []).length ? '\n' : '');
+      const lines = [...(data.lines || [])]
+        .reverse()
+        .map((row) => row.text)
+        .join('\n');
+      const oldTop = output.scrollTop,
+        oldHeight = output.scrollHeight;
+      if (append) output.textContent = lines + '\n' + output.textContent;
+      else output.textContent = lines;
+      if (append) output.scrollTop = oldTop + output.scrollHeight - oldHeight;
+      else if (follow.checked) output.scrollTop = output.scrollHeight;
+      else output.scrollTop = oldTop;
       offset = (append ? offset : 0) + (data.lines || []).length;
       status.textContent = t('Logzeilen: {count}', { count: data.total || 0 });
       more.hidden = offset >= (data.total || 0);
     } catch (error) {
       toast(error.message);
+    } finally {
+      loading = false;
     }
   }
   search.addEventListener('input', () => {
@@ -9300,8 +9511,14 @@ function systemLogs(container, { api, el, iconActionButton, toast }) {
     exportButton,
     clear
   );
-  container.append(controls2, status, output, more);
+  container.append(controls2, options, status, output, more);
   load();
+  const refresh = async () => {
+    if (!container.isConnected) return;
+    if (automatic.checked && !document.hidden && !container.closest('main')?.hidden) await load();
+    container.logTimer = setTimeout(refresh, 5e3);
+  };
+  container.logTimer = setTimeout(refresh, 5e3);
 }
 
 // static/vpn-settings.js
@@ -9372,7 +9589,7 @@ async function vpnSettings(container, { api, el, iconActionButton, toast }) {
     };
     const label = status.available
       ? t(labels[status.state] || 'VPN wird verbunden')
-      : t('VPN-Gateway nicht verf\xFCgbar');
+      : t('VPN nicht verf\xFCgbar: Container-Netzwerkrechte pr\xFCfen');
     state.replaceChildren(
       document.createTextNode(label + (status.active?.name ? ' \xB7 ' + status.active.name : '')),
       el('i', { class: status.connected ? 'connected' : settings.enabled ? 'warning' : '' })
@@ -9380,7 +9597,7 @@ async function vpnSettings(container, { api, el, iconActionButton, toast }) {
     hint.textContent = status.available
       ? t('W\xE4hrend eines VPN-Wechsels warten Tools auf die n\xE4chste gepr\xFCfte Verbindung.')
       : t(
-          'Profile k\xF6nnen gespeichert werden. F\xFCr die VPN-Nutzung ist die Gateway-Installation erforderlich.'
+          'VPN ist im Image enthalten. Ben\xF6tigt werden NET_ADMIN und das TUN-Ger\xE4t im Container.'
         );
     enabled.disabled = saving || !status.available;
     rotate.disabled = saving || !settings.enabled || !status.available;
@@ -9397,18 +9614,92 @@ async function vpnSettings(container, { api, el, iconActionButton, toast }) {
       saving || !settings.rotation_enabled || settings.rotation_mode !== 'interval';
     rotation.disabled = saving;
     list.replaceChildren();
-    for (const profile of settings.profiles || []) {
+    for (const [index, profile] of (settings.profiles || []).entries()) {
       const row = el('div', { class: 'vpn-profile' });
-      row.append(
-        el('strong', {}, profile.name),
-        el('span', { class: 'tag' }, profile.type === 'wireguard' ? 'WireGuard' : 'OpenVPN'),
-        iconActionButton(
-          t('Profil entfernen'),
-          () => save({ profiles: settings.profiles.filter((p) => p.id !== profile.id) }),
-          'trash',
-          'danger-filled'
+      const header = el('div', { class: 'vpn-profile-header' });
+      const grip = iconActionButton(t('Profil verschieben'), () => {}, 'drag', 'source-drag');
+      grip.replaceChildren(icon('drag'));
+      grip.setAttribute('aria-label', t('Profil verschieben'));
+      grip.draggable = true;
+      grip.addEventListener('dragstart', (event) => {
+        event.dataTransfer.setData('application/x-argus-vpn', profile.id);
+        event.dataTransfer.effectAllowed = 'move';
+      });
+      grip.addEventListener('keydown', (event) => {
+        const direction = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
+        if (!direction || index + direction < 0 || index + direction >= settings.profiles.length)
+          return;
+        event.preventDefault();
+        const profiles = [...settings.profiles];
+        profiles.splice(index + direction, 0, profiles.splice(index, 1)[0]);
+        save({ profiles });
+      });
+      row.addEventListener('dragover', (event) => event.preventDefault());
+      row.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const from = settings.profiles.findIndex(
+          (p) => p.id === event.dataTransfer.getData('application/x-argus-vpn')
+        );
+        if (from < 0 || from === index) return;
+        const profiles = [...settings.profiles];
+        profiles.splice(index, 0, profiles.splice(from, 1)[0]);
+        save({ profiles });
+      });
+      const body = el('div', { class: 'vpn-profile-body', hidden: '' });
+      const nameInput = el('input', {
+        value: profile.name,
+        maxlength: 80,
+        'aria-label': t('Profilname')
+      });
+      nameInput.addEventListener('change', () =>
+        save({
+          profiles: settings.profiles.map((p) =>
+            p.id === profile.id ? { ...p, name: nameInput.value } : p
+          )
+        })
+      );
+      body.append(
+        el('label', {}, t('Profilname')),
+        nameInput,
+        el(
+          'p',
+          { class: 'source-help' },
+          t(
+            'Zugangsdaten werden verschl\xFCsselt gespeichert. Zum Ersetzen das Profil entfernen und neu hinzuf\xFCgen.'
+          )
         )
       );
+      const expand = iconActionButton(
+        t('Profil aufklappen'),
+        () => {
+          body.hidden = !body.hidden;
+          expand.setAttribute('aria-expanded', String(!body.hidden));
+          expand.replaceChildren(icon(body.hidden ? 'chevron-down' : 'chevron-up'));
+        },
+        'chevron-down',
+        'source-expand'
+      );
+      expand.setAttribute('aria-expanded', 'false');
+      expand.replaceChildren(icon('chevron-down'));
+      expand.setAttribute('aria-label', t('Profil aufklappen'));
+      const remove = iconActionButton(
+        t('Profil entfernen'),
+        () => save({ profiles: settings.profiles.filter((p) => p.id !== profile.id) }),
+        'trash',
+        'danger-filled'
+      );
+      remove.replaceChildren(icon('trash'));
+      remove.setAttribute('aria-label', t('Profil entfernen'));
+      remove.title = t('Profil entfernen');
+      header.append(
+        expand,
+        grip,
+        icon('vpn'),
+        el('strong', {}, profile.name),
+        el('span', { class: 'tag' }, profile.type === 'wireguard' ? 'WireGuard' : 'OpenVPN'),
+        remove
+      );
+      row.append(header, body);
       list.append(row);
     }
     renderStatus();
@@ -9436,9 +9727,20 @@ async function vpnSettings(container, { api, el, iconActionButton, toast }) {
     if (interval.checkValidity()) save({ interval_seconds: Number(interval.value) * 60 });
     else interval.reportValidity();
   });
-  const add = el('details', { class: 'vpn-add' });
-  add.append(el('summary', {}, t('VPN-Profil hinzuf\xFCgen')));
+  const add = el('section', { class: 'vpn-add' });
   const form = el('form');
+  form.hidden = true;
+  const addButton = iconActionButton(
+    t('VPN-Profil hinzuf\xFCgen'),
+    () => {
+      form.hidden = !form.hidden;
+      addButton.setAttribute('aria-expanded', String(!form.hidden));
+      if (!form.hidden) name.focus();
+    },
+    'plus',
+    'primary'
+  );
+  add.append(addButton);
   const name = el('input', { required: '', maxlength: 80, 'aria-label': t('Profilname') });
   const type = el('select', { 'aria-label': t('VPN-Typ') });
   type.append(
@@ -9512,7 +9814,8 @@ async function vpnSettings(container, { api, el, iconActionButton, toast }) {
     });
     if (settings.profiles.length > previous) {
       form.reset();
-      add.open = false;
+      form.hidden = true;
+      addButton.setAttribute('aria-expanded', 'false');
     }
     submit.disabled = false;
   });
@@ -9525,7 +9828,8 @@ async function vpnSettings(container, { api, el, iconActionButton, toast }) {
     renderStatus();
   }
   container.vpnTimer = setInterval(async () => {
-    if (container.closest('main')?.hidden || saving) return;
+    if (!container.isConnected || container.closest('main')?.hidden || document.hidden || saving)
+      return;
     try {
       const data = await api('/api/vpn');
       status = data.status || {};
@@ -9534,7 +9838,7 @@ async function vpnSettings(container, { api, el, iconActionButton, toast }) {
       status = {};
       renderStatus();
     }
-  }, 3e3);
+  }, 1e4);
 }
 
 // static/app/settings.js
@@ -9594,6 +9898,7 @@ var settings_default = {
       vpnSettings($('vpnSettings'), { api, el, iconActionButton, toast });
     }
     function settingsState() {
+      $('settingsSave').hidden = true;
       saveIndicator(
         $('settingsSave'),
         preferencesState.settingsPromise
@@ -9955,6 +10260,7 @@ var resources_default = {
       );
     }
     function mapsUrl(node, embed = false, provider = 'google') {
+      if (!locationQuery(node)) return null;
       if (embed) {
         const source = mapSources('preview')[0];
         if (!source) return null;
@@ -10059,9 +10365,9 @@ var resources_default = {
     function nodeExtras(g, node, bounds) {
       renderNodeBadges(g, node, bounds);
       const actions = resourceActions(node).filter((a) => node.display?.[a.key]),
-        start = bounds.h - actions.length * 32;
+        start = bounds.h - actions.length * 48;
       actions.forEach((action, index) => {
-        const y = start + index * 32,
+        const y = start + index * 48,
           b = svg('g', {
             class: 'node-open',
             role: 'button',
@@ -10070,17 +10376,17 @@ var resources_default = {
           });
         b.append(
           svg('rect', {
-            x: 6,
+            x: 12,
             y,
-            width: bounds.w - 12,
-            height: 26,
+            width: bounds.w - 24,
+            height: 36,
             rx: 4
           })
         );
         const glyph = icon(action.icon);
         for (const [key, value] of Object.entries({
-          x: 13,
-          y: y + 4,
+          x: 22,
+          y: y + 9,
           width: 18,
           height: 18
         }))
@@ -10091,7 +10397,7 @@ var resources_default = {
             'text',
             {
               x: 38,
-              y: y + 13,
+              y: y + 18,
               'font-size': 11,
               'dominant-baseline': 'central'
             },
@@ -10716,7 +11022,6 @@ var location_fields_default = {
           continue;
         }
         if (line) lines.push(line);
-        line = '';
         if (measureEdgeText(word) <= maxWidth) line = word;
         else {
           let fragment = '';
@@ -11148,7 +11453,7 @@ var tags_default = {
     svg
   }) {
     function nodeBadgeRows(node, width) {
-      if (node.type === 'actor') return [];
+      if (['actor', 'marker'].includes(node.type)) return [];
       const status = ['unverified', 'unclear', 'verified'].includes(node.verification)
           ? node.verification
           : 'unverified',
@@ -11167,7 +11472,7 @@ var tags_default = {
           }
         },
         items = [
-          states[status],
+          ...(['note', 'error'].includes(node.type) ? [] : [states[status]]),
           ...(preferencesState.appSettings.tags || []).filter((tag) =>
             (node.tags || []).includes(tag.id)
           )
@@ -11190,7 +11495,7 @@ var tags_default = {
       return rows;
     }
     function nodeBadgeHeight(node, width) {
-      const rows = nodeBadgeRows(node, width);
+      const rows = nodeBadgeRows(node, width).filter((row) => row.length);
       return rows.length ? rows.length * 22 + 8 : 0;
     }
     function renderNodeBadges(g, node, bounds) {
@@ -11198,7 +11503,7 @@ var tags_default = {
       if (!rows.length) return;
       const start =
           bounds.h -
-          resourceActions(node).filter((a) => node.display?.[a.key]).length * 32 -
+          resourceActions(node).filter((a) => node.display?.[a.key]).length * 48 -
           nodeBadgeHeight(node, bounds.w),
         group = svg('g', {
           class: 'node-badges'
@@ -11242,7 +11547,8 @@ var tags_default = {
       const section = el('section', {
         class: 'node-review'
       });
-      section.append(el('h3', {}, t('Verifizierung')));
+      const verifiable = !['note', 'error', 'marker'].includes(node.type);
+      if (verifiable) section.append(el('h3', {}, t('Verifizierung')));
       const status = el('select', {
         class: 'verification-select',
         'aria-label': t('Verifizierung')
@@ -11269,7 +11575,7 @@ var tags_default = {
         change(node.id);
         render();
       });
-      section.append(status);
+      if (verifiable) section.append(status);
       const list = el('div', {
         class: 'node-tag-options'
       });

@@ -64,16 +64,20 @@ class UpdatesTests(unittest.TestCase):
     def test_location_spawns_new_node_and_preserves_original_and_all_fields(self):
         p = self.project()
         updated = server.execute(p["id"], {"actor_id": "a", "revision": 1})
-        self.assertEqual(len(updated["document"]["nodes"]), 3)
+        self.assertEqual(
+            len([n for n in updated["document"]["nodes"] if n["type"] != "error"]), 3
+        )
         self.assertEqual(updated["document"]["nodes"][0], p["document"]["nodes"][0])
-        place = updated["document"]["nodes"][-1]
+        place = next(
+            n for n in reversed(updated["document"]["nodes"]) if n["type"] == "location"
+        )
         self.assertNotEqual(place["id"], "n")
         self.assertEqual(place["data"]["unit"], "Suite 1")
         self.assertEqual(
             updated["document"]["nodes"][0]["evidence"]["additional_data"]["custom"],
             "kept",
         )
-      self.assertTrue(set(server.LOCATION_DEFAULTS) <= set(place["data"]))
+        self.assertTrue(set(server.LOCATION_DEFAULTS) <= set(place["data"]))
         self.assertEqual(updated["document"]["runs"][0]["updated_inputs"], [])
 
     def test_keyless_provider_and_ambiguous_selection_modify_only_result_node(self):
@@ -96,7 +100,9 @@ class UpdatesTests(unittest.TestCase):
         self.assertEqual(request.call_args.args[2], "photon")
         run = p["document"]["runs"][0]
         self.assertEqual(run["status"], "needs_selection")
-        self.assertEqual(len(p["document"]["nodes"]), 3)
+        self.assertEqual(
+            len([n for n in p["document"]["nodes"] if n["type"] != "error"]), 3
+        )
         selected = server.choose_location(
             p["id"],
             {
@@ -107,9 +113,21 @@ class UpdatesTests(unittest.TestCase):
             },
         )
         self.assertEqual(
-            selected["document"]["nodes"][-1]["data"]["locality"], "Hamburg"
+            next(
+                n
+                for n in reversed(selected["document"]["nodes"])
+                if n["type"] == "location"
+            )["data"]["locality"],
+            "Hamburg",
         )
-        self.assertEqual(selected["document"]["nodes"][-1]["data"]["unit"], "Suite 1")
+        self.assertEqual(
+            next(
+                n
+                for n in reversed(selected["document"]["nodes"])
+                if n["type"] == "location"
+            )["data"]["unit"],
+            "Suite 1",
+        )
         self.assertEqual(selected["document"]["runs"][0]["status"], "completed")
 
     def test_long_action_preserves_edits_made_while_it_runs(self):

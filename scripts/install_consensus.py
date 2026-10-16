@@ -6,7 +6,7 @@ import subprocess
 import tarfile
 import urllib.request
 
-SHA = "6cd61891bf5ba3ade7788b4033cf751cac5551ed"
+SHA = "d8545a7ebf39bf40ce11b5ee7c6f1c2ebb9c5697"
 root = Path("/opt/argus-tools")
 data = urllib.request.urlopen(
     "https://codeload.github.com/OSINT-Experts-Society/Consensus-OSINT/tar.gz/" + SHA,

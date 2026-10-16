@@ -57,7 +57,7 @@ var edge_renderer_default = {
             )
           : [];
         const labelObstacles = [
-          ...doc.nodes.filter((n) => !hidden.has(n.id)).map(nodeRect),
+          ...doc.nodes.filter((n) => n.type !== 'marker' && !hidden.has(n.id)).map(nodeRect),
           ...groupModel.groups
             .filter((g) => !ancestorIds.includes(g.id))
             .map((g) => groupModel.rects.get(g.id)),
@@ -74,14 +74,28 @@ var edge_renderer_default = {
           'data-edge-label': edge.id
         });
         labelOverlay.append(labelLayer);
-        const labelText = String(edge.label || '');
+        const labelText = t(String(edge.label || ''));
         const route = routeConnection(
             a,
             b,
             labelText,
             labelObstacles,
             occupiedLabels,
-            edge,
+            {
+              ...edge,
+              source_port: 'right',
+              target_port:
+                b.inputCount > 1 && visual.b.key.startsWith('node:')
+                  ? `left:${
+                      Math.max(
+                        0,
+                        doc.edges
+                          .filter((e) => e.target === edge.target)
+                          .findIndex((e) => e.id === edge.id)
+                      ) % b.inputCount
+                    }:${b.inputCount}`
+                  : 'left'
+            },
             measureEdgeText(labelText)
           ),
           { labelX, labelY } = route;

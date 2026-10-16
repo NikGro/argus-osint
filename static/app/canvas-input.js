@@ -1,3 +1,4 @@
+import ArgusRouting from '../graph-routing.js';
 import { t } from '../i18n.js';
 var canvas_input_default = {
   name: 'canvas-input',
@@ -361,7 +362,11 @@ var canvas_input_default = {
       }
     }
     function nodePorts(g, node, bounds) {
-      for (const side of ['left', 'right', 'top', 'bottom']) {
+      const count = Math.min(32, bounds.inputCount || 1);
+      for (const side of [
+        ...Array.from({ length: count }, (_, i) => `left:${i}:${count}`),
+        'right'
+      ]) {
         const pos = portPosition(
             {
               x: 0,
@@ -376,7 +381,9 @@ var canvas_input_default = {
             'data-port': side,
             role: 'button',
             tabindex: 0,
-            'aria-label': t('Verbindung ziehen') + ' \xB7 ' + side
+            'aria-label':
+              t(side.startsWith('left') ? 'Eingang' : 'Ausgang') +
+              (side.startsWith('left') ? ' ' + (Number(side.split(':')[1]) + 1) : '')
           });
         dock.append(
           svg('circle', {
@@ -417,12 +424,16 @@ var canvas_input_default = {
       let best = null,
         distance = Infinity;
       for (const node of nodes) {
-        if (node.id === source || !visibleIds.has(node.id)) continue;
+        if (node.id === source || node.type === 'marker' || !visibleIds.has(node.id)) continue;
         const bounds = nodeRect(node),
           dx = Math.max(bounds.x - point.x, 0, point.x - bounds.x - bounds.w),
           dy = Math.max(bounds.y - point.y, 0, point.y - bounds.y - bounds.h);
         if (Math.hypot(dx, dy) > 30 / scale) continue;
-        for (const side of ['left', 'right', 'top', 'bottom']) {
+        const count = Math.min(32, bounds.inputCount || 1);
+        const sides = canvasState.connecting?.port.startsWith('left')
+          ? ['right']
+          : Array.from({ length: count }, (_, i) => `left:${i}:${count}`);
+        for (const side of sides) {
           const port = portPosition(bounds, side),
             d = Math.hypot(point.x - port.x, point.y - port.y);
           if (d < distance) {
@@ -472,7 +483,7 @@ var canvas_input_default = {
           nx: -from.nx,
           ny: -from.ny
         },
-        distance = Math.min(120, Math.max(35, Math.hypot(to.x - from.x, to.y - from.y) * 0.35));
+        middle = (from.x + to.x) / 2;
       let path = $('connectionPreview');
       if (!path) {
         path = svg('path', {
@@ -481,10 +492,20 @@ var canvas_input_default = {
         });
         $('scene').append(path);
       }
-      path.setAttribute(
-        'd',
-        `M ${from.x} ${from.y} C ${from.x + from.nx * distance} ${from.y + from.ny * distance}, ${to.x + to.nx * distance} ${to.y + to.ny * distance}, ${to.x} ${to.y}`
-      );
+      const start = from.nx < 0 ? to : from,
+        end = from.nx < 0 ? from : to;
+      const points =
+        end.x - start.x >= 80
+          ? [start, { x: middle, y: start.y }, { x: middle, y: end.y }, end]
+          : [
+              start,
+              { x: start.x + 40, y: start.y },
+              { x: start.x + 40, y: Math.max(start.y, end.y) + 130 },
+              { x: end.x - 40, y: Math.max(start.y, end.y) + 130 },
+              { x: end.x - 40, y: end.y },
+              end
+            ];
+      path.setAttribute('d', ArgusRouting.curvePath(ArgusRouting.roundedRoute(points)));
     }
     function finishConnection(event) {
       updateConnection(event);
@@ -494,13 +515,15 @@ var canvas_input_default = {
         $('graph').releasePointerCapture(event.pointerId);
       if (!state?.target) return;
       const doc = workspaceState.project.document;
-      if (doc.edges.some((e) => e.source === state.source && e.target === state.target)) return;
+      const source = state.port.startsWith('left') ? state.target : state.source;
+      const target = state.port.startsWith('left') ? state.source : state.target;
+      if (doc.edges.some((e) => e.source === source && e.target === target)) return;
       doc.edges.push({
         id: uid(),
-        source: state.source,
-        target: state.target,
-        source_port: state.port,
-        target_port: state.targetPort,
+        source,
+        target,
+        source_port: 'right',
+        target_port: state.port.startsWith('left') ? state.port : state.targetPort,
         label: t('verbunden mit')
       });
       change();

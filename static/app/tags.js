@@ -26,7 +26,7 @@ var tags_default = {
     svg
   }) {
     function nodeBadgeRows(node, width) {
-      if (node.type === 'actor') return [];
+      if (['actor', 'marker'].includes(node.type)) return [];
       const status = ['unverified', 'unclear', 'verified'].includes(node.verification)
           ? node.verification
           : 'unverified',
@@ -45,7 +45,7 @@ var tags_default = {
           }
         },
         items = [
-          states[status],
+          ...(['note', 'error'].includes(node.type) ? [] : [states[status]]),
           ...(preferencesState.appSettings.tags || []).filter((tag) =>
             (node.tags || []).includes(tag.id)
           )
@@ -68,7 +68,7 @@ var tags_default = {
       return rows;
     }
     function nodeBadgeHeight(node, width) {
-      const rows = nodeBadgeRows(node, width);
+      const rows = nodeBadgeRows(node, width).filter((row) => row.length);
       return rows.length ? rows.length * 22 + 8 : 0;
     }
     function renderNodeBadges(g, node, bounds) {
@@ -76,7 +76,7 @@ var tags_default = {
       if (!rows.length) return;
       const start =
           bounds.h -
-          resourceActions(node).filter((a) => node.display?.[a.key]).length * 32 -
+          resourceActions(node).filter((a) => node.display?.[a.key]).length * 48 -
           nodeBadgeHeight(node, bounds.w),
         group = svg('g', {
           class: 'node-badges'
@@ -120,7 +120,8 @@ var tags_default = {
       const section = el('section', {
         class: 'node-review'
       });
-      section.append(el('h3', {}, t('Verifizierung')));
+      const verifiable = !['note', 'error', 'marker'].includes(node.type);
+      if (verifiable) section.append(el('h3', {}, t('Verifizierung')));
       const status = el('select', {
         class: 'verification-select',
         'aria-label': t('Verifizierung')
@@ -147,7 +148,7 @@ var tags_default = {
         change(node.id);
         render();
       });
-      section.append(status);
+      if (verifiable) section.append(status);
       const list = el('div', {
         class: 'node-tag-options'
       });

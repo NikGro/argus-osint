@@ -183,6 +183,7 @@ var resources_default = {
       );
     }
     function mapsUrl(node, embed = false, provider = 'google') {
+      if (!locationQuery(node)) return null;
       if (embed) {
         const source = mapSources('preview')[0];
         if (!source) return null;
@@ -287,9 +288,9 @@ var resources_default = {
     function nodeExtras(g, node, bounds) {
       renderNodeBadges(g, node, bounds);
       const actions = resourceActions(node).filter((a) => node.display?.[a.key]),
-        start = bounds.h - actions.length * 32;
+        start = bounds.h - actions.length * 48;
       actions.forEach((action, index) => {
-        const y = start + index * 32,
+        const y = start + index * 48,
           b = svg('g', {
             class: 'node-open',
             role: 'button',
@@ -298,17 +299,17 @@ var resources_default = {
           });
         b.append(
           svg('rect', {
-            x: 6,
+            x: 12,
             y,
-            width: bounds.w - 12,
-            height: 26,
+            width: bounds.w - 24,
+            height: 36,
             rx: 4
           })
         );
         const glyph = icon(action.icon);
         for (const [key, value] of Object.entries({
-          x: 13,
-          y: y + 4,
+          x: 22,
+          y: y + 9,
           width: 18,
           height: 18
         }))
@@ -319,7 +320,7 @@ var resources_default = {
             'text',
             {
               x: 38,
-              y: y + 13,
+              y: y + 18,
               'font-size': 11,
               'dominant-baseline': 'central'
             },

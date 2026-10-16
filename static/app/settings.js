@@ -61,6 +61,7 @@ var settings_default = {
       vpnSettings($('vpnSettings'), { api, el, iconActionButton, toast });
     }
     function settingsState() {
+      $('settingsSave').hidden = true;
       saveIndicator(
         $('settingsSave'),
         preferencesState.settingsPromise

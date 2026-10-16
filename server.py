@@ -240,7 +240,7 @@ LOGGER = logging.getLogger("argus.http")
 SYSTEM_LOGS = SystemLogs(connect, now)
 logging.getLogger("argus").addHandler(SYSTEM_LOGS)
 logging.getLogger("argus").setLevel(logging.INFO)
-LOGGER.info(json.dumps({"event": "application_started", "version": "0.29"}))
+LOGGER.info(json.dumps({"event": "application_started", "version": "1.0.0-alpha.1"}))
 
 
 class ApplicationServer(ThreadingHTTPServer):
@@ -313,7 +313,12 @@ class Handler(BaseHTTPRequestHandler):
         )
 
     def log_message(self, fmt, *args):
-        if urlparse(self.path).path.startswith("/api/system-logs"):
+        if (
+            self.command == "GET"
+            and fmt.startswith("%s")
+            and len(args) > 1
+            and str(args[1]).startswith(("2", "3"))
+        ):
             return
         LOGGER.info(
             json.dumps(
@@ -396,7 +401,7 @@ class Handler(BaseHTTPRequestHandler):
                     {
                         "status": "ok",
                         "database": "ok",
-                        "version": "0.29",
+                        "version": "1.0.0-alpha.1",
                         "worker_isolation": Path("/run/argus/worker.sock").exists(),
                     },
                 )

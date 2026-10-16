@@ -41,6 +41,7 @@ export async function setLanguage(code) {
   language = code;
   messages = pack.messages;
   document.documentElement.lang = code;
+  localStorage.setItem('argus.language', code);
   for (const element of document.querySelectorAll('[data-i18n]'))
     element.textContent = t(element.dataset.i18n);
   for (const attr of ['placeholder', 'aria-label', 'title'])

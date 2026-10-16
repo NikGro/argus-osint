@@ -55,14 +55,16 @@ var node_renderer_default = {
         visibleNodes.find((item) => item.id === canvasState.keyboardNode) ||
         visibleNodes.find((item) => selectionState.selected.has(item.id)) ||
         visibleNodes[0];
-      for (const node of doc.nodes) {
+      for (const node of [...doc.nodes].sort(
+        (a, b) => Number(b.type === 'marker') - Number(a.type === 'marker')
+      )) {
         if (hidden.has(node.id)) continue;
         const bounds = nodeRect(node),
           g = svg('g', {
             class:
               'node ' +
               (node.type === 'actor' ? 'actor ' : '') +
-              (node.type === 'note' ? 'note ' : '') +
+              (node.type === 'note' ? 'note ' : node.type === 'marker' ? 'marker ' : '') +
               (node.type === 'error' ? 'error ' : '') +
               (selectionState.selected.has(node.id) ? 'selected' : ''),
             transform: `translate(${node.x} ${node.y})`,
@@ -90,7 +92,7 @@ var node_renderer_default = {
             rx: 20
           })
         );
-        if (node.type === 'note') {
+        if (['note', 'marker'].includes(node.type)) {
           const color = node.appearance?.color || '#ffcc70',
             ink = noteInk(color);
           rect.style.fill = color;
@@ -99,9 +101,10 @@ var node_renderer_default = {
             svg(
               'text',
               {
-                x: 12,
+                x: node.type === 'marker' ? bounds.w / 2 : 12,
+                'text-anchor': node.type === 'marker' ? 'middle' : 'start',
                 y: 25,
-                fill: ink,
+                fill: node.type === 'marker' ? color : ink,
                 'font-size': 13
               },
               short(node.label, Math.floor((bounds.w - 24) / 8))
@@ -139,7 +142,7 @@ var node_renderer_default = {
             change(node.id);
           });
           foreign.append(editor);
-          g.append(foreign);
+          if (node.type === 'note') g.append(foreign);
           const grip = svg('g', {
             class: 'note-resize',
             role: 'button',
@@ -383,11 +386,14 @@ var node_renderer_default = {
           render();
           inspect(event.shiftKey || canvasState.touchSelection);
         });
-        nodeExtras(g, node, bounds);
-        nodeIcon(g, node);
-        nodePorts(g, node, bounds);
+        if (node.type !== 'marker') {
+          nodeExtras(g, node, bounds);
+          nodeIcon(g, node);
+          nodePorts(g, node, bounds);
+        }
         const owner = (groupModel.nodePaths.get(node.id) || []).at(-1);
-        (groupViews.get(owner) || scene).append(g);
+        if (node.type === 'marker') (groupViews.get(owner) || scene).prepend(g);
+        else (groupViews.get(owner) || scene).append(g);
         const old = previousPositions.get(node.id);
         if (
           old &&

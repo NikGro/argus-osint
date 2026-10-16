@@ -64,7 +64,11 @@ class ResultBuilder:
             if group.get("collapsed")
             for id in group_node_ids(doc, group)
         }
-        occupied = [self.bounds(n) for n in doc["nodes"] if n["id"] not in hidden_ids]
+        occupied = [
+            self.bounds(n)
+            for n in doc["nodes"]
+            if n["type"] != "marker" and n["id"] not in hidden_ids
+        ]
         for group in doc["groups"]:
             if group.get("parent_id"):
                 continue

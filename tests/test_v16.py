@@ -101,7 +101,7 @@ class V16Contracts(unittest.TestCase):
     def test_builtin_data_plugins_have_owned_schemas_and_empty_actions(self):
         m = self.manager()
         data = [p for p in m.installed() if p.get("nodes")]
-        self.assertEqual(len(data), 13)
+        self.assertEqual(len(data), 14)
         self.assertTrue(all(not p["actions"] for p in data))
         self.assertEqual(
             m.node_defaults()["datetime"], {"date": "", "time": "", "timezone": "UTC"}

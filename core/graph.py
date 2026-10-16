@@ -17,6 +17,7 @@ TYPES = {
     "error",
     "phone",
     "note",
+    "marker",
     "value",
     "image",
 }
@@ -51,6 +52,7 @@ NODE_DEFAULTS = {
     "username": {"value": ""},
     "datetime": {"date": "", "time": "", "timezone": "UTC"},
     "note": {"text": ""},
+    "marker": {},
     "image": {"filename": "", "file_id": "", "url": ""},
     "file": {"filename": "", "file_id": "", "mime": "", "size": 0},
 }
@@ -210,7 +212,7 @@ class GraphSchema:
                     if not k.startswith("use_") and k != "source_order"
                 }
             return
-        if kind == "note":
+        if kind in ("note", "marker"):
             appearance = node.get("appearance", {})
             width = max(200, min(900, float(appearance.get("width", 320))))
             height = max(120, min(800, float(appearance.get("height", 180))))

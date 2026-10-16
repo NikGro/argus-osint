@@ -1,4 +1,5 @@
 import { t } from './i18n.js';
+import { icon } from './icons.js';
 
 export async function vpnSettings(container, { api, el, iconActionButton, toast }) {
   clearInterval(container.vpnTimer);
@@ -67,16 +68,14 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
     };
     const label = status.available
       ? t(labels[status.state] || 'VPN wird verbunden')
-      : t('VPN-Gateway nicht verfügbar');
+      : t('VPN nicht verfügbar: Container-Netzwerkrechte prüfen');
     state.replaceChildren(
       document.createTextNode(label + (status.active?.name ? ' · ' + status.active.name : '')),
       el('i', { class: status.connected ? 'connected' : settings.enabled ? 'warning' : '' })
     );
     hint.textContent = status.available
       ? t('Während eines VPN-Wechsels warten Tools auf die nächste geprüfte Verbindung.')
-      : t(
-          'Profile können gespeichert werden. Für die VPN-Nutzung ist die Gateway-Installation erforderlich.'
-        );
+      : t('VPN ist im Image enthalten. Benötigt werden NET_ADMIN und das TUN-Gerät im Container.');
     enabled.disabled = saving || !status.available;
     rotate.disabled = saving || !settings.enabled || !status.available;
   }
@@ -92,18 +91,92 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
       saving || !settings.rotation_enabled || settings.rotation_mode !== 'interval';
     rotation.disabled = saving;
     list.replaceChildren();
-    for (const profile of settings.profiles || []) {
+    for (const [index, profile] of (settings.profiles || []).entries()) {
       const row = el('div', { class: 'vpn-profile' });
-      row.append(
-        el('strong', {}, profile.name),
-        el('span', { class: 'tag' }, profile.type === 'wireguard' ? 'WireGuard' : 'OpenVPN'),
-        iconActionButton(
-          t('Profil entfernen'),
-          () => save({ profiles: settings.profiles.filter((p) => p.id !== profile.id) }),
-          'trash',
-          'danger-filled'
+      const header = el('div', { class: 'vpn-profile-header' });
+      const grip = iconActionButton(t('Profil verschieben'), () => {}, 'drag', 'source-drag');
+      grip.replaceChildren(icon('drag'));
+      grip.setAttribute('aria-label', t('Profil verschieben'));
+      grip.draggable = true;
+      grip.addEventListener('dragstart', (event) => {
+        event.dataTransfer.setData('application/x-argus-vpn', profile.id);
+        event.dataTransfer.effectAllowed = 'move';
+      });
+      grip.addEventListener('keydown', (event) => {
+        const direction = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
+        if (!direction || index + direction < 0 || index + direction >= settings.profiles.length)
+          return;
+        event.preventDefault();
+        const profiles = [...settings.profiles];
+        profiles.splice(index + direction, 0, profiles.splice(index, 1)[0]);
+        save({ profiles });
+      });
+      row.addEventListener('dragover', (event) => event.preventDefault());
+      row.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const from = settings.profiles.findIndex(
+          (p) => p.id === event.dataTransfer.getData('application/x-argus-vpn')
+        );
+        if (from < 0 || from === index) return;
+        const profiles = [...settings.profiles];
+        profiles.splice(index, 0, profiles.splice(from, 1)[0]);
+        save({ profiles });
+      });
+      const body = el('div', { class: 'vpn-profile-body', hidden: '' });
+      const nameInput = el('input', {
+        value: profile.name,
+        maxlength: 80,
+        'aria-label': t('Profilname')
+      });
+      nameInput.addEventListener('change', () =>
+        save({
+          profiles: settings.profiles.map((p) =>
+            p.id === profile.id ? { ...p, name: nameInput.value } : p
+          )
+        })
+      );
+      body.append(
+        el('label', {}, t('Profilname')),
+        nameInput,
+        el(
+          'p',
+          { class: 'source-help' },
+          t(
+            'Zugangsdaten werden verschlüsselt gespeichert. Zum Ersetzen das Profil entfernen und neu hinzufügen.'
+          )
         )
       );
+      const expand = iconActionButton(
+        t('Profil aufklappen'),
+        () => {
+          body.hidden = !body.hidden;
+          expand.setAttribute('aria-expanded', String(!body.hidden));
+          expand.replaceChildren(icon(body.hidden ? 'chevron-down' : 'chevron-up'));
+        },
+        'chevron-down',
+        'source-expand'
+      );
+      expand.setAttribute('aria-expanded', 'false');
+      expand.replaceChildren(icon('chevron-down'));
+      expand.setAttribute('aria-label', t('Profil aufklappen'));
+      const remove = iconActionButton(
+        t('Profil entfernen'),
+        () => save({ profiles: settings.profiles.filter((p) => p.id !== profile.id) }),
+        'trash',
+        'danger-filled'
+      );
+      remove.replaceChildren(icon('trash'));
+      remove.setAttribute('aria-label', t('Profil entfernen'));
+      remove.title = t('Profil entfernen');
+      header.append(
+        expand,
+        grip,
+        icon('vpn'),
+        el('strong', {}, profile.name),
+        el('span', { class: 'tag' }, profile.type === 'wireguard' ? 'WireGuard' : 'OpenVPN'),
+        remove
+      );
+      row.append(header, body);
       list.append(row);
     }
     renderStatus();
@@ -133,9 +206,20 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
     if (interval.checkValidity()) save({ interval_seconds: Number(interval.value) * 60 });
     else interval.reportValidity();
   });
-  const add = el('details', { class: 'vpn-add' });
-  add.append(el('summary', {}, t('VPN-Profil hinzufügen')));
+  const add = el('section', { class: 'vpn-add' });
   const form = el('form');
+  form.hidden = true;
+  const addButton = iconActionButton(
+    t('VPN-Profil hinzufügen'),
+    () => {
+      form.hidden = !form.hidden;
+      addButton.setAttribute('aria-expanded', String(!form.hidden));
+      if (!form.hidden) name.focus();
+    },
+    'plus',
+    'primary'
+  );
+  add.append(addButton);
   const name = el('input', { required: '', maxlength: 80, 'aria-label': t('Profilname') });
   const type = el('select', { 'aria-label': t('VPN-Typ') });
   type.append(
@@ -209,7 +293,8 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
     });
     if (settings.profiles.length > previous) {
       form.reset();
-      add.open = false;
+      form.hidden = true;
+      addButton.setAttribute('aria-expanded', 'false');
     }
     submit.disabled = false;
   });
@@ -222,7 +307,8 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
     renderStatus();
   }
   container.vpnTimer = setInterval(async () => {
-    if (container.closest('main')?.hidden || saving) return;
+    if (!container.isConnected || container.closest('main')?.hidden || document.hidden || saving)
+      return;
     try {
       const data = await api('/api/vpn');
       status = data.status || {};
@@ -231,5 +317,5 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
       status = {};
       renderStatus();
     }
-  }, 3000);
+  }, 10000);
 }

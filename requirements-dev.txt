@@ -1,3 +1,3 @@
 # Optional local code-quality tooling; not installed in the production image.
 black==26.10.1
-ruff==0.13.3
+ruff==0.17.1

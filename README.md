@@ -1,10 +1,30 @@
 **Vibe-coded alpha:** ARGUS was built through iterative, AI-assisted development. It is experimental software, with rough edges and changing interfaces. Review the code and test it in your own environment before relying on its results.
 
-# ARGUS
+<p align="center"><img src="docs/assets/argus-logo.svg" width="100" alt="ARGUS logo" /></p>
+<h1 align="center">ARGUS</h1>
+<p align="center">Connect information. Preserve findings.</p>
+<p align="center"><strong>v1.0.0-alpha.1</strong> · Visual OSINT workbench · Python + vanilla JavaScript · One container</p>
+
 
 A desktop-first, self-hosted OSINT graph workbench. Turn individual facts into connected research steps, keep provenance beside the results, and choose what belongs in a report.
 
-**First public alpha: v0.29.0-alpha.1.** Original ARGUS code is [MIT licensed](LICENSE). Research engines, icons, model weights and other dependencies keep their own licenses; see [credits and licensing](THIRD_PARTY.md). In particular, the included Blackbird version has a noncommercial license.
+**Current alpha: v1.0.0-alpha.1.** Original ARGUS code is [MIT licensed](LICENSE). Research engines, icons, model weights and other dependencies keep their own licenses; see [credits and licensing](THIRD_PARTY.md). In particular, the included Blackbird version has a noncommercial license.
+
+
+
+![ARGUS graph workspace showing synthetic research data](docs/assets/workspace.png)
+
+<details><summary>More screenshots</summary>
+
+| Projects | Plugins |
+| --- | --- |
+| ![Project overview](docs/assets/home.png) | ![Plugin settings](docs/assets/plugins.png) |
+
+![VPN rotation and searchable system logs](docs/assets/settings.png)
+
+Screenshots use synthetic fixtures. No real-person research is shown.
+</details>
+
 
 ## What it does
 
@@ -33,7 +53,7 @@ Open **http://127.0.0.1:8080/**. The public `compose.yaml` contains only ARGUS, 
 
 There is currently **no user login or token-entry screen**. Anyone who can reach the interface can use the installation. The default binding is localhost; keep deployment within a trusted environment. Same-origin sessions and CSRF checks remain in place, but they are not user management.
 
-The default standalone Compose file starts a supervisor with explicitly listed capabilities for the optional isolated worker. It fails if the required Linux namespace support is unavailable. See [worker runtime](docs/worker-runtime.md) for an unprivileged deployment option and its feature limits. Do not use `privileged: true` as a workaround.
+The supplied Compose file starts **one ARGUS container** with integrated VPN, Chromium and community workers. No sidecar or additional installation is required. Docker must grant the Linux capabilities and TUN device listed in that file. The supervisor handles privileged networking; the application runs unprivileged. See [runtime details](docs/worker-runtime.md) and [VPN setup](docs/vpn.md).
 
 Project data, uploaded files, plugin credentials and sessions live in the data volume. Back up the **whole volume**, including encryption keys, before changing deployments. Never remove that volume as an update step.
 
@@ -63,7 +83,7 @@ ARGUS integrates work by many upstream maintainers, including [Consensus OSINT](
 
 Provider APIs and sites change, return incomplete data, require authentication or rate-limit requests. A positive tool result is a research lead, not automatic verification. A result can be partial even when other findings succeeded. Instagram only returns masked contact/recovery fields when its response actually includes them.
 
-Community and browser research execution require the isolated worker. If the host does not provide it, those paths fail closed. Built-in trusted adapters run within the app's deployment boundary. The optional VPN gateway has offline state/firewall tests; a real-provider connection and disconnect/leak test is still required for each target deployment. Its UI refuses activation if the gateway is absent or in a different network namespace.
+Browser and community workers are included and start automatically. All traffic uses the integrated VPN when it is enabled. A real-provider disconnect/DNS/IPv6 leak test is still required for each target deployment; automated checks use synthetic profiles. Interactive CAPTCHA challenges and upstream access restrictions can still prevent retrieval.
 
 Model-specific licenses and first-use downloads apply to DeepFace weights. No model weights or third-party executables are committed to this repository. The alpha is not a security certification or a completed audit of every transitive dependency.
 
@@ -81,3 +101,8 @@ python -m unittest discover -s tests -p 'test_*.py'
 ```
 
 Some integration tests require tools available in the Docker image and are skipped when absent. Browser fixture tests use Playwright and a locally served `static/` directory; they substitute API responses and do not perform real-person research. See [CONTRIBUTING.md](CONTRIBUTING.md) for the validation workflow.
+
+
+---
+
+<p align="center"><sub>Support development</sub><br/><a href="https://paypal.me/niklas664"><img src="docs/assets/donate.svg" width="88" height="22" alt="Donate via PayPal" /></a></p>

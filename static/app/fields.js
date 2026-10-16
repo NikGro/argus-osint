@@ -291,7 +291,7 @@ var fields_default = {
             ])
           ];
           for (const zone of zones)
-           control2.append(
+            control2.append(
               el(
                 'option',
                 {

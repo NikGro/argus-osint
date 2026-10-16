@@ -130,13 +130,18 @@ var actors_default = {
           })
           .catch((error) => toast(error.message));
       syncActorJobs().catch(() => {});
-      setInterval(
-        () =>
-          syncActorJobs()
-            .catch(() => {})
-            .catch(() => {}),
-        2e3
-      );
+      const monitor = async () => {
+        try {
+          if (!document.hidden) await syncActorJobs();
+        } catch {
+          /* Retry later. */
+        }
+        setTimeout(
+          monitor,
+          executionState.queueRunning || executionState.actorQueue.length ? 2000 : 15000
+        );
+      };
+      setTimeout(monitor, 15000);
     }
     async function performActorJob(job) {
       let transient = {};
@@ -185,7 +190,6 @@ var actors_default = {
                 }
               : {})
           };
-        transient = {};
         if (node.data.plugin === 'transform') {
           try {
             body.outputs = await transform(node, current.document);

@@ -7,7 +7,7 @@ COPY scripts/install_phoneinfoga.py /tmp/install_phoneinfoga.py
 RUN python /tmp/install_phoneinfoga.py && phoneinfoga version && rm /tmp/install_phoneinfoga.py
 COPY scripts/install_research_tools.py /tmp/install_research_tools.py
 RUN python /tmp/install_research_tools.py && rm /tmp/install_research_tools.py
-RUN apt-get update && apt-get install -y --no-install-recommends libimage-exiftool-perl libarchive-zip-perl chromium chromium-driver xvfb dumb-init fonts-liberation util-linux iproute2 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends libimage-exiftool-perl libarchive-zip-perl chromium chromium-driver xvfb dumb-init fonts-liberation util-linux iproute2 openvpn wireguard-tools wireguard-go iptables curl procps && rm -rf /var/lib/apt/lists/*
 COPY scripts/install_browser_tool.py /tmp/install_browser_tool.py
 RUN python /tmp/install_browser_tool.py && rm /tmp/install_browser_tool.py
 COPY scripts/install_instagram_tool.py /tmp/install_instagram_tool.py

@@ -53,6 +53,15 @@ var group_renderer_default = {
             rx: 10
           })
         );
+        for (const x of [b.x, b.x + (group.collapsed ? 220 : b.w)])
+          g.append(
+            svg('circle', {
+              class: 'group-port',
+              cx: x,
+              cy: b.y + (group.collapsed ? 76 : b.h) / 2,
+              r: 5
+            })
+          );
         const toggle = svg('g', {
           class: 'group-toggle',
           role: 'button',

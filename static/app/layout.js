@@ -101,9 +101,34 @@ var layout_default = {
           if (!columns.has(level)) columns.set(level, []);
           columns.get(level).push(u);
         }
+        const orderedLevels = [...columns.keys()].sort((a, b) => a - b);
+        const rank = new Map();
+        const updateRanks = () => {
+          for (const column of columns.values()) column.forEach((u, i) => rank.set(u.id, i));
+        };
+        updateRanks();
+        for (let pass = 0; pass < 4; pass++) {
+          const forward = pass % 2 === 0;
+          for (const level of forward ? orderedLevels : [...orderedLevels].reverse()) {
+            const score = (id) => {
+              const neighbors = edges
+                .filter(([a, b]) => (forward ? b === id : a === id))
+                .map(([a, b]) => (forward ? a : b))
+                .filter((n) => rank.has(n));
+              return neighbors.length
+                ? neighbors.reduce((sum, n) => sum + rank.get(n), 0) / neighbors.length
+                : rank.get(id);
+            };
+            columns.get(level).sort((a, b) => score(a.id) - score(b.id));
+            updateRanks();
+          }
+        }
+        const maxHeight = Math.max(
+          ...[...columns.values()].map((column) => column.reduce((sum, u) => sum + u.h + 60, -60))
+        );
         let x = 0;
-        for (const level of [...columns.keys()].sort((a, b) => a - b)) {
-          let y = 0,
+        for (const level of orderedLevels) {
+          let y = (maxHeight - columns.get(level).reduce((sum, u) => sum + u.h + 60, -60)) / 2,
             width = 0;
           for (const u of columns.get(level)) {
             positions.set(u.id, {
@@ -120,7 +145,7 @@ var layout_default = {
     }
     function arrangeProject(mode) {
       if (!workspaceState.project || persistenceState.busy) return;
-      if (mode !== 'hierarchical') arrangeGroupContents(mode);
+      arrangeGroupContents(mode);
       const doc = workspaceState.project.document,
         owners = /* @__PURE__ */ new Map(),
         units = [];
@@ -141,7 +166,7 @@ var layout_default = {
         });
       }
       for (const n of doc.nodes)
-        if (!owners.has(n.id)) {
+        if (!owners.has(n.id) && n.type !== 'marker') {
           owners.set(n.id, n.id);
           units.push({
             id: n.id,
@@ -153,9 +178,64 @@ var layout_default = {
           });
         }
       const edges = doc.edges.map((e) => [owners.get(e.source), owners.get(e.target)]);
-      // Arrange all root units together: old actor positions and run provenance
-      // must not introduce offsets into a fresh grid or circle.
-      const positions = layoutPositions(units, edges, mode);
+      // Each execution forms its own grid/circle. Connect those blocks in workflow order.
+      let positions;
+      if (mode === 'hierarchical') positions = layoutPositions(units, edges, mode);
+      else {
+        const byId = new Map(units.map((u) => [u.id, u]));
+        const claimed = new Set(),
+          clusters = [],
+          clusterOwner = new Map();
+        for (const unit of units.filter(
+          (u) => u.members.length === 1 && u.members[0].type === 'actor'
+        )) {
+          const outputs = edges
+            .filter(([from, to]) => from === unit.id && to !== unit.id)
+            .map(([, to]) => byId.get(to))
+            .filter(
+              (u) =>
+                u && u.members.length === 1 && u.members[0].type !== 'actor' && !claimed.has(u.id)
+            );
+          const members = [unit, ...new Map(outputs.map((u) => [u.id, u])).values()];
+          const local = layoutPositions(members, [], mode);
+          const left = Math.min(...members.map((u) => local.get(u.id).x)),
+            top = Math.min(...members.map((u) => local.get(u.id).y));
+          const cluster = {
+            id: unit.id,
+            members,
+            local,
+            x: left,
+            y: top,
+            w: Math.max(...members.map((u) => local.get(u.id).x + u.w)) - left,
+            h: Math.max(...members.map((u) => local.get(u.id).y + u.h)) - top
+          };
+          clusters.push(cluster);
+          for (const member of members) {
+            claimed.add(member.id);
+            clusterOwner.set(member.id, cluster.id);
+          }
+        }
+        for (const unit of units)
+          if (!claimed.has(unit.id)) {
+            clusters.push({
+              ...unit,
+              members: [unit],
+              local: new Map([[unit.id, { x: 0, y: 0 }]]),
+              x: 0,
+              y: 0
+            });
+            clusterOwner.set(unit.id, unit.id);
+          }
+        const clusterEdges = edges.map(([a, b]) => [clusterOwner.get(a), clusterOwner.get(b)]);
+        const blocks = layoutPositions(clusters, clusterEdges, 'hierarchical');
+        positions = new Map();
+        for (const cluster of clusters)
+          for (const unit of cluster.members)
+            positions.set(unit.id, {
+              x: blocks.get(cluster.id).x + cluster.local.get(unit.id).x - cluster.x,
+              y: blocks.get(cluster.id).y + cluster.local.get(unit.id).y - cluster.y
+            });
+      }
       for (const unit of units) {
         const pos = positions.get(unit.id);
         for (const node of unit.members) {
@@ -225,7 +305,7 @@ var layout_default = {
         for (const id of groupNodeIds(group)) hidden.add(id);
       }
       for (const node of workspaceState.project.document.nodes)
-        if (!hidden.has(node.id)) obstacles.push(nodeRect(node));
+        if (node.type !== 'marker' && !hidden.has(node.id)) obstacles.push(nodeRect(node));
       const spot = {
         ...rect
       };
@@ -277,7 +357,7 @@ var layout_default = {
         });
       }
       for (const node of workspaceState.project.document.nodes)
-        if (!owned.has(node.id))
+        if (node.type !== 'marker' && !owned.has(node.id))
           units.push({
             nodes: [node],
             rect: nodeRect(node)
@@ -324,7 +404,12 @@ var layout_default = {
           });
         }
         if (units.length < 2) continue;
-        const positions = layoutPositions(units, [], mode),
+        const unitOwners = new Map(units.flatMap((u) => u.members.map((n) => [n.id, u.id]))),
+          edges = workspaceState.project.document.edges.map((e) => [
+            unitOwners.get(e.source),
+            unitOwners.get(e.target)
+          ]),
+          positions = layoutPositions(units, edges, mode),
           minX = Math.min(...[...positions.values()].map((p) => p.x)),
           minY = Math.min(...[...positions.values()].map((p) => p.y));
         for (const unit of units) {

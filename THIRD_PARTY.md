@@ -6,7 +6,7 @@ The following projects make ARGUS possible. Repository ownership and links ident
 
 | Component / upstream credit | Version or pin | Role and license notes |
 | --- | --- | --- |
-| [Consensus OSINT — OSINT Experts Society](https://github.com/OSINT-Experts-Society/Consensus-OSINT/tree/6cd61891bf5ba3ade7788b4033cf751cac5551ed) | v0.4.2 / `6cd61891bf5ba3ade7788b4033cf751cac5551ed` | Research aggregation; GPL-3.0-or-later. Its own third-party notices and vendored license files are retained in `/opt/argus-tools/consensus`. |
+| [Consensus OSINT — OSINT Experts Society](https://github.com/OSINT-Experts-Society/Consensus-OSINT/tree/d8545a7ebf39bf40ce11b5ee7c6f1c2ebb9c5697) | v0.4.10 / `d8545a7ebf39bf40ce11b5ee7c6f1c2ebb9c5697` | Research aggregation; GPL-3.0-or-later. Its own third-party notices and vendored license files are retained in `/opt/argus-tools/consensus`. |
 | [Sherlock — Sherlock Project](https://github.com/sherlock-project/sherlock) | `sherlock-project==0.16.2` | Username discovery; MIT. |
 | [Holehe — megadose](https://github.com/megadose/holehe) | `1.61` | Email-account checks; GPL-3.0. |
 | [Maigret — soxoj and contributors](https://github.com/soxoj/maigret) | `0.6.6` | Username/profile research; MIT. |

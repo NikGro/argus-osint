@@ -116,7 +116,7 @@ class ProjectRepository:
 
         for attempt in range(4):
             latest = self.load(pid)
-            merged = merge_documents(body["base"],body["local"], latest["document"])
+            merged = merge_documents(body["base"], body["local"], latest["document"])
             title = (
                 latest["title"]
                 if body.get("title") == body.get("base_title")

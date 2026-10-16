@@ -1,36 +1,22 @@
+# Compatibility alias: VPN is integrated into the ARGUS container.
 services:
-  vpn:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile.vpn
-    cap_drop: [ALL]
-    cap_add: [NET_ADMIN, NET_RAW, CHOWN]
-    devices: [/dev/net/tun:/dev/net/tun]
-    ports: ["${BIND_ADDRESS:-127.0.0.1}:${PORT:-8080}:8080"]
-    volumes:
-      - vpn-control:/run/argus-vpn
-      - vpn-state:/vpn-state
-      - ./deploy/vpn-resolv.conf:/etc/resolv.conf:ro
-    restart: unless-stopped
-    security_opt: [no-new-privileges:true]
-    pids_limit: 128
   argus:
     build: .
-    network_mode: service:vpn
-    depends_on:
-      vpn:
-        condition: service_healthy
-    environment:
-      DATA_DIR: /data
-      ARGUS_VPN_SOCKET: /run/argus-vpn/control.sock
+    user: "0:0"
+    cap_drop: [ALL]
+    cap_add: [SYS_ADMIN, NET_ADMIN, NET_RAW, SETUID, SETGID, CHOWN, KILL]
+    devices: [/dev/net/tun:/dev/net/tun]
+    security_opt: [no-new-privileges:true, seccomp:unconfined, apparmor:unconfined]
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8080}:8080"
     volumes:
       - argus-data:/data
-      - vpn-control:/run/argus-vpn:ro
-      - ./deploy/vpn-resolv.conf:/etc/resolv.conf:ro
+    environment:
+      DATA_DIR: /data
+      GEOCODER_URL: ${GEOCODER_URL:-}
+      GEOCODER_USER_AGENT: ${GEOCODER_USER_AGENT:-}
+    shm_size: 1gb
     restart: unless-stopped
-    cap_drop: [ALL]
-    security_opt: [no-new-privileges:true]
+
 volumes:
   argus-data:
-  vpn-control:
-  vpn-state:

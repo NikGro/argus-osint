@@ -35,7 +35,7 @@ _search_lock = threading.Lock()
 
 def parse_csv(text, node, max_results):
     reader = csv.DictReader(io.StringIO(text))
-required = {"name", "url_user", "exists"}
+    required = {"name", "url_user", "exists"}
     if not reader.fieldnames or not required.issubset(reader.fieldnames):
         raise ValueError(
             "Sherlock-Ergebnisformat nicht unterstützt: CSV-Spalten fehlen."

@@ -326,6 +326,11 @@ var groups_default = {
               ? [selectionState.selectedGroup]
               : []
         );
+      for (const group of orderedGroups()) {
+        const ids = [...groupNodeIds(group)];
+        if (ids.length && ids.every((id) => selectionState.selected.has(id)))
+          groupIds.add(group.id);
+      }
       for (const id of [...groupIds]) {
         if ([...groupIds].some((other) => other !== id && groupDescendantIds(other).has(id)))
           groupIds.delete(id);

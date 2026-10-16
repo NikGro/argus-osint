@@ -23,14 +23,14 @@ class Manager:
                 for key in action.get("default_params", {}):
                     schema.setdefault(key, {"secret": is_secret(key)})
         self.data_descriptors = [
-            dict(json.loads(file.read_text()), origin="builtin", version="bundled")
+            dict(json.loads(file.read_text(encoding="utf-8")), origin="builtin", version="bundled")
             for file in sorted((Path(__file__).parent / "data_plugins").glob("*.json"))
         ]
         self.builtin_locales = {}
         for pid in builtins:
             file = Path(__file__).parent / "plugins" / "locales" / (pid + ".json")
             if file.exists():
-                self.builtin_locales[pid] = json.loads(file.read_text())
+                self.builtin_locales[pid] = json.loads(file.read_text(encoding="utf-8"))
         self.sources = data / "community-plugins"
         self.sources.mkdir(exist_ok=True)
         self.secrets = SecretStore(data)

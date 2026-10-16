@@ -1,0 +1,50 @@
+{
+  "checked_at": "2026-10-16",
+  "packages": {
+    "cryptography": "50.0.2",
+    "Pillow": "12.3.0",
+    "sherlock-project": "0.16.2",
+    "holehe": "1.61",
+    "maigret": "0.6.6",
+    "phonenumbers": "9.0.41",
+    "user-scanner": "1.5.2.2",
+    "ignorant": "1.2",
+    "instagrapi": "3.0.25",
+    "toutatis": "1.31",
+    "deepface": "0.0.102",
+    "onnxruntime": "1.31.0",
+    "numpy": "2.5.4",
+    "opencv-python": "5.0.0.93",
+    "opencv-contrib-python-headless": "5.0.0.93",
+    "black": "26.10.1",
+    "ruff": "0.17.1"
+  },
+  "repositories": {
+    "p1ngul1n0/blackbird": {
+      "sha": "b45505080ef51bb3ef52dc29879ee6bef31e5b94",
+      "date": "2025-07-13T13:48:11Z",
+      "release": null
+    },
+    "FlareSolverr/FlareSolverr": {
+      "sha": "76dc4049becf8fcb26b7ebd6a7ef266d508a5909",
+      "date": "2026-09-27T19:12:45Z",
+      "release": "v3.5.2"
+    },
+    "OSINT-Experts-Society/Consensus-OSINT": {
+      "sha": "d8545a7ebf39bf40ce11b5ee7c6f1c2ebb9c5697",
+      "date": "2026-10-16T15:33:11Z",
+      "release": "v0.4.10"
+    },
+    "sundowndev/phoneinfoga": {
+      "sha": "55807b05b753dab7bc6fe67403ca385668dda179",
+      "date": "2026-08-25T07:42:08Z",
+      "release": "v2.11.0"
+    }
+  },
+  "sources": [
+    "https://pypi.org/pypi/{package}/json",
+    "https://registry.npmjs.org/{package}",
+    "https://api.github.com/repos/{repository}/releases/latest"
+  ],
+  "note": "Current stable direct dependencies; transitive versions resolve under upstream constraints during image build. No inference or live research performed."
+}

@@ -28,7 +28,7 @@ class LocationTests(unittest.TestCase):
                 "country_code": "ca",
                 "lat": "45.5",
                 "lon": "-73.5",
-        "local_delivery_area": "X",
+                "local_delivery_area": "X",
             }
         )
         self.assertEqual(result["admin_area_1"], "Québec")
@@ -182,7 +182,9 @@ class APITests(unittest.TestCase):
             },
         )
         self.assertEqual(result["revision"], 2)
-        self.assertEqual(len(result["document"]["nodes"]), 3)
+        self.assertEqual(
+            len([n for n in result["document"]["nodes"] if n["type"] != "error"]), 3
+        )
         self.assertEqual(result["document"]["runs"][0]["status"], "completed")
         self.assertEqual(
             server.PROJECTS.history.page(p["id"])["runs"][0]["input_snapshot"][0][
@@ -216,7 +218,8 @@ class APITests(unittest.TestCase):
                 "outputs": outputs,
             },
         )
-        self.assertEqual(len(result["document"]["nodes"]), 2)
+        self.assertEqual(len(result["document"]["nodes"]), 3)
+        self.assertEqual(result["document"]["nodes"][-1]["type"], "error")
         self.assertEqual(result["document"]["runs"][0]["status"], "failed")
 
     def test_language_packs_are_served_as_json(self):

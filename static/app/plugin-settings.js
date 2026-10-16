@@ -148,16 +148,16 @@ var plugin_settings_default = {
                 'p',
                 { class: 'source-help' },
                 t(
-                  'Gilt für das gesamte Plugin, zum Beispiel Zugangsdaten und Quellenkonfiguration.'
+                  'Gilt fÃ¼r das gesamte Plugin, zum Beispiel Zugangsdaten und Quellenkonfiguration.'
                 )
               )
             );
             preset.append(
-              el('h4', {}, t('Standardwerte für neue Tools')),
+              el('h4', {}, t('Standardwerte fÃ¼r neue Tools')),
               el(
                 'p',
                 { class: 'source-help' },
-                t('Diese Werte kannst du später für jedes Tool in den Knotendetails ändern.')
+                t('Diese Werte kannst du spÃ¤ter fÃ¼r jedes Tool in den Knotendetails Ã¤ndern.')
               )
             );
             form.append(actual, preset);
@@ -226,11 +226,12 @@ var plugin_settings_default = {
             form.hidden = !form.hidden;
             if (form.hidden) pluginsState.pluginSettingsOpen.delete(plugin.id);
             else pluginsState.pluginSettingsOpen.add(plugin.id);
-            expand.textContent = form.hidden ? '\u25B8' : '\u25BE';
+            expand.replaceChildren(icon(form.hidden ? 'chevron-right' : 'chevron-down'));
             expand.setAttribute('aria-expanded', String(!form.hidden));
           },
           'plugin-expand'
         );
+        expand.replaceChildren(icon(form.hidden ? 'chevron-right' : 'chevron-down'));
         expand.setAttribute('aria-label', t('Plugin-Einstellungen'));
         expand.setAttribute('aria-expanded', String(!form.hidden));
         expand.setAttribute('aria-controls', form.id);

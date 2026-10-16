@@ -65,7 +65,6 @@ var location_fields_default = {
           continue;
         }
         if (line) lines.push(line);
-        line = '';
         if (measureEdgeText(word) <= maxWidth) line = word;
         else {
           let fragment = '';

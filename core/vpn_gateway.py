@@ -271,6 +271,7 @@ class Network:
         self.process, self.kind = None, None
         self.directory = Path("/run/argus-vpn-private")
         self.directory.mkdir(mode=0o700, exist_ok=True)
+        self.original_dns = Path("/etc/resolv.conf").read_text()
         self.route = json.loads(
             command(["ip", "-j", "-4", "route", "show", "default"]).stdout
         )[0]
@@ -288,6 +289,13 @@ class Network:
             )
             if exists.returncode:
                 command([family, "-I", "OUTPUT", "1", "-j", "ARGUS_VPN"])
+        # Public DNS resolves through the tunnel. Docker's embedded resolver is
+        # intentionally blocked, since it can forward DNS outside this namespace.
+        Path("/etc/resolv.conf").write_text(
+            "nameserver 1.1.1.1\nnameserver 9.9.9.9\noptions timeout:2 attempts:2\n"
+            if enabled
+            else self.original_dns
+        )
 
     def stop(self):
         if self.process:
@@ -600,7 +608,7 @@ class Controller:
 
 
 def main():
-    controller = Controller("/vpn-state", Network())
+    controller = Controller(os.environ.get("ARGUS_VPN_STATE", "/vpn-state"), Network())
 
     class Handler(socketserver.StreamRequestHandler):
         def handle(self):

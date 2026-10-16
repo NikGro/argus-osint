@@ -242,7 +242,7 @@ try:
     assert css("#inspector .danger-filled svg")
     checks.append("consistent edge and arrowhead highlighting with delete icon")
     select_node("m")
-    text_button("Aktor ausführen", css("#inspector")).click()
+    text_button("Tool ausführen", css("#inspector")).click()
     wait.until(
         lambda d: d.find_elements(
             By.CSS_SELECTOR, ".manual-dialog .search-select-button"

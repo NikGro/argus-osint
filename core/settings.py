@@ -40,7 +40,7 @@ class SettingsRepository:
         result = []
         for file in sorted((self.root / "static" / "locales").glob("*.json")):
             try:
-                data = json.loads(file.read_text())
+                data = json.loads(file.read_text(encoding="utf-8"))
                 result.append(
                     {
                         "code": file.stem,

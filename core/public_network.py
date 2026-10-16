@@ -97,7 +97,7 @@ def request(
             }
             clean["Host"] = parsed.netloc
             clean["Connection"] = "close"
-            clean.setdefault("User-Agent", "Argus/0.29 public research")
+            clean.setdefault("User-Agent", "Argus/1.0.0-alpha.1 public research")
             conn.request(method, target, body=body, headers=clean)
             response = conn.getresponse()
             if (
