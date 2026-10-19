@@ -39,7 +39,7 @@ process = subprocess.Popen(
         ),
         str(ROOT / "server.py"),
     ],
-    env={**os.environ, "HOST": "127.0.0.1", "PORT": str(port)},
+    env={**os.environ, "DATA_DIR": temp.name, "HOST": "127.0.0.1", "PORT": str(port)},
     stdout=logfile,
     stderr=logfile,
     start_new_session=True,

@@ -48,6 +48,9 @@ def main():
     message = json.loads((directory / "request.json").read_text())
     mount("--make-rprivate", "/")
     mount("-t", "tmpfs", "-o", "mode=700,size=128m", "tmpfs", "/work")
+    # Enter while root still owns the private mount. With cap_drop ALL the
+    # broker deliberately has no DAC_OVERRIDE after handing ownership over.
+    os.chdir("/work")
     for item in directory.iterdir():
         if item.name in ("input.json", "plugin.py") or (
             len(item.name) == 32 and item.is_file()
@@ -63,7 +66,6 @@ def main():
     resource.setrlimit(resource.RLIMIT_NPROC, (256, 256))
     resource.setrlimit(resource.RLIMIT_NOFILE, (512, 512))
     resource.setrlimit(resource.RLIMIT_CPU, (600, 600))
-    os.chdir("/work")
     from core.worker_security import harden_worker
 
     harden_worker(uid)

@@ -45,6 +45,7 @@ jobs:
           docker build -f Dockerfile.ci -t argus-tests:ci .
       - name: Complete offline Python and real Chromium suite
         run: |
+          set -euo pipefail
           mkdir -p artifacts
           docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
             --entrypoint python -e DATA_DIR=/tmp/argus-test-data \
