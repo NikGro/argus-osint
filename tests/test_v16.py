@@ -101,7 +101,8 @@ class V16Contracts(unittest.TestCase):
     def test_builtin_data_plugins_have_owned_schemas_and_empty_actions(self):
         m = self.manager()
         data = [p for p in m.installed() if p.get("nodes")]
-        self.assertEqual(len(data), 14)
+        self.assertEqual(len(data), 15)
+        self.assertIn("video", m.node_defaults())
         self.assertTrue(all(not p["actions"] for p in data))
         self.assertEqual(
             m.node_defaults()["datetime"], {"date": "", "time": "", "timezone": "UTC"}
@@ -238,7 +239,7 @@ class V16Contracts(unittest.TestCase):
             "x": 0,
             "y": 0,
         }
-        with patch.object(server, "MANAGER", m):
+        with patch.object(server.get_default_application(), "MANAGER", m):
             server.canonicalize_node(node)
         self.assertEqual(node["data"], {"value": "info", "code": ""})
 

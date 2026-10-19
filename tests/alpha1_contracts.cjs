@@ -1,7 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
-const production=()=>import('data:text/javascript;base64,'+fs.readFileSync('static/app.js').toString('base64'));
+const production=()=>import(require('node:url').pathToFileURL(require('node:path').resolve('static/app.js')).href);
 test('Nested grouping retains complete selected subgroups',async()=>{
  const m=await production(),s=m.createState();
  s.workspaceState.project={document:{nodes:[{id:'a'},{id:'b'}],edges:[],groups:[{id:'one',members:['a']},{id:'two',members:['b']}],runs:[]}};

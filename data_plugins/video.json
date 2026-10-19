@@ -1,0 +1,40 @@
+{
+  "id": "data_video",
+  "name": "Video",
+  "description": "Daten-Node: Video",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "video",
+      "name": "Video",
+      "new_label": "Neues Video",
+      "icon": "video",
+      "category": "Medien",
+      "defaults": {
+        "filename": "",
+        "file_id": "",
+        "mime": "",
+        "size": 0,
+        "duration": 0
+      },
+      "display_defaults": {
+        "preview": false,
+        "videoButton": false
+      }
+    }
+  ],
+  "translations": {
+    "de": {
+      "Video": "Video",
+      "Daten-Node: Video": "Daten-Node: Video",
+      "Neues Video": "Neues Video",
+      "Medien": "Medien"
+    },
+    "en": {
+      "Video": "Video",
+      "Daten-Node: Video": "Data node: Video",
+      "Neues Video": "New video",
+      "Medien": "Media"
+    }
+  }
+}

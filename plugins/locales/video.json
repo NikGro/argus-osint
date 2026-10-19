@@ -1,0 +1,49 @@
+{
+  "de": {
+    "Video tools": "Video-Tools",
+
+    "Media": "Medien",
+
+    "Trim a video into a new copy, or fuse a short sequence into a still image on the CPU.": "Video als Kopie zuschneiden oder eine kurze Sequenz auf der CPU zu einem Einzelbild fusionieren.",
+
+    "Trim video": "Video zeitlich zuschneiden",
+
+    "Fuse video frames into an image": "Videoframes zu einem Bild fusionieren",
+
+    "start_seconds": "Startzeit (Sekunden)",
+
+    "end_seconds": "Endzeit (Sekunden)",
+
+    "burst_seconds": "Sequenzdauer (Sekunden)",
+
+    "max_frames": "Maximale Frames",
+
+    "scale_factor": "Ausgabeskalierung",
+
+    "alignment_min": "Mindestqualität der Ausrichtung"
+  },
+
+  "en": {
+    "Video tools": "Video tools",
+
+    "Media": "Media",
+
+    "Trim a video into a new copy, or fuse a short sequence into a still image on the CPU.": "Trim a video into a new copy, or fuse a short sequence into a still image on the CPU.",
+
+    "Trim video": "Trim video",
+
+    "Fuse video frames into an image": "Fuse video frames into an image",
+
+    "start_seconds": "Start time (seconds)",
+
+    "end_seconds": "End time (seconds)",
+
+    "burst_seconds": "Sequence duration (seconds)",
+
+    "max_frames": "Maximum frames",
+
+    "scale_factor": "Output scale",
+
+    "alignment_min": "Minimum alignment quality"
+  }
+}

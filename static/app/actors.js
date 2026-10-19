@@ -72,6 +72,7 @@ var actors_default = {
       )
         return;
       executionState.preflighting.add(node.id);
+      updateStatus();
       try {
         if (node.data?.plugin === 'instagram' && !(await instagramPreflight())) return;
         await performActorJob({

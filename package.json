@@ -1,9 +1,9 @@
 {
   "name": "argus-workbench",
-  "version": "1.0.0-alpha.1",
+  "version": "26.10.1-beta.1",
   "private": true,
   "type": "module",
-  "description": "Development tooling for the Argus vanilla JavaScript frontend; no Node runtime is needed in production.",
+  "description": "Development tooling for the ARGUS React frontend; no Node runtime is needed in production.",
   "scripts": {
     "lint": "eslint static --max-warnings 0",
     "format": "prettier --write static",
@@ -14,10 +14,14 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "globals": "17.13.0",
-    "prettier": "3.9.10",
-    "esbuild": "0.28.2"
+    "prettier": "3.9.10"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
 }

@@ -137,7 +137,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             parts.append(
                 f'<img style="max-width:400px;max-height:300px" src="/api/files/{esc(node["data"]["file_id"])}">'
             )
-        if node["type"] == "file" and node["data"].get("file_id"):
+        if node["type"] in ("file", "video") and node["data"].get("file_id"):
             parts.append(
                 '<p><a href="/api/files/'
                 + esc(node["data"]["file_id"])

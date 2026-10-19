@@ -15,6 +15,8 @@ class Gateway:
         self.path = path
 
     def call(self, action, **payload):
+        if not hasattr(socket, "AF_UNIX"):
+            raise AppError("vpn_unavailable", 409)
         try:
             with socket.socket(socket.AF_UNIX) as connection:
                 connection.settimeout(120 if action == "configure" else 4)

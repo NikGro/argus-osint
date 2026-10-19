@@ -79,6 +79,7 @@ SCHEMA.update(
 )
 PLUGIN = {
     "id": "deepface",
+    "icon": "face-compare",
     "name": "DeepFace",
     "category": "Bildanalyse",
     "description": "Zwei Bilder vergleichen; Scores und Bilder mit Erkennungs-Overlays ausgeben.",

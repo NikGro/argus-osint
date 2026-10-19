@@ -33,13 +33,11 @@ var history_default = {
         historyState.lastSnapshot &&
         JSON.stringify(snapshot) !== JSON.stringify(historyState.lastSnapshot)
       ) {
-        if (
-          !(
-            scope &&
-            historyState.lastHistoryScope === scope &&
-            at - historyState.lastHistoryAt < 700
-          )
-        )
+        if (!(
+          scope &&
+          historyState.lastHistoryScope === scope &&
+          at - historyState.lastHistoryAt < 700
+        ))
           historyState.undoStack.push(historyState.lastSnapshot);
         if (historyState.undoStack.length > 60) historyState.undoStack.shift();
         historyState.redoStack = [];

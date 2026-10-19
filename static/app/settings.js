@@ -38,8 +38,8 @@ var settings_default = {
   }) {
     async function settingsHome() {
       await leaveWorkspace();
-      show('settingsView');
       const data = await api('/api/settings');
+      show('settingsView');
       preferencesState.appSettings = data.settings;
       $('languageSelect').replaceChildren(
         ...data.languages.map((lang) =>

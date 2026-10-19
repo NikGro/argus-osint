@@ -79,6 +79,8 @@ var resources_default = {
           .map((source) => actions[source.id])
           .filter(Boolean);
       }
+      if (node.type === 'video')
+        return [{ key: 'videoButton', label: 'Video öffnen', icon: 'video' }];
       return ['url', 'profile'].includes(node.type)
         ? [
             {
@@ -247,7 +249,7 @@ var resources_default = {
         return;
       }
       const url =
-        ['image', 'file'].includes(node.type) && node.data.file_id
+        ['image', 'file', 'video'].includes(node.type) && node.data.file_id
           ? '/api/files/' + encodeURIComponent(node.data.file_id)
           : node.type === 'location'
             ? mapsUrl(node, false, provider)
@@ -319,7 +321,7 @@ var resources_default = {
           svg(
             'text',
             {
-              x: 38,
+              x: 48,
               y: y + 18,
               'font-size': 11,
               'dominant-baseline': 'central'
@@ -400,6 +402,35 @@ var resources_default = {
         wrap.style.width = nodeRect(node).w - 16 + 'px';
         wrap.style.height = '210px';
         wrap.style.transform = `translate(${canvasState.pan.x + (node.x + 8) * canvasState.pan.scale}px,${canvasState.pan.y + (node.y + Math.max(76, 64 + locationDisplayLines(node.data, nodeRect(node).w).length * 16)) * canvasState.pan.scale}px) scale(${canvasState.pan.scale})`;
+      }
+      for (const node of workspaceState.project.document.nodes) {
+        if (
+          node.type !== 'video' ||
+          !node.display?.preview ||
+          !node.data.file_id ||
+          hidden.has(node.id)
+        )
+          continue;
+        keep.add(node.id);
+        let wrap = root.querySelector('[data-map-node="' + node.id + '"]');
+        if (!wrap) {
+          wrap = el('div', { class: 'node-video', 'data-map-node': node.id });
+          const video = el('video', {
+            controls: '',
+            preload: 'metadata',
+            'aria-label': node.label
+          });
+          video.src = '/api/files/' + encodeURIComponent(node.data.file_id);
+          wrap.append(video);
+          root.append(wrap);
+          for (const name of ['pointerdown', 'wheel', 'dblclick'])
+            wrap.addEventListener(name, (e) => e.stopPropagation());
+        }
+        const videoSource = '/api/files/' + encodeURIComponent(node.data.file_id);
+        if (wrap.firstChild.getAttribute('src') !== videoSource) wrap.firstChild.src = videoSource;
+        wrap.style.width = nodeRect(node).w - 24 + 'px';
+        wrap.style.height = '144px';
+        wrap.style.transform = `translate(${canvasState.pan.x + (node.x + 12) * canvasState.pan.scale}px,${canvasState.pan.y + (node.y + 64) * canvasState.pan.scale}px) scale(${canvasState.pan.scale})`;
       }
       for (const wrap of [...root.children]) if (!keep.has(wrap.dataset.mapNode)) wrap.remove();
     }

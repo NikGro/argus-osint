@@ -37,6 +37,14 @@ var edge_renderer_default = {
       labelOverlay,
       labelsByContext
     }) {
+      const nodeObstacles = doc.nodes
+        .filter((n) => n.type !== 'marker' && !hidden.has(n.id))
+        .map(nodeRect);
+      const incoming = new Map();
+      for (const edge of doc.edges) {
+        if (!incoming.has(edge.target)) incoming.set(edge.target, []);
+        incoming.get(edge.target).push(edge.id);
+      }
       const shownConnections = /* @__PURE__ */ new Set();
       for (const edge of doc.edges) {
         const visual = groupModel.connection(edge);
@@ -57,7 +65,7 @@ var edge_renderer_default = {
             )
           : [];
         const labelObstacles = [
-          ...doc.nodes.filter((n) => n.type !== 'marker' && !hidden.has(n.id)).map(nodeRect),
+          ...nodeObstacles,
           ...groupModel.groups
             .filter((g) => !ancestorIds.includes(g.id))
             .map((g) => groupModel.rects.get(g.id)),
@@ -87,12 +95,7 @@ var edge_renderer_default = {
               target_port:
                 b.inputCount > 1 && visual.b.key.startsWith('node:')
                   ? `left:${
-                      Math.max(
-                        0,
-                        doc.edges
-                          .filter((e) => e.target === edge.target)
-                          .findIndex((e) => e.id === edge.id)
-                      ) % b.inputCount
+                      Math.max(0, incoming.get(edge.target).indexOf(edge.id)) % b.inputCount
                     }:${b.inputCount}`
                   : 'left'
             },
@@ -147,11 +150,8 @@ var edge_renderer_default = {
           labelText
         );
         labelLayer.append(text);
-        const measured = text.getBBox();
-        text.setAttribute('dx', labelX - measured.x - measured.width / 2);
-        text.setAttribute('dy', labelY - measured.y - measured.height / 2);
-        const labelWidth = measured.width,
-          labelHeight = Math.max(26, measured.height + 8);
+        const labelWidth = measureEdgeText(labelText),
+          labelHeight = 28;
         const backdrop = svg('rect', {
           class: 'edge-label-backdrop',
           x: labelX - labelWidth / 2 - 59,
@@ -168,46 +168,26 @@ var edge_renderer_default = {
           event.stopPropagation();
           selectEdge(edge.id, event.shiftKey);
         });
-        const maskId = 'edge-controls-' + edge.id;
-        const mask = svg('mask', {
-          id: maskId,
-          maskUnits: 'userSpaceOnUse',
-          x: labelX - labelWidth / 2 - 70,
-          y: labelY - 40,
-          width: labelWidth + 150,
-          height: 80
-        });
-        // Mask only the control neighbourhood. The surrounding path must remain visible.
-        mask.setAttribute('x', Math.min(a.x, b.x, labelX) - 300);
-        mask.setAttribute('y', Math.min(a.y, b.y, labelY) - 300);
-        mask.setAttribute('width', Math.abs(a.x - b.x) + Math.max(a.w, b.w) + 1000);
-        mask.setAttribute('height', Math.abs(a.y - b.y) + Math.max(a.h, b.h) + 1000);
-        mask.append(
-          svg('rect', {
-            x: mask.getAttribute('x'),
-            y: mask.getAttribute('y'),
-            width: mask.getAttribute('width'),
-            height: mask.getAttribute('height'),
-            fill: 'white'
-          })
+        // Separate stroked paths provide control gaps without expensive per-edge SVG masks.
+        const strokes = [
+          ...edgeLayer.querySelectorAll('[data-edge-path="' + CSS.escape(edge.id) + '"]')
+        ];
+        labelLayer.addEventListener('pointerenter', () =>
+          strokes.forEach((stroke, i) =>
+            stroke.setAttribute('d', route.controlPaths?.[i]?.path || route.visiblePaths[i].path)
+          )
         );
-        mask.append(
-          svg('rect', {
-            class: 'edge-controls-gap',
-            x: labelX + labelWidth / 2 + 3,
-            y: labelY - 13,
-            width: 54,
-            height: 26,
-            fill: 'black'
-          })
+        labelLayer.addEventListener('pointerleave', () =>
+          strokes.forEach((stroke, i) => stroke.setAttribute('d', route.visiblePaths[i].path))
         );
-        const defs = svg('defs');
-        defs.append(mask);
-        labelLayer.append(defs);
-        for (const stroke of edgeLayer.querySelectorAll(
-          '[data-edge-path="' + CSS.escape(edge.id) + '"]'
-        ))
-          stroke.setAttribute('mask', 'url(#' + maskId + ')');
+        labelLayer.addEventListener('focusin', () =>
+          strokes.forEach((stroke, i) =>
+            stroke.setAttribute('d', route.controlPaths?.[i]?.path || route.visiblePaths[i].path)
+          )
+        );
+        labelLayer.addEventListener('focusout', () =>
+          strokes.forEach((stroke, i) => stroke.setAttribute('d', route.visiblePaths[i].path))
+        );
         const pen = svg('g', {
           class: 'edge-edit',
           role: 'button',

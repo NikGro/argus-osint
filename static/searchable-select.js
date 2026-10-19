@@ -185,7 +185,9 @@ const ArgusSelect = (() => {
     close,
     refresh: (select) => controls.get(select)?.refresh()
   };
-  if (typeof MutationObserver === 'function') {
+  // Legacy views opt in explicitly. Never mutate React-owned form elements.
+  function install() {
+    if (typeof MutationObserver !== 'function') return;
     new MutationObserver((records) => {
       for (const record of records)
         for (const node of record.addedNodes) if (node.nodeType === 1) scan(node);
@@ -205,6 +207,7 @@ const ArgusSelect = (() => {
       true
     );
   }
+  api.install = install;
   return api;
 })();
 export default ArgusSelect;

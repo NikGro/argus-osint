@@ -12,6 +12,7 @@ var canvas_input_default = {
     'nodeRect',
     'portPosition',
     'render',
+    'renderViewport',
     'svg',
     'uid'
   ],
@@ -29,6 +30,7 @@ var canvas_input_default = {
     nodeRect,
     portPosition,
     render,
+    renderViewport,
     svg,
     uid
   }) {
@@ -87,7 +89,21 @@ var canvas_input_default = {
       $('graph').setPointerCapture(event.pointerId);
       inspectGroup(group);
     }
+    let pendingDrag = null,
+      dragFrame = null;
+    function flushDrag() {
+      if (dragFrame !== null) cancelAnimationFrame(dragFrame);
+      dragFrame = null;
+      const event = pendingDrag;
+      pendingDrag = null;
+      if (event) applyDrag(event);
+    }
     function updateDrag(event) {
+      if (!canvasState.drag && !canvasState.connecting) return;
+      pendingDrag = event;
+      if (dragFrame === null) dragFrame = requestAnimationFrame(flushDrag);
+    }
+    function applyDrag(event) {
       if (canvasState.connecting) {
         updateConnection(event);
         return;
@@ -135,14 +151,15 @@ var canvas_input_default = {
         }
         change(null, 'drag:' + canvasState.drag.startX + ':' + canvasState.drag.startY);
       }
-      render();
+      if (canvasState.drag.kind === 'pan') renderViewport();
+      else render();
     }
     function zoomAt(x, y, scale) {
       const next = Math.max(0.15, Math.min(2.5, scale));
       canvasState.pan.x = x - ((x - canvasState.pan.x) * next) / canvasState.pan.scale;
       canvasState.pan.y = y - ((y - canvasState.pan.y) * next) / canvasState.pan.scale;
       canvasState.pan.scale = next;
-      render();
+      renderViewport();
     }
     function zoomStep(direction) {
       const box = $('graph').getBoundingClientRect();
@@ -263,6 +280,7 @@ var canvas_input_default = {
       $('graph').setPointerCapture(event.pointerId);
     }
     function canvasPointerUp(event) {
+      flushDrag();
       if (canvasState.connecting) {
         finishConnection(event);
         return;
@@ -353,7 +371,7 @@ var canvas_input_default = {
           metrics.x - box.left - canvasState.pinchGesture.worldX * canvasState.pan.scale;
         canvasState.pan.y =
           metrics.y - box.top - canvasState.pinchGesture.worldY * canvasState.pan.scale;
-        render();
+        renderViewport();
         event.stopImmediatePropagation();
         event.preventDefault();
       } else if (canvasState.gestureBlocked) {
@@ -482,8 +500,7 @@ var canvas_input_default = {
           ...point,
           nx: -from.nx,
           ny: -from.ny
-        },
-        middle = (from.x + to.x) / 2;
+        };
       let path = $('connectionPreview');
       if (!path) {
         path = svg('path', {
@@ -494,18 +511,27 @@ var canvas_input_default = {
       }
       const start = from.nx < 0 ? to : from,
         end = from.nx < 0 ? from : to;
-      const points =
-        end.x - start.x >= 80
-          ? [start, { x: middle, y: start.y }, { x: middle, y: end.y }, end]
-          : [
+      if (start.x - 20 <= end.x) {
+        const distance = end.x >= start.x ? (end.x - start.x) / 2 : 25 * Math.sqrt(start.x - end.x);
+        path.setAttribute(
+          'd',
+          `M ${start.x} ${start.y} C ${start.x + distance} ${start.y}, ${end.x - distance} ${end.y}, ${end.x} ${end.y}`
+        );
+      } else {
+        path.setAttribute(
+          'd',
+          ArgusRouting.curvePath(
+            ArgusRouting.roundedRoute([
               start,
               { x: start.x + 40, y: start.y },
-              { x: start.x + 40, y: Math.max(start.y, end.y) + 130 },
-              { x: end.x - 40, y: Math.max(start.y, end.y) + 130 },
+              { x: start.x + 40, y: start.y + 130 },
+              { x: end.x - 40, y: start.y + 130 },
               { x: end.x - 40, y: end.y },
               end
-            ];
-      path.setAttribute('d', ArgusRouting.curvePath(ArgusRouting.roundedRoute(points)));
+            ])
+          )
+        );
+      }
     }
     function finishConnection(event) {
       updateConnection(event);

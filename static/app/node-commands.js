@@ -83,7 +83,7 @@ var node_commands_default = {
     }
     function addData(type, x, y) {
       if (persistenceState.busy) return;
-      if (type === 'image' || type === 'file') {
+      if (['image', 'file', 'video'].includes(type)) {
         uploadsState.pendingUploadType = type;
         uploadsState.pendingImagePosition =
           x === void 0
@@ -92,7 +92,7 @@ var node_commands_default = {
                 x,
                 y
               };
-        $('fileInput').accept = type === 'image' ? 'image/*' : '';
+        $('fileInput').accept = type === 'image' ? 'image/*' : type === 'video' ? 'video/*' : '';
         $('fileInput').click();
         return;
       }

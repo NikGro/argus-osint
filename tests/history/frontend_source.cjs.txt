@@ -11,17 +11,16 @@ const definitions = new Map();
 for (const name of manifest.features) {
   const text = asset('app/' + name + '.js', true);
   const matches = [...text.matchAll(/^    (?:(?:async )?function |const )([\w$]+)[\s\S]*?(?=^    (?:(?:async )?function |const |return \{))/gm)];
-  for (const match of matches) definitions.set(match[1], match[0].replace(/^    /gm, '').replace(/\bappState\./g, '').trim());
+  for (const match of matches) definitions.set(match[1], match[0].replace(/^    /gm, '').replace(/\b(?:appState|workspaceState|persistenceState|selectionState|canvasState|executionState|pluginsState|preferencesState|historyState|uploadsState|libraryState|shellState|logsState)\./g, '').trim());
 }
 const state = asset('app/state.js', true);
-const starts = [...state.matchAll(/^    (\w+): /gm)];
-for (let i=0;i<starts.length;i++) {
-  const value=state.slice(starts[i].index+starts[i][0].length,i+1<starts.length?starts[i+1].index:state.lastIndexOf('\n  };')).trim().replace(/,$/,'');
-  const name=starts[i][1];
-  definitions.set(name, (name==='templates'?'const':'let')+' '+name+' = '+value+';');
-}
+const vm=require('node:vm');
+const stores=vm.runInNewContext(state.replace(/^export.*$/gm,'')+'\ncreateState();');
+function literal(value){const tag=Object.prototype.toString.call(value);if(tag==='[object Set]')return 'new Set('+JSON.stringify([...value])+')';if(tag==='[object Map]')return 'new Map('+JSON.stringify([...value])+')';return JSON.stringify(value);}
+for(const store of Object.values(stores))for(const [name,value]of Object.entries(store))definitions.set(name,(name==='templates'?'const':'let')+' '+name+' = '+literal(value)+';');
 const labels=asset('app/labels.js', true);
 for(const match of labels.matchAll(/^export const (\w+)[\s\S]*?(?=^export const |$(?![\s\S]))/gm)) definitions.set(match[1],match[0].replace(/^export /,'').trim());
+definitions.set('__labels',labels.replace(/^export.*$/gm,''));
 const order=manifest.declarations.filter(name=>definitions.has(name));
 for(const name of definitions.keys()) if(!order.includes(name))order.push(name);
 function normalize(text){return String(text).replace(/\s+/g,'').replace(/"/g,"'").replace(/\((\w+)\)=>/g,'$1=>').replace(/\b0\.(\d+)/g,'.$1');}

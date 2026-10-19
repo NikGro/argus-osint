@@ -20,6 +20,7 @@ TYPES = {
     "marker",
     "value",
     "image",
+    "video",
 }
 LOCATION_DEFAULTS = {
     key: ""
@@ -54,6 +55,7 @@ NODE_DEFAULTS = {
     "note": {"text": ""},
     "marker": {},
     "image": {"filename": "", "file_id": "", "url": ""},
+    "video": {"filename": "", "file_id": "", "mime": "", "size": 0, "duration": 0},
     "file": {"filename": "", "file_id": "", "mime": "", "size": 0},
 }
 

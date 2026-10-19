@@ -243,7 +243,7 @@ var layout_default = {
           node.y += pos.y - unit.y;
         }
       }
-      $('cleanupMenu').open = false;
+      if ($('cleanupMenu')) $('cleanupMenu').open = false;
       change();
       render();
       $('fit').click();

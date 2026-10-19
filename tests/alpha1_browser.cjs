@@ -29,6 +29,16 @@ await page.goto('http://127.0.0.1:8765/');await page.locator('.project-tile').wa
 const centeredCreate = await page.locator('#newProject').evaluate(e=>{const r=e.getBoundingClientRect(),a=e.firstElementChild.getBoundingClientRect(),b=e.lastElementChild.getBoundingClientRect();return Math.abs((a.left+b.right-r.left-r.right)/2)<1;});assert.ok(centeredCreate,'Create project content centered as one unit');
 await page.screenshot({path:'docs/assets/home.png'});
 await page.locator('.project-tile button').first().click();await page.locator('.node[data-id=lookup]').waitFor();await page.locator('#fit').click();
+const scene=page.locator('#scene');
+const beforeWheel=await scene.getAttribute('transform');
+await page.locator('#graph').hover({position:{x:30,y:30}});await page.mouse.wheel(70,40);await page.waitForTimeout(120);
+assert.notEqual(await scene.getAttribute('transform'),beforeWheel,'Wheel pan must move the graph');
+const beforeZoom=await scene.getAttribute('transform');await page.keyboard.down('Control');await page.mouse.wheel(0,-50);await page.keyboard.up('Control');await page.waitForTimeout(120);
+assert.notEqual(await scene.getAttribute('transform'),beforeZoom,'Ctrl-wheel zoom must update the viewport');
+const beforeDrag=await scene.getAttribute('transform');const graphBox=await page.locator('#graph').boundingBox();
+await page.mouse.move(graphBox.x+35,graphBox.y+35);await page.keyboard.down('Space');await page.mouse.down();await page.mouse.move(graphBox.x+100,graphBox.y+75,{steps:5});await page.mouse.up();await page.keyboard.up('Space');await page.waitForTimeout(100);
+assert.notEqual(await scene.getAttribute('transform'),beforeDrag,'Space-drag must move the viewport');
+await page.locator('#fit').click();
 assert.equal(await page.locator('.node[data-id=lookup] .dock').count(),3,'Two required left inputs and one right output');
 assert.equal(await page.locator('.node[data-id=marker] .note-editor').count(),0);
 await page.locator('.node[data-id=error]').click();assert.equal(await page.locator('#inspector .verification-select').count(),0);assert.ok((await page.locator('.node[data-id=error]').textContent()).includes('Time limit reached'));

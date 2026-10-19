@@ -33,3 +33,14 @@ No third-party research-engine source tree, installed Python environment, downlo
 DeepFace model weights are downloaded by upstream on a user's first relevant execution. ARGUS does not preload weights, instantiate models or run image comparisons during installation. Check the chosen model's own terms before redistributing weights or a cache.
 
 Direct pins reduce drift; transitive Python packages, base images and Debian repositories are not a complete hermetic lock or full license/security bill of materials. Retain the packages' installed license/copyright files and the complete upstream checkouts/notices when redistributing a build. This alpha source publication does not include a prebuilt image.
+
+## Video processing
+
+- [FFmpeg](https://ffmpeg.org/) — Debian executable for probing, extraction and H.264/AAC trimming. Debian builds may include GPL components such as libx264; see `/usr/share/doc/ffmpeg/copyright` and upstream license/configuration. These terms apply independently of ARGUS MIT code.
+- [OpenCV](https://opencv.org/) and NumPy — reused from the bundled isolated runtime for ARGUS CPU alignment and fusion.
+- [Jamy-L/Handheld-Multi-Frame-Super-Resolution](https://github.com/Jamy-L/Handheld-Multi-Frame-Super-Resolution) was evaluated but is not bundled or executed by this CPU workflow.
+- Canvas geometry follows [n8n behavior](https://github.com/n8n-io/n8n/blob/master/packages/frontend/editor-ui/src/features/workflows/canvas/components/elements/edges/utils/getEdgeRenderData.ts) and Vue Flow: forward Bezier curves and rounded backwards detours. ARGUS geometry is implemented locally; no n8n source is bundled.
+
+## React interface
+
+React and React DOM 19.3.1 and Scheduler are maintained by Meta Platforms and contributors and distributed under MIT. Their notices are shipped in `static/react-LICENSE.txt`, `static/react-dom-LICENSE.txt` and `static/scheduler-LICENSE.txt`. The browser bundle is built locally and served by ARGUS; no CDN is required.

@@ -1,6 +1,21 @@
 import { t } from './i18n.js';
 // Material Design Icons 7.4.47, Pictogrammers, Apache-2.0.
 const ICON_PATHS = {
+  pause: ['M6 4h4v16H6V4m8 0h4v16h-4V4'],
+  clock: [
+    'M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2M12 4A8 8 0 1 1 12 20A8 8 0 1 1 12 4M11 6H13V11.4L16.4 13.4L15.4 15.1L11 12.5Z'
+  ],
+  crop: ['M7 3H5V5H3V7H5V17A2 2 0 0 0 7 19H17V21H19V19H21V17H7V7H17V15H19V7A2 2 0 0 0 17 5H7Z'],
+  'video-trim': ['M3 5H21V19H3ZM5 7V17H19V7ZM7 9H9V15H7ZM15 9H17V15H15ZM11 10L14 12L11 14Z'],
+  'video-analysis': [
+    'M3 3H17V5H5V15H3ZM7 7H21V21H7ZM9 9V19H19V9ZM10 16L12 13L14 15L17 11L18 12L14 18L12 16L11 17Z'
+  ],
+  'face-compare': [
+    'M2 3H9V5H4V10H2ZM15 3H22V10H20V5H15ZM2 14H4V19H9V21H2ZM20 14H22V21H15V19H20ZM8 8A1.5 1.5 0 1 0 8 11A1.5 1.5 0 1 0 8 8ZM16 8A1.5 1.5 0 1 0 16 11A1.5 1.5 0 1 0 16 8ZM7 14H17V16H7Z'
+  ],
+  video: [
+    'M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z'
+  ],
   refresh: [
     'M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.09A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h8V3z'
   ],
@@ -217,4 +232,4 @@ function decorateStaticIcons() {
   }
 }
 
-export { icon, buttonContent, decorateStaticIcons };
+export { ICON_PATHS, icon, buttonContent, decorateStaticIcons };

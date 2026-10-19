@@ -194,7 +194,7 @@ var palette_default = {
           lastActorCategory = category;
         }
         const b = button(label, () => addActor(plugin, action), 'palette-item actor-item');
-        buttonContent(b, label, actorIcon(plugin.id));
+        buttonContent(b, label, actorIcon(plugin.id, action.id));
         b.dataset.plugin = plugin.id;
         b.dataset.action = action.id;
         b.disabled = persistenceState.busy || actorIncompatible(action, inputs, true);

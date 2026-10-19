@@ -62,7 +62,8 @@ class ExtractedServiceContracts(unittest.TestCase):
         def broken_connection():
             raise sqlite3.OperationalError("fixture")
 
-        service = FileRepository(broken_connection, self.files_dir)
+        service = FileRepository(self.connect, self.files_dir)
+        service.connect = broken_connection
         with self.assertRaises(sqlite3.OperationalError):
             service.upload(b"fixture content", "fixture.txt")
         self.assertEqual(list(self.files_dir.iterdir()), [])
@@ -164,3 +165,38 @@ class ActorDiagnosticContracts(unittest.TestCase):
         text = json.dumps(run)
         self.assertNotIn("fixture-password", text)
         self.assertNotIn("654321", text)
+
+
+class HttpLogging(unittest.TestCase):
+    def test_successful_gets_are_quiet_and_failures_remain_structured(self):
+        import server
+        from unittest.mock import patch
+
+        handler = object.__new__(server.Handler)
+        handler.command = "GET"
+        handler.request_id = "fixture"
+        with patch.object(server.LOGGER, "info") as log:
+            for status in (200, 206, 304):
+                handler.log_request(status, 128)
+            log.assert_not_called()
+            handler.log_request(404, 0)
+            value = json.loads(log.call_args.args[0])
+            self.assertEqual(value["status"], 404)
+            handler.command = "POST"
+            handler.log_request(201, 0)
+            value = json.loads(log.call_args.args[0])
+            self.assertEqual(value["status"], 201)
+            self.assertEqual(value["method"], "POST")
+
+
+class OptionalVpnCapability(unittest.TestCase):
+    def test_missing_unix_sockets_is_explicitly_unavailable(self):
+        from core.vpn import Gateway
+        from core.errors import AppError
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        with patch("core.vpn.socket", SimpleNamespace()):
+            with self.assertRaises(AppError) as error:
+                Gateway().call("status")
+        self.assertEqual(error.exception.code, "vpn_unavailable")

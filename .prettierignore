@@ -3,3 +3,7 @@ static/argus-logo.svg
 package-lock.json
 node_modules/
 data/
+
+# Deterministically generated; verified by build:check.
+static/app.js
+static/version.js

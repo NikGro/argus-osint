@@ -17,7 +17,7 @@ body {
   position: absolute;
   width: 256px;
   height: 256px;
-  filter: invert(0.91) hue-rotate(180deg);
+  filter: grayscale(1) invert(0.9) sepia(0.5) saturate(2) hue-rotate(170deg) brightness(0.7);
 }
 #marker {
   position: absolute;
@@ -58,7 +58,7 @@ a {
   height: 100%;
   object-fit: cover;
   border-radius: 8px;
-  filter: invert(0.91) hue-rotate(180deg);
+  filter: grayscale(1) invert(0.9) sepia(0.5) saturate(2) hue-rotate(170deg) brightness(0.7);
 }
 
 button {
@@ -78,4 +78,22 @@ a:focus-visible {
 small {
   font-size: 11px;
   line-height: 1.5;
+}
+
+.map-unavailable {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #0c1521;
+  color: #92a4bc;
+  font: 13px system-ui;
+  text-align: center;
+}
+
+small {
+  max-width: calc(100% - 8px);
+  border-radius: 4px 0 0;
 }

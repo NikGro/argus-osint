@@ -13,8 +13,20 @@ from core.execution_context import CANCEL_EVENT
 
 
 def bounded_run(
-    command, timeout, payload=None, extra_env=None, max_bytes=8 * 1024 * 1024, cwd=None
+    command,
+    timeout,
+    payload=None,
+    extra_env=None,
+    max_bytes=8 * 1024 * 1024,
+    cwd=None,
+    output_limit=None,
 ):
+    def check_artifact():
+        if output_limit is not None:
+            path, maximum = output_limit
+            if Path(path).exists() and Path(path).stat().st_size > maximum:
+                raise ValueError("The generated media exceeds the 128 MB limit.")
+
     env = {
         "PATH": os.environ.get("PATH", ""),
         "LANG": "C.UTF-8",
@@ -44,6 +56,7 @@ def bounded_run(
             )
             try:
                 while process.poll() is None:
+                    check_artifact()
                     cancellation = CANCEL_EVENT.get()
                     if cancellation is not None and cancellation.is_set():
                         raise AppError("actor_cancelled", 409)
@@ -55,6 +68,7 @@ def bounded_run(
                     ):
                         raise ValueError("Suchergebnis zu groß.")
                     time.sleep(0.05)
+                check_artifact()
                 out.seek(0)
                 err.seek(0)
                 stdout, stderr = out.read(max_bytes + 1), err.read(max_bytes + 1)

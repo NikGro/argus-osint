@@ -18,6 +18,8 @@ def node_bounds(node, preferences=None):
     )
     if node["type"] in ("note", "marker"):
         width, height = appearance.get("width", width), appearance.get("height", height)
+    if node["type"] == "video" and display.get("preview"):
+        height = LAYOUT["videoPreviewHeight"]
     if node["type"] == "image" and display.get("preview"):
         height = LAYOUT["imagePreviewHeight"]
     if node["type"] == "location":
@@ -50,6 +52,7 @@ def node_bounds(node, preferences=None):
             "openButton",
             "imageButton",
             "fileButton",
+            "videoButton",
             "mapsButton",
             "appleMapsButton",
             "osmButton",

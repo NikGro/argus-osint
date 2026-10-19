@@ -49,6 +49,8 @@ class Jobs:
         self.ephemeral = {}
         self.cancellations = {}
         self.stopped = False
+        self.last_worker_error = None
+        self.thread = None
         with connect() as conn:
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS actor_jobs (id TEXT PRIMARY KEY,project_id TEXT NOT NULL,actor_id TEXT NOT NULL,request_key TEXT NOT NULL,fingerprint TEXT NOT NULL,signature TEXT NOT NULL,request TEXT NOT NULL,state TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,run_id TEXT,error_code TEXT,UNIQUE(project_id,request_key))"
@@ -62,9 +64,25 @@ class Jobs:
                 "UPDATE actor_jobs SET state='interrupted',error_code='execution_interrupted' WHERE state IN ('queued','running','cancelling')"
             )
         if start:
-            threading.Thread(
-                target=self.worker, name="argus-actor-worker", daemon=True
-            ).start()
+            self.start()
+
+    def start(self):
+        if self.thread is not None and self.thread.is_alive():
+            return
+        self.stopped = False
+        self.thread = threading.Thread(
+            target=self.worker, name="argus-actor-worker", daemon=True
+        )
+        self.thread.start()
+
+    def close(self):
+        self.stopped = True
+        for cancellation in list(self.cancellations.values()):
+            cancellation.set()
+        with self.condition:
+            self.condition.notify_all()
+        if self.thread is not None:
+            self.thread.join(timeout=5)
 
     def submit(self, pid, body, key):
         if not isinstance(key, str) or not 16 <= len(key) <= 128:
@@ -236,6 +254,29 @@ class Jobs:
         return self.get(jid)
 
     def worker(self):
+        """An infrastructure/cleanup exception must not silently kill the FIFO."""
+        while not self.stopped:
+            try:
+                self._work_loop()
+            except Exception:
+                self.last_worker_error = self.now()
+                logging.getLogger("argus.jobs").exception(
+                    "Worker infrastructure failure"
+                )
+                try:
+                    with self.connect() as conn:
+                        conn.execute(
+                            "UPDATE actor_jobs SET state='interrupted',error_code='execution_interrupted',updated_at=? WHERE state IN ('running','cancelling')",
+                            (self.now(),),
+                        )
+                except Exception:
+                    logging.getLogger("argus.jobs").exception(
+                        "Worker recovery deferred"
+                    )
+                with self.condition:
+                    self.condition.wait(timeout=2)
+
+    def _work_loop(self):
         while not self.stopped:
             with self.connect() as conn:
                 conn.execute("BEGIN IMMEDIATE")
@@ -300,12 +341,16 @@ class Jobs:
                 error = classify(exc).code
                 state = "cancelled" if event.is_set() else "failed"
             finally:
-                if self.vpn:
-                    self.vpn.after_actor(
-                        acquired,
-                        rotate=not run.get("input_request")
-                        and not (result or {}).get("input_request"),
-                    )
+                try:
+                    if self.vpn:
+                        self.vpn.after_actor(
+                            acquired,
+                            rotate=not run.get("input_request")
+                            and not (result or {}).get("input_request"),
+                        )
+                except Exception:
+                    logging.getLogger("argus.jobs").exception("VPN cleanup failed")
+                    error, state = "vpn_unavailable", "failed"
                 logging.getLogger("argus.jobs").info(
                     json.dumps(
                         {

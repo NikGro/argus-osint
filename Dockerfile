@@ -20,6 +20,9 @@ COPY scripts/install_deepface.py /tmp/install_deepface.py
 RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/* && python /tmp/install_deepface.py && rm /tmp/install_deepface.py
 COPY scripts/install_toutatis.py /tmp/install_toutatis.py
 RUN python /tmp/install_toutatis.py && rm /tmp/install_toutatis.py
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+COPY requirements-media.txt /tmp/requirements-media.txt
+RUN python -m venv /opt/argus-tools/media-venv && /opt/argus-tools/media-venv/bin/pip install --no-cache-dir -r /tmp/requirements-media.txt && rm /tmp/requirements-media.txt
 COPY . .
 RUN python scripts/verify_frontend.py && python scripts/build_provider_catalogue.py && python scripts/build_research_profiles.py
 USER workbench

@@ -1,4 +1,4 @@
-name: Publish alpha release
+name: Publish ARGUS beta
 on:
   push:
     branches: [main]
@@ -7,14 +7,14 @@ permissions:
   contents: write
 jobs:
   release:
-    if: github.event.head_commit.message == 'Publish ARGUS v0.29.0-alpha.1'
+    if: github.event.head_commit.message == 'Publish ARGUS v26.10.1-beta.1'
     runs-on: ubuntu-24.04
     steps:
-      - name: Publish source alpha
+      - name: Publish tested beta source
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
           gh api "repos/$GH_REPO/contents/RELEASE_NOTES.md?ref=$COMMIT_SHA" --jq .content | base64 --decode > release-notes.md
-          gh release create v0.29.0-alpha.1 --target "$COMMIT_SHA" --prerelease --title "ARGUS v0.29.0-alpha.1" --notes-file release-notes.md
+          gh release create v26.10.1-beta.1 --target "$COMMIT_SHA" --prerelease --title "ARGUS V26.10.1 Beta 1" --notes-file release-notes.md

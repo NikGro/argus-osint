@@ -190,30 +190,69 @@ var groups_default = {
         connection
       };
     }
+    const expansionSnapshots = new Map();
+    const positions = () =>
+      new Map(
+        workspaceState.project.document.nodes.map((node) => [node.id, { x: node.x, y: node.y }])
+      );
+    function restorePositions(snapshot) {
+      if (!snapshot) return;
+      const current = positions();
+      // Restore only an untouched automatic layout. Never overwrite subsequent
+      // manual moves, additions, deletions or another layout operation.
+      if (
+        current.size !== snapshot.after.size ||
+        [...current].some(([id, p]) => {
+          const expected = snapshot.after.get(id);
+          return !expected || p.x !== expected.x || p.y !== expected.y;
+        })
+      )
+        return;
+      for (const node of workspaceState.project.document.nodes) {
+        const old = snapshot.before.get(node.id);
+        node.x = old.x;
+        node.y = old.y;
+      }
+    }
     function toggleGroup(group) {
       if (!workspaceState.project || workspaceState.project.archived_at) return;
       group = workspaceState.project.document.groups.find((item) => item.id === group.id);
       if (!group) return;
+      const key = workspaceState.project.id + ':' + group.id;
+      const before = positions();
       group.collapsed = !group.collapsed;
       canvasState.groupBoundsCache = null;
-      if (!group.collapsed) makeRoomForGroup(group);
+      if (!group.collapsed) {
+        makeRoomForGroup(group);
+        expansionSnapshots.set(key, { before, after: positions() });
+      } else {
+        restorePositions(expansionSnapshots.get(key));
+        expansionSnapshots.delete(key);
+      }
+      canvasState.groupBoundsCache = null;
       change();
       render();
-      inspectGroup(group);
+      // Opening a group is not a selection action. Existing inspector selection
+      // is retained and React refreshes it from the same group object.
     }
     function setAllGroups(collapsed) {
       if (!workspaceState.project || workspaceState.project.archived_at) return;
       const groups = workspaceState.project.document.groups;
-      if (!groups.some((g) => Boolean(g.collapsed) !== collapsed)) return;
-      for (const group2 of groups) group2.collapsed = collapsed;
+      if (!groups.some((group) => Boolean(group.collapsed) !== collapsed)) return;
+      const key = workspaceState.project.id + ':all',
+        before = positions();
+      for (const group of groups) group.collapsed = collapsed;
       canvasState.groupBoundsCache = null;
-      if (!collapsed)
-        for (const group2 of groups.filter((g) => !g.parent_id)) makeRoomForGroup(group2);
+      if (!collapsed) {
+        for (const group of groups.filter((group) => !group.parent_id)) makeRoomForGroup(group);
+        expansionSnapshots.set(key, { before, after: positions() });
+      } else {
+        restorePositions(expansionSnapshots.get(key));
+        expansionSnapshots.delete(key);
+      }
+      canvasState.groupBoundsCache = null;
       change(null, 'all-groups');
       render();
-      const group = groups.find((g) => g.id === selectionState.selectedGroup);
-      if (group) inspectGroup(group);
-      else inspect();
     }
     function moveGroup(group, dx, dy) {
       for (const node of workspaceState.project.document.nodes)

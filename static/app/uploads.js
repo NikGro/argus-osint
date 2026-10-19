@@ -9,7 +9,8 @@ var uploads_default = {
       const response = await authorizedFetch('/api/files', {
         method: 'POST',
         headers: {
-          'X-File-Name': encodeURIComponent(file.name)
+          'X-File-Name': encodeURIComponent(file.name),
+          'X-Project-Id': pid
         },
         body: file
       });
@@ -29,6 +30,8 @@ var uploads_default = {
         if (choice === null) return;
         type = choice;
       }
+      if (type === 'file' && data.is_video) type = 'video';
+      if (type === 'video' && !data.is_video) throw Error(t('Keine unterstützte Videodatei.'));
       if (type === 'image' && !data.is_image) type = 'file';
       if (workspaceState.project?.id !== pid)
         throw Error(
@@ -46,7 +49,8 @@ var uploads_default = {
               file_id: data.file_id,
               filename: file.name,
               mime: data.mime,
-              size: data.size
+              size: data.size,
+              ...(type === 'video' ? { duration: data.duration } : {})
             },
         x,
         y

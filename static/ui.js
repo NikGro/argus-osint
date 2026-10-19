@@ -119,6 +119,7 @@ const ArgusUI = (() => {
     });
   }
   function notice({ title, message, checkboxText, actions }) {
+    if (options.notice) return options.notice({ title, message, checkboxText, actions });
     return frame(title, (dialog, finish) => {
       dialog.append(el('p', {}, message));
       const remember = checkbox(checkboxText);

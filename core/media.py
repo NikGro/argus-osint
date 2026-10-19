@@ -70,6 +70,7 @@ class Media:
                 try:
                     fid, _ = self.image(node["data"]["url"])
                     node["data"]["file_id"] = fid
+                    node.setdefault("evidence", {}).pop("media_error", None)
                 except AppError as error:
                     node.setdefault("evidence", {})["media_error"] = error.code
         return document

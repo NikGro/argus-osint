@@ -1,12 +1,21 @@
 export let language = 'de',
   messages = {},
   fallbackMessages = {};
+let orderedSources = [];
+let translatedMessages = null;
+function sources() {
+  if (translatedMessages !== messages) {
+    orderedSources = Object.keys(messages).sort((a, b) => b.length - a.length);
+    translatedMessages = messages;
+  }
+  return orderedSources;
+}
 export function t(key, params = {}) {
   if (key === undefined || key === null) return '';
   let value = messages[key] ?? fallbackMessages[key];
   if (value === undefined) {
     value = String(key);
-    for (const source of Object.keys(messages).sort((a, b) => b.length - a.length)) {
+    for (const source of sources()) {
       if (source.length < 10) continue;
       if (value.startsWith(source)) {
         value = messages[source] + value.slice(source.length);
@@ -24,7 +33,7 @@ export function t(key, params = {}) {
 }
 export function diagnostic(value) {
   let text = String(value ?? '');
-  for (const source of Object.keys(messages).sort((a, b) => b.length - a.length)) {
+  for (const source of sources()) {
     if (source.length >= 10 && source !== messages[source])
       text = text.replaceAll(source, messages[source]);
   }
@@ -39,7 +48,20 @@ export async function setLanguage(code) {
     fallbackMessages = (await fallback.json()).messages;
   }
   language = code;
-  messages = pack.messages;
+  messages = { ...pack.messages };
+  // Historical generated labels may contain an English display value instead
+  // of the stable translation key. Resolve only unambiguous exact aliases.
+  const english = code === 'en' ? pack : await (await fetch('/locales/en.json')).json();
+  const aliases = new Map();
+  for (const [key, value] of Object.entries(english.messages)) {
+    if (typeof value !== 'string' || !value || value === key) continue;
+    const translated = messages[key] ?? fallbackMessages[key];
+    if (translated === undefined) continue;
+    if (aliases.has(value) && aliases.get(value) !== translated) aliases.set(value, null);
+    else if (!aliases.has(value)) aliases.set(value, translated);
+  }
+  for (const [key, value] of aliases)
+    if (value !== null && messages[key] === undefined) messages[key] = value;
   document.documentElement.lang = code;
   localStorage.setItem('argus.language', code);
   for (const element of document.querySelectorAll('[data-i18n]'))

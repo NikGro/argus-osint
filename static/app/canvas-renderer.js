@@ -43,9 +43,21 @@ var canvas_renderer_default = {
     svg,
     updateMapOverlays
   }) {
+    function renderViewport() {
+      const pan = canvasState.pan;
+      if ($('zoomLevel')) $('zoomLevel').value = Math.round(pan.scale * 100) + '%';
+      $('grid').setAttribute(
+        'patternTransform',
+        `translate(${pan.x} ${pan.y}) scale(${pan.scale})`
+      );
+      $('scene').setAttribute('transform', `translate(${pan.x} ${pan.y}) scale(${pan.scale})`);
+      updateMapOverlays(new Set(graphGroupModel().hidden));
+    }
     function render() {
       if (!workspaceState.project) return;
       canvasState.groupBoundsCache = null;
+      measureEdgeText.font = getComputedStyle(document.body).fontFamily;
+      measureEdgeText.cache = new Map();
       if ($('zoomLevel')) $('zoomLevel').value = Math.round(canvasState.pan.scale * 100) + '%';
       const scene = $('scene');
       const previousPositions = new Map(
@@ -102,6 +114,8 @@ var canvas_renderer_default = {
         w = node.appearance?.width || w;
         h = node.appearance?.height || h;
       }
+      if (node.type === 'video' && node.display?.preview)
+        h = layout_spec_default.videoPreviewHeight;
       if (node.type === 'image' && node.display?.preview)
         h = layout_spec_default.imagePreviewHeight;
       if (node.type === 'location') {
@@ -144,7 +158,9 @@ var canvas_renderer_default = {
       };
     }
     function nodeIcon(g, node) {
-      const n = icon(node.type === 'actor' ? actorIcon(node.data.plugin) : dataIcon(node.type));
+      const n = icon(
+        node.type === 'actor' ? actorIcon(node.data.plugin, node.data.action) : dataIcon(node.type)
+      );
       n.setAttribute('x', 11);
       n.setAttribute('y', node.type === 'note' ? 12 : 10);
       n.setAttribute('width', 16);
@@ -163,6 +179,7 @@ var canvas_renderer_default = {
         return pluginsState.dataTypes.get(type).node.icon;
       return (
         {
+          video: 'video',
           email: 'email',
           phone: 'phone',
           username: 'account',
@@ -176,8 +193,10 @@ var canvas_renderer_default = {
         }[type] || 'nodes'
       );
     }
-    function actorIcon(plugin) {
+    function actorIcon(plugin, action) {
       return (
+        pluginsState.catalog.find((p) => p.id === plugin)?.actions.find((a) => a.id === action)
+          ?.icon ||
         pluginsState.catalog.find((p) => p.id === plugin)?.icon ||
         {
           email: 'email-search',
@@ -244,8 +263,10 @@ var canvas_renderer_default = {
       }
       const context = measureEdgeText.context;
       if (!context) return text.length * 7;
-      context.font = '11px ' + getComputedStyle(document.body).fontFamily;
-      return context.measureText(text).width;
+      context.font = '11px ' + (measureEdgeText.font || 'sans-serif');
+      const cache = measureEdgeText.cache || (measureEdgeText.cache = new Map());
+      if (!cache.has(text)) cache.set(text, context.measureText(text).width);
+      return cache.get(text);
     }
     function fitNodeText(value, width, size = 13, spacing = 0) {
       const text = String(value);
@@ -338,6 +359,7 @@ var canvas_renderer_default = {
     }
     return {
       render,
+      renderViewport,
       nodeRect,
       nodeIcon,
       dataIcon,

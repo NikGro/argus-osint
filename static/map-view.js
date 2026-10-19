@@ -14,8 +14,10 @@ function draw() {
     centerY = cy - offsetY / 256;
   const tiles = document.getElementById('tiles');
   tiles.replaceChildren();
-  for (let dx = -2; dx <= 2; dx++)
-    for (let dy = -2; dy <= 2; dy++) {
+  const spanX = Math.ceil(innerWidth / 512),
+    spanY = Math.ceil(innerHeight / 512);
+  for (let dx = -spanX; dx <= spanX; dx++)
+    for (let dy = -spanY; dy <= spanY; dy++) {
       const x = Math.floor(centerX) + dx,
         y = Math.floor(centerY) + dy;
       if (y < 0 || y >= count) continue;
@@ -53,4 +55,4 @@ document.addEventListener('pointerup', (event) => {
   drag = null;
   draw();
 });
-draw();
+new ResizeObserver(() => draw()).observe(document.body);

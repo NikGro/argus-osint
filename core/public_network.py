@@ -97,7 +97,7 @@ def request(
             }
             clean["Host"] = parsed.netloc
             clean["Connection"] = "close"
-            clean.setdefault("User-Agent", "Argus/1.0.0-alpha.1 public research")
+            clean.setdefault("User-Agent", "Argus/1.0.0-alpha.3 public research")
             conn.request(method, target, body=body, headers=clean)
             response = conn.getresponse()
             if (
@@ -117,7 +117,10 @@ def request(
                     method, body = "GET", None
                 continue
             chunks, size = [], 0
-            while True:
+            # read1 closes the response (and its socket) after the final byte
+            # of a Content-Length body. Do not set a timeout on that closed
+            # socket in a redundant EOF iteration.
+            while not response.isclosed():
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise AppError("external_timeout", 504)

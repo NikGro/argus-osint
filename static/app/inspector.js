@@ -1,3 +1,4 @@
+import { cropKeys, hasMediaEditor, mountMediaEditor } from './media-editor.js';
 import { researchProfiles } from '../research-profiles.js';
 import { t } from '../i18n.js';
 import { diagnostic } from '../i18n.js';
@@ -84,6 +85,7 @@ var inspector_default = {
     toast,
     toggleGroup
   }) {
+    let disposeMediaEditor = () => {};
     function inspect(preserveGroups = false) {
       applyGraphHighlights();
       if (!preserveGroups) {
@@ -94,6 +96,8 @@ var inspector_default = {
       }
       renderPalette();
       const panel = $('inspector');
+      disposeMediaEditor();
+      disposeMediaEditor = () => {};
       panel.replaceChildren();
       if (!workspaceState.project) {
         inspectorAvailability('');
@@ -216,6 +220,10 @@ var inspector_default = {
                     ([key]) =>
                       !key.startsWith('_merge_') &&
                       !(
+                        hasMediaEditor(node) &&
+                        [...cropKeys, 'start_seconds', 'end_seconds'].includes(key)
+                      ) &&
+                      !(
                         actorAction?.default_params?.source_order &&
                         (key === 'source' || key === 'source_order' || key.startsWith('use_'))
                       ) &&
@@ -239,7 +247,7 @@ var inspector_default = {
             }
           );
       if (['note', 'marker'].includes(node.type)) noteControls(panel, node);
-      if (['url', 'profile', 'image', 'location', 'file'].includes(node.type))
+      if (['url', 'profile', 'image', 'video', 'location', 'file'].includes(node.type))
         displayControls(panel, node);
       if (node.type === 'phone') phoneControls(panel, node, readers);
       let profileReaders = null;
@@ -268,6 +276,26 @@ var inspector_default = {
           toast(error.message);
         }
       };
+      if (hasMediaEditor(node)) {
+        const inputs = new Set(
+          workspaceState.project.document.edges
+            .filter((e) => e.target === node.id)
+            .map((e) => e.source)
+        );
+        const source = workspaceState.project.document.nodes.find(
+          (n) => inputs.has(n.id) && n.type === (node.data.plugin === 'video' ? 'video' : 'image')
+        );
+        const editor = el('div', { class: 'media-editor-root' });
+        panel.append(editor);
+        disposeMediaEditor = mountMediaEditor(editor, {
+          node,
+          source,
+          onChange(values) {
+            node.data.params = { ...node.data.params, ...values };
+            change(node.id);
+          }
+        });
+      }
       if (actorAction?.research_profiles) {
         profileReaders = {};
         const defaults = actorAction.default_params || {};
@@ -314,6 +342,15 @@ var inspector_default = {
       nodeSave.dataset.nodeSave = node.id;
       panel.append(nodeSave);
       saveButtons();
+      if (node.type === 'video' && node.data.file_id)
+        panel.append(
+          el('video', {
+            class: 'preview',
+            controls: '',
+            preload: 'metadata',
+            src: '/api/files/' + node.data.file_id
+          })
+        );
       if (node.type === 'image' && node.data.file_id)
         panel.append(
           el('img', {
@@ -454,6 +491,8 @@ var inspector_default = {
         );
       renderPalette();
       const panel = $('inspector');
+      disposeMediaEditor();
+      disposeMediaEditor = () => {};
       panel.replaceChildren();
       panel.append(
         el(

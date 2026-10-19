@@ -1,4 +1,4 @@
-"""Export a public alpha source snapshot with an explicit allowlist, never user data."""
+"""Export a public beta source snapshot with an explicit allowlist, never user data."""
 
 import argparse
 import hashlib
@@ -30,6 +30,9 @@ ROOT_FILES = {
     ".prettierignore",
     "Dockerfile",
     "LICENSE",
+    "VERSION",
+    "requirements-media.txt",
+    "TEST_QUEUE.md",
     "AGENTS.md",
     "deploy/Dockerfile.vpn",
     "compose.vpn.yaml",
@@ -56,6 +59,7 @@ ROOT_FILES = {
 SUFFIXES = {
     ".py",
     ".js",
+    ".jsx",
     ".cjs",
     ".mjs",
     ".json",
@@ -99,7 +103,7 @@ def payloads():
                 continue
             if any(part.startswith(".") for part in relative.parts):
                 continue
-        if relative.as_posix().startswith("tests/fixtures/"):
+        if relative.as_posix().startswith("tests/fixtures/") and file.name != "frontend-manifest.json":
             continue  # Retired snapshots; active tests import the production bundle.
         if relative.as_posix() in {
             "docs/test-history.md",
@@ -143,7 +147,7 @@ def main():
     manifest = {
         "version": json.loads((ROOT / "package.json").read_text())["version"],
         "source_commit": args.commit,
-        "purpose": "Public alpha source; no user data, credentials, Git history or Synology management services",
+        "purpose": "Public beta source; no user data, credentials, Git history or Synology management services",
         "files": {name: hashlib.sha256(content).hexdigest() for name, content in items},
     }
     items.append(

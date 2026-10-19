@@ -148,16 +148,16 @@ var plugin_settings_default = {
                 'p',
                 { class: 'source-help' },
                 t(
-                  'Gilt fÃ¼r das gesamte Plugin, zum Beispiel Zugangsdaten und Quellenkonfiguration.'
+                  'Gilt für das gesamte Plugin, zum Beispiel Zugangsdaten und Quellenkonfiguration.'
                 )
               )
             );
             preset.append(
-              el('h4', {}, t('Standardwerte fÃ¼r neue Tools')),
+              el('h4', {}, t('Standardwerte für neue Tools')),
               el(
                 'p',
                 { class: 'source-help' },
-                t('Diese Werte kannst du spÃ¤ter fÃ¼r jedes Tool in den Knotendetails Ã¤ndern.')
+                t('Diese Werte kannst du später für jedes Tool in den Knotendetails ändern.')
               )
             );
             form.append(actual, preset);

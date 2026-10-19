@@ -63,3 +63,14 @@ External tools contact providers when explicitly run. Image previews are downloa
 Add an approved community repository under the plugin library, inspect its metadata and install explicitly. Python modules are pinned to a repository commit and SHA-256. Treat community code as trusted code you chose to install; the worker boundary is an additional control, not a claim that arbitrary hostile code is safe.
 
 A data plugin may declare node types, default fields, display defaults, categories, icons and translations. A tool plugin declares accepted input types, actions, parameter metadata and a `run` function. For the exact contract, structured result shapes, prompts and provenance rules, see [PLUGIN_CONTRACT.md](PLUGIN_CONTRACT.md) and the examples. Keep a plugin's returned facts small and atomic; use nested groups to express provider/context relationships.
+
+## Video tools
+
+The bundled `video` plugin provides `trim` and `fuse` actions for a single `video` node. It runs locally without network access or GPU requirements. See [video inputs, parameters and limits](video.md).
+
+## Alpha 4 media additions
+
+- **Photo crop** accepts one local Image input and produces a separate PNG with source provenance. Its rectangle can be edited visually in node details.
+- **Trim video** accepts one Video input and produces a new MP4. Start/end and spatial crop have a graphical editor; plugin settings hold the defaults.
+- **CPU frame fusion** remains a short-sequence operation, not generative reconstruction. It has a separate media runtime.
+- DeepFace, frame fusion and video trimming now have distinct action icons.

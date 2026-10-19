@@ -37,7 +37,15 @@ import tagsFeature from './app/tags.js';
 import logsFeature from './app/logs.js';
 import bindingsFeature from './app/bindings.js';
 import { createState } from './app/state.js';
-import { setupNumberFields } from './number-field.js';
+
+export function instantiateFeature(feature, dependencies) {
+  for (const name of feature.dependencies || []) {
+    if (typeof dependencies[name] !== 'function') {
+      throw new TypeError(`Feature ${feature.name}: missing callback ${name}`);
+    }
+  }
+  return feature.create(dependencies);
+}
 
 export function createApplication(state = createState()) {
   const {
@@ -54,13 +62,13 @@ export function createApplication(state = createState()) {
     shellState,
     logsState
   } = state;
-  const configureUi = configureUiFeature.create({
+  const configureUi = instantiateFeature(configureUiFeature, {
     decorateButton: (...args) => shell.decorateButton(...args),
     fieldName: (...args) => fields.fieldName(...args),
     toast: (...args) => shell.toast(...args),
     uid: (...args) => shell.uid(...args)
   });
-  const bindNavigation = bindNavigationFeature.create({
+  const bindNavigation = instantiateFeature(bindNavigationFeature, {
     libraryState,
     preferencesState,
     $: (...args) => shell.$(...args),
@@ -82,7 +90,7 @@ export function createApplication(state = createState()) {
     settingsState: (...args) => settings.settingsState(...args),
     toast: (...args) => shell.toast(...args)
   });
-  const bindWorkspace = bindWorkspaceFeature.create({
+  const bindWorkspace = instantiateFeature(bindWorkspaceFeature, {
     parameterModal: (...args) => shell.parameterModal(...args),
     canvasState,
     selectionState,
@@ -110,7 +118,7 @@ export function createApplication(state = createState()) {
     zoomAt: (...args) => canvasInput.zoomAt(...args),
     zoomStep: (...args) => canvasInput.zoomStep(...args)
   });
-  const bindCanvas = bindCanvasFeature.create({
+  const bindCanvas = instantiateFeature(bindCanvasFeature, {
     canvasState,
     workspaceState,
     uploadsState,
@@ -121,6 +129,7 @@ export function createApplication(state = createState()) {
     dropPalette: (...args) => palette.dropPalette(...args),
     removeSelectionFrame: (...args) => canvasInput.removeSelectionFrame(...args),
     render: (...args) => canvasRenderer.render(...args),
+    renderViewport: (...args) => canvasRenderer.renderViewport(...args),
     resizablePanel: (...args) => shell.resizablePanel(...args),
     textEditing: (...args) => clipboard.textEditing(...args),
     toast: (...args) => shell.toast(...args),
@@ -129,7 +138,7 @@ export function createApplication(state = createState()) {
     uploadNodeFile: (...args) => uploads.uploadNodeFile(...args),
     zoomAt: (...args) => canvasInput.zoomAt(...args)
   });
-  const bindShortcuts = bindShortcutsFeature.create({
+  const bindShortcuts = instantiateFeature(bindShortcutsFeature, {
     workspaceState,
     selectionState,
     historyState,
@@ -144,7 +153,7 @@ export function createApplication(state = createState()) {
     render: (...args) => canvasRenderer.render(...args),
     textEditing: (...args) => clipboard.textEditing(...args)
   });
-  const bindLifecycle = bindLifecycleFeature.create({
+  const bindLifecycle = instantiateFeature(bindLifecycleFeature, {
     persistenceState,
     preferencesState,
     pluginsState,
@@ -163,7 +172,7 @@ export function createApplication(state = createState()) {
     show: (...args) => shell.show(...args),
     toast: (...args) => shell.toast(...args)
   });
-  const nodeRenderer = nodeRendererFeature.create({
+  const nodeRenderer = instantiateFeature(nodeRendererFeature, {
     selectionState,
     canvasState,
     persistenceState,
@@ -188,7 +197,7 @@ export function createApplication(state = createState()) {
     summary: (...args) => canvasRenderer.summary(...args),
     svg: (...args) => shell.svg(...args)
   });
-  const edgeRenderer = edgeRendererFeature.create({
+  const edgeRenderer = instantiateFeature(edgeRendererFeature, {
     askText: (...args) => shell.askText(...args),
     change: (...args) => persistence.change(...args),
     deleteEdges: (...args) => nodeCommands.deleteEdges(...args),
@@ -201,7 +210,7 @@ export function createApplication(state = createState()) {
     svg: (...args) => shell.svg(...args),
     toast: (...args) => shell.toast(...args)
   });
-  const groupRenderer = groupRendererFeature.create({
+  const groupRenderer = instantiateFeature(groupRendererFeature, {
     selectionState,
     persistenceState,
     $: (...args) => shell.$(...args),
@@ -217,7 +226,7 @@ export function createApplication(state = createState()) {
     svg: (...args) => shell.svg(...args),
     toggleGroup: (...args) => groups.toggleGroup(...args)
   });
-  const shell = shellFeature.create({
+  const shell = instantiateFeature(shellFeature, {
     shellState,
     executionState,
     persistenceState,
@@ -233,11 +242,11 @@ export function createApplication(state = createState()) {
     setupProviderDismissal: (...args) => providers.setupProviderDismissal(...args),
     startJobMonitor: (...args) => actors.startJobMonitor(...args)
   });
-  const api = apiFeature.create({
+  const api = instantiateFeature(apiFeature, {
     shellState,
     updateStatus: (...args) => shell.updateStatus(...args)
   });
-  const projects = projectsFeature.create({
+  const projects = instantiateFeature(projectsFeature, {
     libraryState,
     persistenceState,
     workspaceState,
@@ -262,7 +271,7 @@ export function createApplication(state = createState()) {
     toast: (...args) => shell.toast(...args),
     updateStatus: (...args) => shell.updateStatus(...args)
   });
-  const persistence = persistenceFeature.create({
+  const persistence = instantiateFeature(persistenceFeature, {
     persistenceState,
     workspaceState,
     canvasState,
@@ -273,7 +282,7 @@ export function createApplication(state = createState()) {
     toast: (...args) => shell.toast(...args),
     updateStatus: (...args) => shell.updateStatus(...args)
   });
-  const nodeCommands = nodeCommandsFeature.create({
+  const nodeCommands = instantiateFeature(nodeCommandsFeature, {
     preferencesState,
     canvasState,
     pluginsState,
@@ -296,7 +305,7 @@ export function createApplication(state = createState()) {
     render: (...args) => canvasRenderer.render(...args),
     uid: (...args) => shell.uid(...args)
   });
-  const layout = layoutFeature.create({
+  const layout = instantiateFeature(layoutFeature, {
     workspaceState,
     persistenceState,
     canvasState,
@@ -312,7 +321,7 @@ export function createApplication(state = createState()) {
     orderedGroups: (...args) => groups.orderedGroups(...args),
     render: (...args) => canvasRenderer.render(...args)
   });
-  const groups = groupsFeature.create({
+  const groups = instantiateFeature(groupsFeature, {
     canvasState,
     workspaceState,
     persistenceState,
@@ -329,7 +338,7 @@ export function createApplication(state = createState()) {
     render: (...args) => canvasRenderer.render(...args),
     uid: (...args) => shell.uid(...args)
   });
-  const canvasRenderer = canvasRendererFeature.create({
+  const canvasRenderer = instantiateFeature(canvasRendererFeature, {
     workspaceState,
     canvasState,
     pluginsState,
@@ -351,7 +360,7 @@ export function createApplication(state = createState()) {
     svg: (...args) => shell.svg(...args),
     updateMapOverlays: (...args) => resources.updateMapOverlays(...args)
   });
-  const canvasInput = canvasInputFeature.create({
+  const canvasInput = instantiateFeature(canvasInputFeature, {
     selectionState,
     persistenceState,
     canvasState,
@@ -365,11 +374,12 @@ export function createApplication(state = createState()) {
     nodeRect: (...args) => canvasRenderer.nodeRect(...args),
     portPosition: (...args) => geometry.portPosition(...args),
     render: (...args) => canvasRenderer.render(...args),
+    renderViewport: (...args) => canvasRenderer.renderViewport(...args),
     svg: (...args) => shell.svg(...args),
     uid: (...args) => shell.uid(...args)
   });
-  const geometry = geometryFeature.create({});
-  const inspector = inspectorFeature.create({
+  const geometry = instantiateFeature(geometryFeature, {});
+  const inspector = instantiateFeature(inspectorFeature, {
     selectionState,
     workspaceState,
     pluginsState,
@@ -411,13 +421,13 @@ export function createApplication(state = createState()) {
     toast: (...args) => shell.toast(...args),
     toggleGroup: (...args) => groups.toggleGroup(...args)
   });
-  const fields = fieldsFeature.create({
+  const fields = instantiateFeature(fieldsFeature, {
     countryRegionSelect: (...args) => locationFields.countryRegionSelect(...args),
     el: (...args) => shell.el(...args),
     providerField: (...args) => providers.providerField(...args),
     uid: (...args) => shell.uid(...args)
   });
-  const palette = paletteFeature.create({
+  const palette = instantiateFeature(paletteFeature, {
     libraryState,
     workspaceState,
     pluginsState,
@@ -441,7 +451,7 @@ export function createApplication(state = createState()) {
     toast: (...args) => shell.toast(...args),
     updateDeleteButtons: (...args) => nodeCommands.updateDeleteButtons(...args)
   });
-  const actors = actorsFeature.create({
+  const actors = instantiateFeature(actorsFeature, {
     workspaceState,
     executionState,
     pluginsState,
@@ -458,7 +468,7 @@ export function createApplication(state = createState()) {
     toast: (...args) => shell.toast(...args),
     updateStatus: (...args) => shell.updateStatus(...args)
   });
-  const history = historyFeature.create({
+  const history = instantiateFeature(historyFeature, {
     workspaceState,
     persistenceState,
     historyState,
@@ -468,7 +478,7 @@ export function createApplication(state = createState()) {
     inspect: (...args) => inspector.inspect(...args),
     render: (...args) => canvasRenderer.render(...args)
   });
-  const clipboard = clipboardFeature.create({
+  const clipboard = instantiateFeature(clipboardFeature, {
     workspaceState,
     historyState,
     selectionState,
@@ -484,7 +494,7 @@ export function createApplication(state = createState()) {
     toast: (...args) => shell.toast(...args),
     uid: (...args) => shell.uid(...args)
   });
-  const catalogue = catalogueFeature.create({
+  const catalogue = instantiateFeature(catalogueFeature, {
     pluginsState,
     workspaceState,
     preferencesState,
@@ -492,14 +502,14 @@ export function createApplication(state = createState()) {
     providerSearchKey: (...args) => providers.providerSearchKey(...args),
     renderPalette: (...args) => palette.renderPalette(...args)
   });
-  const pluginSources = pluginSourcesFeature.create({
+  const pluginSources = instantiateFeature(pluginSourcesFeature, {
     button: (...args) => shell.button(...args),
     editFields: (...args) => fields.editFields(...args),
     el: (...args) => shell.el(...args),
     pluginText: (...args) => catalogue.pluginText(...args),
     sourceLabel: (...args) => catalogue.sourceLabel(...args)
   });
-  const pluginSettings = pluginSettingsFeature.create({
+  const pluginSettings = instantiateFeature(pluginSettingsFeature, {
     pluginsState,
     preferencesState,
     $: (...args) => shell.$(...args),
@@ -523,7 +533,7 @@ export function createApplication(state = createState()) {
     toast: (...args) => shell.toast(...args),
     updateStatus: (...args) => shell.updateStatus(...args)
   });
-  const pluginLibrary = pluginLibraryFeature.create({
+  const pluginLibrary = instantiateFeature(pluginLibraryFeature, {
     pluginsState,
     $: (...args) => shell.$(...args),
     api: (...args) => api.api(...args),
@@ -536,7 +546,7 @@ export function createApplication(state = createState()) {
     renderInstalled: (...args) => pluginSettings.renderInstalled(...args),
     searchText: (...args) => shell.searchText(...args)
   });
-  const settings = settingsFeature.create({
+  const settings = instantiateFeature(settingsFeature, {
     preferencesState,
     $: (...args) => shell.$(...args),
     api: (...args) => api.api(...args),
@@ -551,7 +561,7 @@ export function createApplication(state = createState()) {
     uid: (...args) => shell.uid(...args),
     updateStatus: (...args) => shell.updateStatus(...args)
   });
-  const resources = resourcesFeature.create({
+  const resources = instantiateFeature(resourcesFeature, {
     api: (...args) => api.api(...args),
     pluginsState,
     canvasState,
@@ -568,24 +578,24 @@ export function createApplication(state = createState()) {
     svg: (...args) => shell.svg(...args),
     toast: (...args) => shell.toast(...args)
   });
-  const locationFields = locationFieldsFeature.create({
+  const locationFields = instantiateFeature(locationFieldsFeature, {
     el: (...args) => shell.el(...args),
     measureEdgeText: (...args) => canvasRenderer.measureEdgeText(...args),
     svg: (...args) => shell.svg(...args)
   });
-  const uploads = uploadsFeature.create({
+  const uploads = instantiateFeature(uploadsFeature, {
     workspaceState,
     canvasState,
     $: (...args) => shell.$(...args),
     modalChoice: (...args) => shell.modalChoice(...args),
     newNode: (...args) => nodeCommands.newNode(...args)
   });
-  const providers = providersFeature.create({
+  const providers = instantiateFeature(providersFeature, {
     pluginsState,
     button: (...args) => shell.button(...args),
     el: (...args) => shell.el(...args)
   });
-  const tags = tagsFeature.create({
+  const tags = instantiateFeature(tagsFeature, {
     preferencesState,
     canvasState,
     change: (...args) => persistence.change(...args),
@@ -597,7 +607,7 @@ export function createApplication(state = createState()) {
     resourceActions: (...args) => resources.resourceActions(...args),
     svg: (...args) => shell.svg(...args)
   });
-  const logs = logsFeature.create({
+  const logs = instantiateFeature(logsFeature, {
     workspaceState,
     logsState,
     $: (...args) => shell.$(...args),
@@ -606,7 +616,7 @@ export function createApplication(state = createState()) {
     save: (...args) => persistence.save(...args),
     show: (...args) => shell.show(...args)
   });
-  const bindings = bindingsFeature.create({
+  const bindings = instantiateFeature(bindingsFeature, {
     configureUi: (...args) => configureUi.configureUi(...args),
     bindNavigation: (...args) => bindNavigation.bindNavigation(...args),
     bindWorkspace: (...args) => bindWorkspace.bindWorkspace(...args),
@@ -696,13 +706,5 @@ export { providersFeature };
 export { tagsFeature };
 export { logsFeature };
 export { bindingsFeature };
-if (
-  typeof document !== 'undefined' &&
-  !globalThis.ARGUS_TEST_MODE &&
-  !globalThis.ARGUS_MOBILE_BLOCKED
-) {
-  setupNumberFields();
-  createApplication().initialize();
-}
 
 export { default as routing } from './graph-routing.js';

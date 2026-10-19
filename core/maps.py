@@ -16,8 +16,8 @@ class Maps:
         self.directory.mkdir(exist_ok=True)
         self.previews = {}
 
-    def preview(self, lat, lon, query, provider="osm"):
-        key = (str(lat), str(lon), str(query), provider)
+    def preview(self, lat, lon, query, provider="osm", language="en"):
+        key = (str(lat), str(lon), str(query), provider, language)
         cached = self.previews.get(key)
         if cached and time.monotonic() - cached[0] < 600:
             return cached[1]
@@ -51,8 +51,8 @@ class Maps:
                     return html
             except Exception:
                 pass
-        if provider == "google":
-            raise AppError("map_unavailable", 502)
+        # A preferred Google preview can be unavailable without the namespace
+        # broker. Use the built-in server-side map, never a client-side VPN bypass.
         try:
             latitude = float(lat)
             longitude = float(lon)
@@ -73,8 +73,33 @@ class Maps:
             longitude, latitude = found[0]["geometry"]["coordinates"][:2]
         latitude = max(-85, min(85, latitude))
         longitude = max(-180, min(180, longitude))
+        # Resolve one central tile before emitting a map shell. A blocked egress
+        # must show the localized unavailable state, not a grid of broken images.
+        count = 2**14
+        x = int((longitude + 180) / 360 * count) % count
+        y = int((1 - math.asinh(math.tan(math.radians(latitude))) / math.pi) / 2 * count)
+        self.tile(14, x, max(0, min(count - 1, y)))
+        caption = "Kartenvorschau" if language == "de" else "Map preview"
+        html = (
+            f'<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/map-view.css"></head><body data-lat="{latitude}" data-lon="{longitude}"><div id="tiles"></div><span id="marker">●</span><div id="zoom"><button id="in" aria-label="Zoom in">+</button><button id="out" aria-label="Zoom out">−</button></div><small>© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> · {caption}</small><script type="module" src="/map-view.js"></script></body></html>'
+        ).encode()
+
+        if len(self.previews) >= 64:
+            self.previews.pop(next(iter(self.previews)))
+        self.previews[key] = (time.monotonic(), html)
+        return html
+
+    @staticmethod
+    def unavailable(language="en"):
+        message = (
+            "Karten-Vorschau derzeit nicht verfügbar."
+            if language == "de"
+            else "Map preview is currently unavailable."
+        )
         return (
-            f'<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/map-view.css"></head><body data-lat="{latitude}" data-lon="{longitude}"><div id="tiles"></div><span id="marker">●</span><div id="zoom"><button id="in" aria-label="Zoom in">+</button><button id="out" aria-label="Zoom out">−</button></div><small>© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> · serverseitige Vorschau</small><script type="module" src="/map-view.js"></script></body></html>'
+            '<!doctype html><html><meta charset="utf-8"><link rel="stylesheet" href="/map-view.css"><body class="map-unavailable"><p role="status">'
+            + message
+            + "</p></body></html>"
         ).encode()
 
     def tile(self, z, x, y):

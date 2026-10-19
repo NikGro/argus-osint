@@ -1,4 +1,16 @@
 var fieldNames = {
+  crop_enabled: 'Bildausschnitt zuschneiden',
+  crop_x: 'Horizontale Position (0–1)',
+  crop_y: 'Vertikale Position (0–1)',
+  crop_width: 'Breite des Ausschnitts (0–1)',
+  crop_height: 'Höhe des Ausschnitts (0–1)',
+  start_seconds: 'Startzeit (Sekunden)',
+  end_seconds: 'Endzeit (Sekunden)',
+  duration: 'Dauer (Sekunden)',
+  burst_seconds: 'Sequenzdauer (Sekunden)',
+  max_frames: 'Maximale Frames',
+  scale_factor: 'Ausgabeskalierung',
+  alignment_min: 'Mindestqualität der Ausrichtung',
   model_name: 'Modell',
   detector_backend: 'Gesichtsdetektor',
   distance_metric: 'Distanzmetrik',
@@ -122,6 +134,10 @@ var providerFields = {
   phoneinfoga: ['disabled_scanners', 'numverify_api_key', 'googlecse_api_key', 'googlecse_cx']
 };
 var displayOptions = {
+  video: [
+    ['preview', 'Glance: Videoplayer'],
+    ['videoButton', 'Quick Action: Video öffnen']
+  ],
   profile: [['openButton', 'Quick Action: Link \xF6ffnen']],
   url: [['openButton', 'Quick Action: Link \xF6ffnen']],
   image: [

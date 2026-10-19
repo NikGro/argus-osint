@@ -26,10 +26,15 @@
     "line": 16
   },
   "imagePreviewHeight": 210,
-  "mapHeight": 228,
+  "mapHeight": 184,
   "quickActionHeight": 48,
   "marker": {
     "width": 400,
     "height": 240
-  }
+  },
+  "video": {
+    "width": 300,
+    "height": 76
+  },
+  "videoPreviewHeight": 220
 }

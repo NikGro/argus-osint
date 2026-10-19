@@ -29,7 +29,7 @@ const ArgusRouting = (() => {
   function connectionGeometry(a, b, sourcePort = null, targetPort = null) {
     const from = portPosition(a, sourcePort?.startsWith('right') ? sourcePort : 'right'),
       to = portPosition(b, targetPort?.startsWith('left') ? targetPort : 'left'),
-      distance = Math.min(180, Math.max(35, Math.hypot(to.x - from.x, to.y - from.y) * 0.42));
+      distance = to.x >= from.x ? (to.x - from.x) / 2 : 25 * Math.sqrt(from.x - to.x);
     const c1x = from.x + from.nx * distance,
       c1y = from.y + from.ny * distance,
       c2x = to.x + to.nx * distance,
@@ -238,11 +238,11 @@ const ArgusRouting = (() => {
       to = portPosition(b, edge.target_port || 'left'),
       width = Math.max(0, measuredWidth ?? label.length * 7) + 66,
       height = 28,
-      backwards = to.x - from.x < 80,
+      backwards = from.x - 20 > to.x,
       middle = (from.x + to.x) / 2;
     const base = {
       x: middle,
-      y: backwards ? Math.max(a.y + a.h, b.y + b.h) + 80 : (from.y + to.y) / 2
+      y: backwards ? from.y + 130 : (from.y + to.y) / 2
     };
     const clear = (p) => {
       const box = { x: p.x - width / 2, y: p.y - height / 2, w: width, h: height };
@@ -250,53 +250,63 @@ const ArgusRouting = (() => {
         !obstacles.some((r) => intersects(box, r, 8)) && !labels.some((r) => intersects(box, r, 8))
       );
     };
+    // Geometry follows n8n: forward Bezier, backward rounded detour. Label
+    // collision handling chooses a point ON that path instead of bending it.
+    const geometry = connectionGeometry(a, b, edge.source_port, edge.target_port);
+    const segments = backwards
+      ? roundedRoute([
+          from,
+          { x: from.x + 40, y: from.y },
+          { x: from.x + 40, y: base.y },
+          { x: to.x - 40, y: base.y },
+          { x: to.x - 40, y: to.y },
+          to
+        ])
+      : [[from, { x: geometry.c1x, y: geometry.c1y }, { x: geometry.c2x, y: geometry.c2y }, to]];
     let point = base;
     if (!clear(point)) {
-      let found = false;
-      for (let radius = 32; radius <= 640 && !found; radius += 32) {
-        for (const dy of [-1, 1]) {
-          const candidate = { x: base.x, y: base.y + dy * radius };
-          if (clear(candidate)) {
-            point = candidate;
-            found = true;
-            break;
-          }
-        }
-      }
-      if (!found)
-        point = {
-          x: base.x,
-          y:
-            Math.min(a.y, b.y, ...obstacles.map((r) => r.y), ...labels.map((r) => r.y)) -
-            height -
-            32
-        };
+      const candidates = segments.flatMap((segment) =>
+        [0.25, 0.5, 0.75].map((t) => cubicPoint(segment, t))
+      );
+      candidates.sort(
+        (p, q) => Math.hypot(p.x - base.x, p.y - base.y) - Math.hypot(q.x - base.x, q.y - base.y)
+      );
+      point = candidates.find(clear) || base;
     }
-    let points;
-    if (!backwards && point === base) {
-      points = [from, { x: middle, y: from.y }, { x: middle, y: to.y }, to];
-    } else {
-      const lead = from.x + 40,
-        tail = to.x - 40;
-      points = [
-        from,
-        { x: lead, y: from.y },
-        { x: lead, y: point.y },
-        point,
-        { x: tail, y: point.y },
-        { x: tail, y: to.y },
-        to
-      ];
-    }
-    const segments = roundedRoute(points);
     labels.push({ x: point.x - width / 2, y: point.y - height / 2, w: width, h: height });
+    if (edge.label_clipping === 'mask') {
+      const points = segments.flat();
+      const minX = Math.min(...points.map((p) => p.x), point.x - width / 2) - 40;
+      const minY = Math.min(...points.map((p) => p.y), point.y - height / 2) - 40;
+      return {
+        path: curvePath(segments),
+        labelX: point.x,
+        labelY: point.y,
+        maskBounds: {
+          x: minX,
+          y: minY,
+          w: Math.max(...points.map((p) => p.x), point.x + width / 2 + 70) - minX + 40,
+          h: Math.max(...points.map((p) => p.y), point.y + height / 2) - minY + 40
+        }
+      };
+    }
     const gap = curveLabelGap(
       segments,
       Math.max(0, measuredWidth ?? label.length * 7) + 16,
       height,
       point
     );
+    const controlGap = curveLabelGap(
+      segments,
+      Math.max(0, measuredWidth ?? label.length * 7) + 72,
+      height,
+      { x: point.x + 28, y: point.y }
+    );
     return {
+      controlPaths: [
+        { path: gap.before, arrow: false },
+        { path: controlGap.after, arrow: true }
+      ],
       path: curvePath(segments),
       labelX: point.x,
       labelY: point.y,

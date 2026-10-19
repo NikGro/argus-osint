@@ -176,7 +176,7 @@ class UpdatesTests(unittest.TestCase):
             for c in ("de", "en")
         ]
         self.assertEqual(set(packs[0]), set(packs[1]))
-        with patch.object(server, "settings", return_value={"language": "en"}):
+        with patch.object(server.get_default_application(), "settings", return_value={"language": "en"}):
             output = server.report(self.project()).decode()
         self.assertIn("Research report", output)
         self.assertIn("Print / Save as PDF", output)

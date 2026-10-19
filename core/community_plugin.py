@@ -21,7 +21,7 @@ class CommunityPlugin:
         files = {
             node["data"]["file_id"]: context["resolve_file"](node["data"]["file_id"])
             for node in inputs
-            if node["type"] in ("image", "file") and node["data"].get("file_id")
+            if node["type"] in ("image", "file", "video") and node["data"].get("file_id")
         }
         return invoke(
             "community",

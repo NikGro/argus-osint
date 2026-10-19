@@ -7,7 +7,7 @@ var bindings_canvas_default = {
     'canvasPointerUp',
     'dropPalette',
     'removeSelectionFrame',
-    'render',
+    'renderViewport',
     'resizablePanel',
     'textEditing',
     'toast',
@@ -26,7 +26,7 @@ var bindings_canvas_default = {
     canvasPointerUp,
     dropPalette,
     removeSelectionFrame,
-    render,
+    renderViewport,
     resizablePanel,
     textEditing,
     toast,
@@ -65,7 +65,7 @@ var bindings_canvas_default = {
               canvasState.pan.x -= event.deltaX * unit;
               canvasState.pan.y -= event.deltaY * unit;
             }
-            render();
+            renderViewport();
           }
         },
         {

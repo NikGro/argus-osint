@@ -12,7 +12,14 @@ MAX_GRAPH_BYTES = 12 * 1024 * 1024
 
 class ProjectRepository:
     def __init__(
-        self, connect, canonicalize, validate, now, prepare=None, cleanup=None
+        self,
+        connect,
+        canonicalize,
+        validate,
+        now,
+        prepare=None,
+        cleanup=None,
+        attach_files=None,
     ):
         self.connect, self.canonicalize, self.validate, self.now = (
             connect,
@@ -22,6 +29,7 @@ class ProjectRepository:
         )
         self.prepare = prepare or (lambda doc: self._legacy_prepare(doc))
         self.cleanup = cleanup
+        self.attach_files = attach_files
         self.history = RunHistory(connect)
 
     def _legacy_prepare(self, doc):
@@ -31,6 +39,8 @@ class ProjectRepository:
 
     def _encode(self, conn, pid, document):
         doc = self.prepare(document)
+        if self.attach_files:
+            self.attach_files(conn, pid, doc)
         doc = self.history.detach(conn, pid, doc)
         encoded = json.dumps(doc, ensure_ascii=False, allow_nan=False)
         while len(encoded.encode()) > MAX_GRAPH_BYTES and len(doc.get("runs", [])) > 1:
@@ -191,6 +201,8 @@ class ProjectRepository:
                     ).fetchone()[0]
                 )
             )
+            if conn.execute("SELECT 1 FROM sqlite_master WHERE name='project_files'").fetchone():
+                candidates.update(row[0] for row in conn.execute("SELECT file_id FROM project_files WHERE project_id=?", (pid,)))
             for row in conn.execute(
                 "SELECT record FROM run_history WHERE project_id=?", (pid,)
             ):

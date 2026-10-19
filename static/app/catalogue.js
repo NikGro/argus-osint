@@ -38,7 +38,11 @@ var catalogue_default = {
       if (workspaceState.project) renderPalette();
     }
     function pluginText(plugin, key) {
-      const localized = plugin?.translations?.[language]?.[key];
+      const catalog = plugin?.translations;
+      const stable =
+        catalog?.en && Object.keys(catalog.en).find((source) => catalog.en[source] === key);
+      const localized =
+        catalog?.[language]?.[key] ?? (stable ? catalog?.[language]?.[stable] : undefined);
       if (localized !== undefined) return localized;
       const common = t(key);
       if (common !== key) return common;
@@ -56,8 +60,13 @@ var catalogue_default = {
       return entry ? pluginText(entry.plugin, entry.node.name) : t(nodeLabels[type] || type);
     }
     function nodeTitle(node) {
+      if (node.evidence?.label_custom) return node.label;
       if (node.evidence?.label_key)
-        return pluginText(nodePlugin(node.type), node.evidence.label_key);
+        return pluginText(
+          pluginsState.catalog.find((p) => p.id === (node.data?.plugin || node.evidence?.plugin)) ||
+            nodePlugin(node.type),
+          node.evidence.label_key
+        );
       if (node.evidence?.origin === 'manual') return node.label;
       return pluginText(
         pluginsState.catalog.find((p) => p.id === node.evidence?.plugin) || nodePlugin(node.type),

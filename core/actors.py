@@ -1,5 +1,6 @@
 """Serialized actor orchestration, plugin boundary validation and result persistence."""
 
+from core.tool_contracts import validate_result, result_state
 import copy
 from core.partial_results import include_warning_node
 from uuid import uuid4
@@ -160,10 +161,7 @@ class ActorService:
                         "transient": body.get("transient", {}),
                     },
                 )
-            if not isinstance(result, dict) or not isinstance(
-                result.get("warnings", []), list
-            ):
-                raise ValueError("Ungültige Aktorantwort.")
+            result = validate_result(result)
             result = {
                 **result,
                 "warnings": [
@@ -212,19 +210,7 @@ class ActorService:
                     },
                     "started_at": started,
                     "finished_at": self.now(),
-                    "status": (
-                        "failed"
-                        if result.get("failed")
-                        else (
-                            "needs_input"
-                            if result.get("input_request")
-                            else (
-                                "needs_selection"
-                                if result.get("candidates")
-                                else "completed"
-                            )
-                        )
-                    ),
+                    "status": result_state(result),
                     "candidates": result.get("candidates", []),
                     "input_request": result.get("input_request"),
                     "updated_inputs": [u["id"] for u in result.get("updates", [])],
@@ -236,15 +222,7 @@ class ActorService:
             )
             if module.PLUGIN["id"] == "merge" and not result.get("input_request"):
                 actor["data"]["params"] = {}
-            actor["data"]["status"] = (
-                "failed"
-                if result.get("failed")
-                else (
-                    "needs_input"
-                    if result.get("input_request")
-                    else "needs_selection" if result.get("candidates") else "completed"
-                )
-            )
+            actor["data"]["status"] = result_state(result)
         except Exception as exc:
             doc = original
             actor = next(n for n in doc["nodes"] if n["id"] == actor["id"])
