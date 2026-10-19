@@ -61,7 +61,14 @@ def main():
     mount("--bind", str(directory / "empty"), "/data")
     mount("-t", "tmpfs", "-o", "mode=1777,size=384m", "tmpfs", "/tmp")
     subprocess.run(["/usr/sbin/ip", "link", "set", "lo", "up"], check=True)
-    resource.setrlimit(resource.RLIMIT_FSIZE, (12 * 1024 * 1024, 12 * 1024 * 1024))
+    # Chromium patches a private copy of its driver, which exceeds 12 MiB.
+    # Community code retains the tighter file budget. Both tmpfs mounts stay bounded.
+    file_budget = (
+        (64 if message["kind"] in {"browser", "browser_self_test"} else 12)
+        * 1024
+        * 1024
+    )
+    resource.setrlimit(resource.RLIMIT_FSIZE, (file_budget, file_budget))
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     resource.setrlimit(resource.RLIMIT_NPROC, (256, 256))
     resource.setrlimit(resource.RLIMIT_NOFILE, (512, 512))

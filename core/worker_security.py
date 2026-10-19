@@ -179,8 +179,11 @@ def install_seccomp():
         for family in (16, 17, 38, 40, 44):  # netlink, packet, crypto, vsock, XDP
             deny("socket", Argument(0, 4, family, 0))
         deny("socket", Argument(1, 7, 15, 3))  # SOCK_RAW, even with CLOEXEC flags
-        if seccomp.seccomp_load(context) != 0:
-            raise RuntimeError("Cannot load worker seccomp")
+        result = seccomp.seccomp_load(context)
+        if result != 0:
+            raise RuntimeError(
+                f"Cannot load worker seccomp: result={result}, errno={ctypes.get_errno()}"
+            )
     finally:
         seccomp.seccomp_release(context)
 

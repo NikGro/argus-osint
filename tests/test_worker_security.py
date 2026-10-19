@@ -71,6 +71,14 @@ class WorkerSecurity(unittest.TestCase):
                 """
 import ctypes, errno, subprocess, sys, threading
 from core.worker_security import install_seccomp
+libc=ctypes.CDLL(None,use_errno=True)
+assert libc.prctl(38,1,0,0,0)==0
+# A null filter must be rejected with EFAULT on a supporting kernel.
+# EINVAL/ENOSYS indicates missing filter support, not a successful boundary.
+rc=libc.prctl(22,2,0,0,0)
+if rc == -1 and ctypes.get_errno() in (errno.EINVAL,errno.ENOSYS):
+    print("Host kernel does not support seccomp filters")
+    sys.exit(77)
 install_seccomp()
 libc=ctypes.CDLL(None,use_errno=True)
 assert libc.mount(b'none',b'/nonexistent',b'tmpfs',0,None)==-1
@@ -86,6 +94,8 @@ subprocess.run([sys.executable,'-c','print("child-ok")'],check=True)
             text=True,
             timeout=20,
         )
+        if result.returncode == 77:
+            self.skipTest(result.stdout.strip())
         self.assertEqual(result.returncode, 0, result.stderr)
 
 
