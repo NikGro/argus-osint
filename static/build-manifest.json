@@ -71,7 +71,7 @@
     "static/react/ui/layout.jsx": "68e1e9939da759f2ee8cd15fcd4490f9b89fa62bf02700ba6fe33c48274cdf28",
     "static/react/ui/modal.jsx": "76989c603a9a03fb933fc4a21ec4a62ba100e02a00f9445ba60b208769bcbe20",
     "static/react/ui/pickers.jsx": "0a052a08499e9ea8d4485b71c8445d308223154b6ac982fc47584374839b9e0b",
-    "static/react/ui/select.jsx": "bc7fe1013a8917513b7a45b6a1ac2ddb724d1b469ee85c62eb77e35f3d95db69",
+    "static/react/ui/select.jsx": "8fbbfc80b6cd94f88c88c45957a51d87e29031e93916f5b6163764ad477a7c5c",
     "static/react/ui/sortable.jsx": "3c09309f603f81fec9abb1a0a9931a4f5f2602dba589451d371c4e87970ad501",
     "static/react/workspace-preferences.js": "2663601b83ee85aa4acdb26ae96da6dd49dadfc663715c4c3ab1e3a92116f7af",
     "static/react/workspace.jsx": "e85bb3aa3a0d6d0b61924e0ee29b720fdda401df0c842ec73857d051362f1659",
@@ -90,5 +90,5 @@
     "static/vpn-settings.js": "533b86bfabab5766c7cf7112092bb93c5cb9a4fc78f1553150034b50edc5abf8",
     "static/workspace-layout.js": "478425c434fb2a75e48ee0b647790e8d8ec19bdaa55ace9b366cd4adcadd5042"
   },
-  "bundle_sha256": "f83963c52d3d33964be4c620edef91e4402ef0219db7198c4fb0c72dc1ff593d"
+  "bundle_sha256": "31b91ada227a4107ff053a17342aed8d0f4661c0b96a58dc4380737c53c85475"
 }

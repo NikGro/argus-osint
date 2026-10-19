@@ -76,6 +76,14 @@ const path = require('node:path');
       await page.locator('.node[data-id=phone]').click();await page.locator('#inspector .phone-input').waitFor();assert.equal(await page.locator('#inspector .phone-input').count(),1);
       const report=await page.locator('.node-report-section').evaluate(el=>getComputedStyle(el).borderBottomWidth);assert.equal(report,'0px');
     });
+    await check('Dropdown stays open after queued inspector scroll',async()=>{
+      await page.locator('.node[data-id=phone]').click();
+      await page.locator('.verification-section [role=combobox]').click();
+      await page.locator('#inspector').evaluate(el=>el.dispatchEvent(new Event('scroll')));
+      await page.waitForTimeout(100);
+      assert.equal(await page.locator('.react-select-popup').count(),1);
+      await page.keyboard.press('Escape');
+    });
     await check('Note releases keyboard focus for graph deletion',async()=>{
       await page.locator('.note-editor').click();await page.keyboard.type(' fixture');
       await page.locator('.node[data-id=error]').click();await page.keyboard.press('Delete');

@@ -44,6 +44,7 @@ jobs:
           printf 'FROM argus:ci\nUSER root\nCOPY requirements-test.txt /tmp/requirements-test.txt\nRUN pip install --no-cache-dir -r /tmp/requirements-test.txt\nUSER workbench\n' > Dockerfile.ci
           docker build -f Dockerfile.ci -t argus-tests:ci .
       - name: Complete offline Python and real Chromium suite
+        id: python
         run: |
           set -euo pipefail
           mkdir -p artifacts
@@ -52,6 +53,7 @@ jobs:
             -v "$PWD/tests:/app/tests:ro" argus-tests:ci \
             -m unittest discover -s /app/tests -v 2>&1 | tee artifacts/python-tests.log
       - name: Verify privileged bootstrap and zero-capability worker
+        if: ${{ !cancelled() && (steps.python.outcome == 'success' || steps.python.outcome == 'failure') }}
         run: |
           docker run --rm --network none --user root --cap-drop ALL \
             --cap-add SETPCAP --cap-add SETUID --cap-add SETGID \

@@ -36,16 +36,16 @@ export function Select({
       if (!anchor.current?.contains(event.target) && !popup.current?.contains(event.target))
         setOpen(false);
     };
-    const close = (event) => {
-      if (!popup.current?.contains(event.target)) setOpen(false);
+    const reposition = (event) => {
+      if (!popup.current?.contains(event.target)) positionPopup();
     };
     document.addEventListener('pointerdown', dismiss);
-    window.addEventListener('resize', close);
-    document.addEventListener('scroll', close, true);
+    window.addEventListener('resize', reposition);
+    document.addEventListener('scroll', reposition, true);
     return () => {
       document.removeEventListener('pointerdown', dismiss);
-      window.removeEventListener('resize', close);
-      document.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', reposition);
+      document.removeEventListener('scroll', reposition, true);
     };
   }, [open]);
   function choose(item) {
@@ -53,18 +53,26 @@ export function Select({
     setOpen(false);
     anchor.current?.focus();
   }
-  function toggle() {
-    if (open) {
+  function positionPopup() {
+    if (!anchor.current) return;
+    const box = anchor.current.getBoundingClientRect();
+    if (box.bottom < 0 || box.top > innerHeight) {
       setOpen(false);
       return;
     }
-    const box = anchor.current.getBoundingClientRect();
     const height = Math.min(320, Math.max(180, innerHeight - box.bottom - 16));
     setPosition({
       left: Math.min(box.left, innerWidth - Math.max(240, box.width) - 12),
       top: box.bottom + height > innerHeight ? Math.max(12, box.top - height) : box.bottom + 6,
       width: Math.max(240, box.width)
     });
+  }
+  function toggle() {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    positionPopup();
     setQuery('');
     setActive(0);
     setOpen(true);
