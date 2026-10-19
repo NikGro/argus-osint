@@ -44,3 +44,7 @@ Direct pins reduce drift; transitive Python packages, base images and Debian rep
 ## React interface
 
 React and React DOM 19.3.1 and Scheduler are maintained by Meta Platforms and contributors and distributed under MIT. Their notices are shipped in `static/react-LICENSE.txt`, `static/react-dom-LICENSE.txt` and `static/scheduler-LICENSE.txt`. The browser bundle is built locally and served by ARGUS; no CDN is required.
+# Container syscall policy
+
+`deploy/seccomp-argus.json` is adapted from [Moby profiles](https://github.com/moby/profiles), commit `6fe7deb1b9fb7c0397a4593480d7d22b9ee8caef`, under Apache License 2.0. Copyright Moby contributors. The ARGUS adaptation narrows the SYS_ADMIN conditional exception to namespace/mount plumbing. The upstream license is reproduced in [deploy/LICENSE.moby](deploy/LICENSE.moby).
+

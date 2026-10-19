@@ -5,7 +5,7 @@
   },
   "profile": {
     "width": 280,
-    "height": 96
+    "height": 76
   },
   "person": {
     "width": 280,
@@ -26,7 +26,7 @@
     "line": 16
   },
   "imagePreviewHeight": 210,
-  "mapHeight": 184,
+  "mapHeight": 160,
   "quickActionHeight": 48,
   "marker": {
     "width": 400,

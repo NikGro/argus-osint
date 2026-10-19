@@ -1,0 +1,3 @@
+# Test-only dependencies, separate from runtime and inference environments.
+trio==0.34.0
+selenium==4.51.0

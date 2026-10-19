@@ -162,30 +162,14 @@ export function createController() {
       redraw();
     },
     async deleteProject(project) {
-      if (!(await overrides.askConfirm(t('Projekt löschen'), project.title))) return;
+      if (!(await overrides.askConfirm(t('ui.delete_project'), project.title))) return;
       await methods.api('/api/projects/' + project.id + '/delete', { revision: project.revision });
       state.libraryState.projectIndex = await methods.api('/api/projects');
       redraw();
     }
   };
-  for (const [name, feature] of Object.entries(features)) {
-    if (!name.endsWith('Feature') || typeof feature?.create !== 'function') continue;
-    const dependencies = Object.fromEntries(
-      (feature.dependencies || []).map((key) => [
-        key,
-        (...args) => {
-          const method = overrides[key] || methods[key];
-          if (!method) throw Error(`Unregistered command: ${feature.name}.${key}`);
-          return method(...args);
-        }
-      ])
-    );
-    const commands = feature.create({ ...state, ...dependencies });
-    for (const [key, method] of Object.entries(commands)) {
-      if (key in methods) throw Error(`Duplicate command: ${key}`);
-      methods[key] = method;
-    }
-  }
+  const domains = features.createApplication(state, overrides);
+  Object.assign(methods, domains.commands);
   Object.assign(methods, overrides);
   UI.configure({ notice: (request) => dialog({ ...request, mode: 'notice' }) });
   return {

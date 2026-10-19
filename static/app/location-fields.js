@@ -54,7 +54,7 @@ var location_fields_default = {
       return [...new Set(parts)].join(', ');
     }
     function locationDisplayLines(data = {}, width) {
-      const text = formatLocation(data) || data.formatted_address || t('Standortangabe'),
+      const text = formatLocation(data) || data.formatted_address || t('ui.location'),
         maxWidth = width - 24,
         lines = [];
       let line = '';
@@ -136,7 +136,7 @@ var location_fields_default = {
         input = reader?.control;
       if (!input) return;
       const select = el('select', {
-          'aria-label': t('L\xE4ndervorwahl'),
+          'aria-label': t('ui.country_calling_code'),
           class: 'phone-prefix'
         }),
         names = new Intl.DisplayNames([language], {

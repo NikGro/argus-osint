@@ -47,7 +47,7 @@ var shell_default = {
     }
     function appDialog(mode, title, message, value = '') {
       if (shellState.dialogRequest)
-        return Promise.reject(Error(t('Bitte zuerst das offene Fenster schlie\xDFen.')));
+        return Promise.reject(Error(t('ui.close_the_open_dialog_first')));
       return new Promise((resolve) => {
         shellState.dialogRequest = {
           mode,
@@ -60,8 +60,7 @@ var shell_default = {
         $('inputDialogMessage').hidden = mode === 'text';
         $('inputDialogValue').hidden = mode === 'confirm';
         $('inputDialogValue').value = value;
-        $('inputDialogSubmit').textContent =
-          mode === 'confirm' ? t('Best\xE4tigen') : t('\xDCbernehmen');
+        $('inputDialogSubmit').textContent = mode === 'confirm' ? t('ui.confirm') : t('ui.apply');
         $('inputDialog').style.transform = '';
         $('inputDialog').dataset.dx = 0;
         $('inputDialog').dataset.dy = 0;
@@ -145,30 +144,30 @@ var shell_default = {
         .toLocaleLowerCase();
     }
     function decorateButton(button2, label) {
-      if (label === t('L\xE4uft \u2026')) {
+      if (label === t('ui.running')) {
         buttonContent(button2, label, 'spinner', false, true);
         return;
       }
       const trash = [
-        t('Knoten l\xF6schen'),
-        t('L\xF6schen'),
-        t('Entfernen'),
-        t('Plugin entfernen')
+        t('ui.delete_node'),
+        t('ui.delete'),
+        t('ui.remove'),
+        t('ui.remove_plugin')
       ].includes(label);
       const name = trash
         ? 'trash'
-        : label === t('Archivieren')
+        : label === t('ui.archive_a54c8deb')
           ? 'archive'
-          : label === t('Wiederherstellen')
+          : label === t('ui.restore')
             ? 'restore'
-            : label === t('Einstellungen speichern')
+            : label === t('ui.save_settings')
               ? 'save'
-              : label === t('\xD6ffnen')
+              : label === t('ui.open_bc385a30')
                 ? 'file'
-                : label === t('Link \xF6ffnen')
+                : label === t('ui.open_link')
                   ? 'link'
                   : null;
-      buttonContent(button2, label, name, trash || label === t('Archivieren'));
+      buttonContent(button2, label, name, trash || label === t('ui.archive_a54c8deb'));
     }
     function iconActionButton(text, fn, glyph, cls) {
       const b = button(text, fn, cls);
@@ -211,7 +210,7 @@ var shell_default = {
                   {
                     class: 'queue-count'
                   },
-                  ' | ' + t('Wartend') + ': ' + (executionState.actorQueue.length || 0)
+                  ' | ' + t('ui.queued_6a61e4e0') + ': ' + (executionState.actorQueue.length || 0)
                 )
               ]
             : [])
@@ -219,35 +218,32 @@ var shell_default = {
       }
       if (!$('statusLight')) return;
       let state = 'yellow',
-        label = t('Verbindung wird gepr\xFCft');
+        label = t('ui.checking_connection');
       if (shellState.backendOnline === false) {
         state = 'red';
-        label = t('Backend nicht erreichbar');
+        label = t('ui.backend_unavailable');
       } else if (persistenceState.saveError || preferencesState.settingsError) {
         state = 'red';
-        label = t('Speichern fehlgeschlagen');
+        label = t('ui.save_failed');
       } else if (
         persistenceState.savePromise ||
         preferencesState.settingsPromise ||
         pluginsState.pendingPluginSaves.size
       ) {
-        label = t('Speichert \u2026');
+        label = t('ui.saving');
       } else if (persistenceState.dirty || preferencesState.settingsDirty) {
-        label = t('Noch zu speichern');
+        label = t('ui.pending_save');
       } else if (shellState.backendOnline === true) {
         state = 'green';
         label =
-          workspaceState.project || !$('settingsView').hidden ? t('Gespeichert') : t('Verbunden');
+          workspaceState.project || !$('settingsView').hidden ? t('ui.saved') : t('ui.connected');
       }
       $('statusLight').dataset.state = state;
       $('statusText').textContent = label;
       $('status').title =
         label +
         (shellState.backendCheckAt
-          ? ' \xB7 ' +
-            t('Letzte Pr\xFCfung') +
-            ': ' +
-            shellState.backendCheckAt.toLocaleTimeString()
+          ? ' \xB7 ' + t('ui.last_check') + ': ' + shellState.backendCheckAt.toLocaleTimeString()
           : '');
     }
     async function checkBackend() {

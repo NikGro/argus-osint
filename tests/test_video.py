@@ -7,7 +7,6 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-
 from PIL import Image, ImageDraw, ImageChops
 from plugins import video
 from core.video import probe_video
@@ -17,6 +16,7 @@ from core.video import probe_video
     shutil.which("ffmpeg") and shutil.which("ffprobe"), "Requires bundled FFmpeg"
 )
 class VideoTools(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory(prefix="argus-video-test-")
@@ -25,9 +25,9 @@ class VideoTools(unittest.TestCase):
         draw = ImageDraw.Draw(image)
         rng = random.Random(4)
         for _ in range(120):
-            x, y = rng.randrange(150), rng.randrange(110)
+            x, y = (rng.randrange(150), rng.randrange(110))
             draw.rectangle(
-                (x, y, x + 5, y + 5), fill=tuple(rng.randrange(256) for _ in range(3))
+                (x, y, x + 5, y + 5), fill=tuple((rng.randrange(256) for _ in range(3)))
             )
         for i in range(12):
             ImageChops.offset(image, [0, 1, 0, -1][i % 4], 0).save(
@@ -133,15 +133,19 @@ class VideoTools(unittest.TestCase):
 
 
 class MediaRanges(unittest.TestCase):
+
     def test_authenticated_ranges_and_rejection(self):
         import threading
         import urllib.request
         import urllib.error
-        import server
+        from core.application import get_default_application
+        from core.http_server import Handler, ApplicationServer
+
+        app = get_default_application()
         from http_fixture import request
 
-        stored = server.FILES.upload(b"0123456789", "range-fixture.txt")
-        httpd = server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        stored = app.FILES.upload(b"0123456789", "range-fixture.txt")
+        httpd = ApplicationServer(("127.0.0.1", 0), Handler)
         thread = threading.Thread(target=httpd.serve_forever, daemon=True)
         thread.start()
         url = f"http://127.0.0.1:{httpd.server_port}/api/files/{stored['file_id']}"
@@ -171,6 +175,7 @@ class MediaRanges(unittest.TestCase):
     hasattr(__import__("os"), "killpg"), "Requires POSIX process groups"
 )
 class ArtifactBudget(unittest.TestCase):
+
     def test_output_limit_kills_oversized_child_before_success(self):
         import sys
         from plugins._process import bounded_run

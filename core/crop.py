@@ -1,5 +1,6 @@
 """One normalized crop contract shared by image and video tools."""
 
+from core.errors import DomainError
 import math
 
 CROP_DEFAULTS = {
@@ -18,7 +19,7 @@ CROP_SCHEMA = {
 
 def crop_box(params, width, height, even=False):
     if not isinstance(params.get("crop_enabled", False), bool):
-        raise ValueError("Invalid crop option.")
+        raise DomainError("validation.dabce27835")
     if not params.get("crop_enabled", False):
         return None
     values = []
@@ -27,20 +28,21 @@ def crop_box(params, width, height, even=False):
         if (
             isinstance(value, bool)
             or not isinstance(value, (int, float))
-            or not math.isfinite(value)
+            or (not math.isfinite(value))
         ):
-            raise ValueError("Invalid crop coordinates.")
+            raise DomainError("validation.32698effeb")
         values.append(value)
     x, y, w, h = values
-    if x < 0 or y < 0 or w <= 0 or h <= 0 or x + w > 1.000001 or y + h > 1.000001:
-        raise ValueError("The crop must stay inside the image.")
-    left, top = round(x * width), round(y * height)
-    right, bottom = min(width, round((x + w) * width)), min(
-        height, round((y + h) * height)
+    if x < 0 or y < 0 or w <= 0 or (h <= 0) or (x + w > 1.000001) or (y + h > 1.000001):
+        raise DomainError("validation.b1693aec33")
+    left, top = (round(x * width), round(y * height))
+    right, bottom = (
+        min(width, round((x + w) * width)),
+        min(height, round((y + h) * height)),
     )
     if even:
-        left, top = left // 2 * 2, top // 2 * 2
-        right, bottom = right // 2 * 2, bottom // 2 * 2
+        left, top = (left // 2 * 2, top // 2 * 2)
+        right, bottom = (right // 2 * 2, bottom // 2 * 2)
     if right - left < (2 if even else 1) or bottom - top < (2 if even else 1):
-        raise ValueError("The selected crop is too small.")
-    return left, top, right - left, bottom - top
+        raise DomainError("validation.008643ca3c")
+    return (left, top, right - left, bottom - top)

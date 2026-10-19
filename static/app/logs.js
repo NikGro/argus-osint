@@ -17,12 +17,12 @@ var logs_default = {
       );
       if (current !== generation) return;
       logsState.logRecords = append ? [...logsState.logRecords, ...response.rows] : response.rows;
-      $('logsCount').textContent = logsState.logRecords.length + ' ' + t('Zeilen');
+      $('logsCount').textContent = logsState.logRecords.length + ' ' + t('ui.rows');
       $('logsBody').replaceChildren(
         ...logsState.logRecords.map((row) => el('div', { class: 'log-line' }, row.text))
       );
       if (!logsState.logRecords.length)
-        $('logsBody').append(el('p', { class: 'empty-state' }, t('Keine passenden Logeinträge.')));
+        $('logsBody').append(el('p', { class: 'empty-state' }, t('ui.no_matching_log_entries')));
       $('logsMore').hidden = !response.more;
     }
     async function openLogs() {
@@ -33,7 +33,7 @@ var logs_default = {
     }
     function exportLogs() {
       const limit = Number($('logsLimit').value);
-      if (!Number.isInteger(limit) || limit < 0) throw Error(t('Ung\xFCltige Zeilenzahl'));
+      if (!Number.isInteger(limit) || limit < 0) throw Error(t('ui.invalid_row_count'));
       const link = el('a', {
         href:
           '/api/projects/' +

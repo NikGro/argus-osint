@@ -1,6 +1,8 @@
 """Filesystem Unix proxy reachable by network-isolated workers, never a TCP listener."""
 
 import http.server
+import http.client
+from core.errors import AppError
 import select
 import socketserver
 import threading
@@ -40,7 +42,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     (remote if source is self.connection else self.connection).sendall(
                         data
                     )
-        except Exception:
+        except (OSError, ValueError, AppError, http.client.HTTPException):
             self.close_connection = True
         finally:
             if remote:

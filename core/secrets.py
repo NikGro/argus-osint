@@ -1,5 +1,6 @@
 """Install-local encryption with descriptor-defined secrets and legacy-name compatibility."""
 
+from core.errors import DomainError
 import copy
 import json
 import os
@@ -12,7 +13,7 @@ MASK = "••••••••"
 PREFIX = "argus:sealed:v1:"
 JSON_PREFIX = "argus:sealed:json:v1:"
 SECRET_KEY = re.compile(
-    r"(?:password|token|secret|api[_-]?key|sessionid|cookie|authorization|credential)$",
+    "(?:password|token|secret|api[_-]?key|sessionid|cookie|authorization|credential)$",
     re.I,
 )
 
@@ -29,8 +30,10 @@ def redact(value, fields=()):
                 if child
                 and (
                     is_secret(key, fields)
-                    or isinstance(child, str)
-                    and child.startswith((PREFIX, JSON_PREFIX))
+                    or (
+                        isinstance(child, str)
+                        and child.startswith((PREFIX, JSON_PREFIX))
+                    )
                 )
                 else redact(child, fields)
             )
@@ -59,7 +62,7 @@ class SecretStore:
                     pass
             finally:
                 Path(name).unlink(missing_ok=True)
-        key_file.chmod(0o600)
+        key_file.chmod(384)
         self.cipher = Fernet(key_file.read_bytes())
 
     def encrypt_text(self, value):
@@ -69,7 +72,7 @@ class SecretStore:
         try:
             return self.cipher.decrypt(value.encode()).decode()
         except InvalidToken:
-            raise ValueError("Gespeicherte Sitzung nicht lesbar.") from None
+            raise DomainError("validation.c03d68db5c") from None
 
     def seal(self, value, fields=()):
         if isinstance(value, dict):
@@ -78,7 +81,7 @@ class SecretStore:
                 already = isinstance(child, str) and child.startswith(
                     (PREFIX, JSON_PREFIX)
                 )
-                if is_secret(key, fields) and child and not already:
+                if is_secret(key, fields) and child and (not already):
                     prefix, plain = (
                         (PREFIX, child)
                         if isinstance(child, str)
@@ -103,9 +106,7 @@ class SecretStore:
                 plain = self.cipher.decrypt(value[len(prefix) :].encode()).decode()
                 return json.loads(plain) if prefix == JSON_PREFIX else plain
             except (InvalidToken, ValueError):
-                raise ValueError(
-                    "Gespeicherte Zugangsdaten nicht lesbar. Datensicherung samt Schlüssel wiederherstellen."
-                ) from None
+                raise DomainError("validation.819545b513") from None
         return copy.deepcopy(value)
 
     def preserve_masks(self, incoming, previous):
@@ -137,7 +138,7 @@ def scrub_text(value, settings):
         elif isinstance(item, list):
             for child in item:
                 collect(child, forced)
-        elif forced and isinstance(item, str) and item and item != MASK:
+        elif forced and isinstance(item, str) and item and (item != MASK):
             secrets.append(item)
 
     collect(settings)

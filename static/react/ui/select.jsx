@@ -1,4 +1,4 @@
-import React, { useId, useRef, useState, useEffect } from 'react';
+import React, { useId, useRef, useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './controls.jsx';
 import { t } from '../../i18n.js';
@@ -21,9 +21,14 @@ export function Select({
     popup = useRef(null),
     search = useRef(null);
   const listId = useId();
-  const filtered = options.filter((item) =>
-    String(item.label).toLowerCase().includes(query.toLowerCase())
+  const matches = useMemo(
+    () =>
+      open
+        ? options.filter((item) => String(item.label).toLowerCase().includes(query.toLowerCase()))
+        : [],
+    [open, options, query]
   );
+  const filtered = matches.slice(0, 100);
   useEffect(() => {
     if (!open) return;
     search.current?.focus();
@@ -104,7 +109,7 @@ export function Select({
               ref={search}
               type="search"
               role="searchbox"
-              aria-label={t('Suchen …')}
+              aria-label={t('ui.search_51942c20')}
               aria-controls={listId}
               aria-activedescendant={filtered[active] ? listId + '-' + active : undefined}
               value={query}
@@ -134,6 +139,11 @@ export function Select({
                 }
               }}
             />
+            {matches.length > 100 && (
+              <small className="select-limit">
+                {t('ui.use_search_to_narrow_down_more_entries')} ({matches.length})
+              </small>
+            )}
             <div role="listbox" id={listId}>
               {filtered.map((item, index) => (
                 <button

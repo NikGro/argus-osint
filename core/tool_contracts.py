@@ -1,5 +1,6 @@
 """One transport-independent contract for built-in and community tool results."""
 
+from core.errors import DomainError
 from typing import Any, Literal, TypedDict
 
 ToolState = Literal["failed", "needs_input", "needs_selection", "completed"]
@@ -18,16 +19,16 @@ class ToolResult(TypedDict, total=False):
 
 def validate_result(value: Any) -> ToolResult:
     if not isinstance(value, dict):
-        raise ValueError("Invalid tool result.")
+        raise DomainError("validation.27551f1d9f")
     for key in ("outputs", "updates", "warnings", "candidates"):
-        if key in value and not isinstance(value[key], list):
+        if key in value and (not isinstance(value[key], list)):
             raise ValueError("Invalid tool result field: " + key)
     if not isinstance(value.get("outputs"), list) or len(value["outputs"]) > 5000:
-        raise ValueError("A tool must return at most 5000 output nodes.")
-    if value.get("input_request") is not None and not isinstance(
-        value["input_request"], dict
+        raise DomainError("validation.f929e35c73")
+    if value.get("input_request") is not None and (
+        not isinstance(value["input_request"], dict)
     ):
-        raise ValueError("Invalid tool input request.")
+        raise DomainError("validation.0c184194e5")
     return value
 
 

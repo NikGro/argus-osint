@@ -1,10 +1,12 @@
 """Persistent application preferences and installed locale discovery."""
 
+from core.errors import DomainError
 import json
 import re
 
 
 class SettingsRepository:
+
     def __init__(self, connect, manager, root, tag_preferences):
         self.connect = connect
         self.manager = manager
@@ -28,7 +30,7 @@ class SettingsRepository:
             result.get("node_display_defaults", {})
         )
         result["geocoder_enabled"] = any(
-            p["id"] == "location" for p in self.manager.installed()
+            (p["id"] == "location" for p in self.manager.installed())
         )
         result["geocoder_provider"] = "photon"
         self.tag_preferences.update(
@@ -47,13 +49,13 @@ class SettingsRepository:
                         "name": data.get("_meta", {}).get("name", file.stem),
                     }
                 )
-            except Exception:
+            except (OSError, ValueError, TypeError, AttributeError):
                 continue
         return result
 
     def save(self, body):
         if body.get("language") not in {item["code"] for item in self.languages()}:
-            raise ValueError("Sprache nicht installiert.")
+            raise DomainError("validation.9d3b3b01e2")
         with self.connect() as conn:
             row = conn.execute(
                 "SELECT settings FROM application_settings WHERE id=1"
@@ -63,29 +65,27 @@ class SettingsRepository:
             if "tags" in body:
                 tags = body["tags"]
                 if not isinstance(tags, list) or len(tags) > 200:
-                    raise ValueError("Maximal 200 globale Tags.")
+                    raise DomainError("validation.abb9115d05")
                 clean = []
                 seen = set()
                 names = set()
                 for tag in tags:
                     if not isinstance(tag, dict):
-                        raise ValueError("Ungültiger Tag.")
+                        raise DomainError("validation.7f511add0f")
                     ident = tag.get("id")
                     name = str(tag.get("name", "")).strip()
                     color = tag.get("color", "#8799b2")
                     if (
                         not isinstance(ident, str)
-                        or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", ident)
-                        or not name
-                        or len(name) > 40
-                        or not isinstance(color, str)
-                        or not re.fullmatch(r"#[0-9a-fA-F]{6}", color)
+                        or not re.fullmatch("[A-Za-z0-9_-]{1,64}", ident)
+                        or (not name)
+                        or (len(name) > 40)
+                        or (not isinstance(color, str))
+                        or (not re.fullmatch("#[0-9a-fA-F]{6}", color))
                     ):
-                        raise ValueError(
-                            "Tag benötigt ID, Namen (max. 40 Zeichen) und Farbe."
-                        )
+                        raise DomainError("validation.efcf17282c")
                     if ident in seen or name.casefold() in names:
-                        raise ValueError("Doppelte globale Tags.")
+                        raise DomainError("validation.6085389b2b")
                     seen.add(ident)
                     names.add(name.casefold())
                     clean.append({"id": ident, "name": name, "color": color})

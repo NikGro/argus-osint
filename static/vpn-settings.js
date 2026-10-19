@@ -3,7 +3,7 @@ import { icon } from './icons.js';
 
 export async function vpnSettings(container, { api, el, iconActionButton, toast }) {
   clearInterval(container.vpnTimer);
-  container.replaceChildren(el('h2', {}, t('VPN')));
+  container.replaceChildren(el('h2', {}, t('ui.vpn')));
   let settings = {
       enabled: false,
       profiles: [],
@@ -17,17 +17,17 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
   const hint = el('p', { class: 'source-help' });
   const enabled = el('input', { type: 'checkbox' });
   const rotation = el('input', { type: 'checkbox' });
-  const mode = el('select', { 'aria-label': t('VPN-Rotation') });
+  const mode = el('select', { 'aria-label': t('ui.vpn_rotation') });
   mode.append(
-    el('option', { value: 'interval' }, t('Nach Zeitintervall')),
-    el('option', { value: 'actor' }, t('Nach jedem Tool'))
+    el('option', { value: 'interval' }, t('ui.at_a_time_interval')),
+    el('option', { value: 'actor' }, t('ui.after_each_tool'))
   );
   const interval = el('input', {
     type: 'number',
     min: 1,
     max: 1440,
     step: 1,
-    'aria-label': t('Intervall in Minuten')
+    'aria-label': t('ui.interval_in_minutes')
   });
   const list = el('div', { class: 'vpn-profiles' });
   const check = (input, text) => {
@@ -36,10 +36,10 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
     return label;
   };
   const controls = el('div', { class: 'vpn-controls' });
-  const intervalLabel = el('label', {}, t('Intervall in Minuten'));
+  const intervalLabel = el('label', {}, t('ui.interval_in_minutes'));
   intervalLabel.append(interval);
   const rotate = iconActionButton(
-    t('VPN jetzt wechseln'),
+    t('ui.switch_vpn_now'),
     async () => {
       try {
         const data = await api('/api/vpn/rotate', {});
@@ -68,14 +68,14 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
     };
     const label = status.available
       ? t(labels[status.state] || 'VPN wird verbunden')
-      : t('VPN nicht verfügbar: Container-Netzwerkrechte prüfen');
+      : t('ui.vpn_unavailable_check_container_network_permissions');
     state.replaceChildren(
       document.createTextNode(label + (status.active?.name ? ' · ' + status.active.name : '')),
       el('i', { class: status.connected ? 'connected' : settings.enabled ? 'warning' : '' })
     );
     hint.textContent = status.available
-      ? t('Während eines VPN-Wechsels warten Tools auf die nächste geprüfte Verbindung.')
-      : t('VPN ist im Image enthalten. Benötigt werden NET_ADMIN und das TUN-Gerät im Container.');
+      ? t('ui.during_a_vpn_change_tools_wait_for_the_next_verified_connection')
+      : t('ui.vpn_is_bundled_in_the_image_the_container_needs_net_admin_and_the');
     enabled.disabled = saving || !status.available;
     rotate.disabled = saving || !settings.enabled || !status.available;
   }
@@ -94,9 +94,9 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
     for (const [index, profile] of (settings.profiles || []).entries()) {
       const row = el('div', { class: 'vpn-profile' });
       const header = el('div', { class: 'vpn-profile-header' });
-      const grip = iconActionButton(t('Profil verschieben'), () => {}, 'drag', 'source-drag');
+      const grip = iconActionButton(t('ui.reorder_profile'), () => {}, 'drag', 'source-drag');
       grip.replaceChildren(icon('drag'));
-      grip.setAttribute('aria-label', t('Profil verschieben'));
+      grip.setAttribute('aria-label', t('ui.reorder_profile'));
       grip.draggable = true;
       grip.addEventListener('dragstart', (event) => {
         event.dataTransfer.setData('application/x-argus-vpn', profile.id);
@@ -126,7 +126,7 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
       const nameInput = el('input', {
         value: profile.name,
         maxlength: 80,
-        'aria-label': t('Profilname')
+        'aria-label': t('ui.profile_name')
       });
       nameInput.addEventListener('change', () =>
         save({
@@ -136,18 +136,16 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
         })
       );
       body.append(
-        el('label', {}, t('Profilname')),
+        el('label', {}, t('ui.profile_name')),
         nameInput,
         el(
           'p',
           { class: 'source-help' },
-          t(
-            'Zugangsdaten werden verschlüsselt gespeichert. Zum Ersetzen das Profil entfernen und neu hinzufügen.'
-          )
+          t('ui.credentials_are_stored_encrypted_to_replace_them_remove_the_profi')
         )
       );
       const expand = iconActionButton(
-        t('Profil aufklappen'),
+        t('ui.expand_profile'),
         () => {
           body.hidden = !body.hidden;
           expand.setAttribute('aria-expanded', String(!body.hidden));
@@ -158,16 +156,16 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
       );
       expand.setAttribute('aria-expanded', 'false');
       expand.replaceChildren(icon('chevron-down'));
-      expand.setAttribute('aria-label', t('Profil aufklappen'));
+      expand.setAttribute('aria-label', t('ui.expand_profile'));
       const remove = iconActionButton(
-        t('Profil entfernen'),
+        t('ui.remove_profile'),
         () => save({ profiles: settings.profiles.filter((p) => p.id !== profile.id) }),
         'trash',
         'danger-filled'
       );
       remove.replaceChildren(icon('trash'));
-      remove.setAttribute('aria-label', t('Profil entfernen'));
-      remove.title = t('Profil entfernen');
+      remove.setAttribute('aria-label', t('ui.remove_profile'));
+      remove.title = t('ui.remove_profile');
       header.append(
         expand,
         grip,
@@ -210,7 +208,7 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
   const form = el('form');
   form.hidden = true;
   const addButton = iconActionButton(
-    t('VPN-Profil hinzufügen'),
+    t('ui.add_vpn_profile'),
     () => {
       form.hidden = !form.hidden;
       addButton.setAttribute('aria-expanded', String(!form.hidden));
@@ -220,8 +218,8 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
     'primary'
   );
   add.append(addButton);
-  const name = el('input', { required: '', maxlength: 80, 'aria-label': t('Profilname') });
-  const type = el('select', { 'aria-label': t('VPN-Typ') });
+  const name = el('input', { required: '', maxlength: 80, 'aria-label': t('ui.profile_name') });
+  const type = el('select', { 'aria-label': t('ui.vpn_type') });
   type.append(
     el('option', { value: 'openvpn' }, 'OpenVPN'),
     el('option', { value: 'wireguard' }, 'WireGuard')
@@ -232,18 +230,18 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
     maxlength: 131072,
     spellcheck: false,
     autocomplete: 'off',
-    'aria-label': t('VPN-Profil')
+    'aria-label': t('ui.vpn_profile')
   });
   const file = el('input', {
     type: 'file',
     accept: '.ovpn,.conf,.txt',
-    'aria-label': t('Profildatei importieren')
+    'aria-label': t('ui.import_profile_file')
   });
   file.addEventListener('change', async () => {
     const chosen = file.files[0];
     if (!chosen) return;
     if (chosen.size > 131072) {
-      toast(t('Profildatei zu groß.'));
+      toast(t('ui.profile_file_is_too_large'));
       return;
     }
     config.value = await chosen.text();
@@ -253,12 +251,12 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
   });
   const username = el('input', {
     autocomplete: 'off',
-    'aria-label': t('VPN-Benutzername (optional)')
+    'aria-label': t('ui.vpn_username_optional')
   });
   const password = el('input', {
     type: 'password',
     autocomplete: 'new-password',
-    'aria-label': t('VPN-Passwort (optional)')
+    'aria-label': t('ui.vpn_password_optional')
   });
   for (const [label, input] of [
     ['Profilname', name],
@@ -272,7 +270,7 @@ export async function vpnSettings(container, { api, el, iconActionButton, toast 
     field.append(input);
     form.append(field);
   }
-  const submit = el('button', { type: 'submit', class: 'primary' }, t('Profil speichern'));
+  const submit = el('button', { type: 'submit', class: 'primary' }, t('ui.save_profile'));
   form.append(submit);
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

@@ -1,10 +1,12 @@
 """Graph domain: schemas, normalization, validation, group trees and optimistic merging."""
 
+from core.errors import DomainError
 import copy
 import re
 from uuid import uuid4
 
 TYPES = {
+    "database",
     "person",
     "datetime",
     "actor",
@@ -45,6 +47,7 @@ LOCATION_DEFAULTS = {
 }
 LOCATION_DEFAULTS.update(latitude=None, longitude=None, coordinate_role="")
 NODE_DEFAULTS = {
+    "database": {"database_id": "", "database_title": ""},
     "location": LOCATION_DEFAULTS,
     "value": {"value": ""},
     "url": {"value": ""},
@@ -72,9 +75,9 @@ def strip_assessment(value):
 
 def value_text(value):
     if isinstance(value, dict):
-        return "\n".join(str(k) + ": " + value_text(v) for k, v in value.items())
+        return "\n".join((str(k) + ": " + value_text(v) for k, v in value.items()))
     if isinstance(value, list):
-        return ", ".join(value_text(v) for v in value)
+        return ", ".join((value_text(v) for v in value))
     if value is None:
         return ""
     return str(value)
@@ -124,24 +127,24 @@ def validate_group_tree(groups):
             roots.append(group["id"])
             continue
         if not isinstance(parent, str) or parent not in by_id or parent == group["id"]:
-            raise ValueError("Ungültige übergeordnete Gruppe.")
+            raise DomainError("validation.28d968ed26")
         children[parent].append(group["id"])
     seen = set()
     stack = roots
     while stack:
         ident = stack.pop()
         if ident in seen:
-            raise ValueError("Zyklische Gruppenstruktur.")
+            raise DomainError("validation.51ab5d4417")
         seen.add(ident)
         stack.extend(children[ident])
     if len(seen) != len(groups):
-        raise ValueError("Zyklische Gruppenstruktur.")
+        raise DomainError("validation.51ab5d4417")
 
 
 def merge_value(base, local, remote):
     if local == base:
         return copy.deepcopy(remote)
-    if all(isinstance(value, dict) for value in (base, local, remote)):
+    if all((isinstance(value, dict) for value in (base, local, remote))):
         out = copy.deepcopy(remote)
         for key in set(base) | set(local):
             if key not in local:
@@ -171,9 +174,11 @@ def merge_documents(base, local, remote):
             )
             mine.pop(ident, None)
         items.extend(
-            copy.deepcopy(value)
-            for ident, value in mine.items()
-            if ident not in old or value != old[ident]
+            (
+                copy.deepcopy(value)
+                for ident, value in mine.items()
+                if ident not in old or value != old[ident]
+            )
         )
         result[key] = items
     result["report_notes"] = merge_value(
@@ -195,6 +200,7 @@ def merge_documents(base, local, remote):
 
 
 class GraphSchema:
+
     def __init__(self, schemas, actor_policy=None, node_policy=None):
         self.schemas = schemas
         self.actor_policy = actor_policy or (lambda node: None)
@@ -219,17 +225,18 @@ class GraphSchema:
             width = max(200, min(900, float(appearance.get("width", 320))))
             height = max(120, min(800, float(appearance.get("height", 180))))
             color = str(appearance.get("color", "#ffcc70"))
-            if not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+            if not re.fullmatch("#[0-9a-fA-F]{6}", color):
                 color = "#ffcc70"
             node["appearance"] = {"width": width, "height": height, "color": color}
         if kind == "profile":
             if any(
-                not isinstance(data.get(key, ""), str) or len(data.get(key, "")) > 4096
-                for key in ("provider", "url", "identifier")
-            ):
-                raise ValueError(
-                    "Profilfelder müssen Texte mit höchstens 4096 Zeichen sein."
+                (
+                    not isinstance(data.get(key, ""), str)
+                    or len(data.get(key, "")) > 4096
+                    for key in ("provider", "url", "identifier")
                 )
+            ):
+                raise DomainError("validation.0a87a4bd75")
         if kind == "datetime":
             data["timezone"] = data.get("timezone") or "UTC"
         defaults = (schemas if schemas is not None else self.schemas()).get(
@@ -274,12 +281,12 @@ class GraphSchema:
 
     def _validate_in_place(self, doc):
         if not isinstance(doc, dict):
-            raise ValueError("Projekt muss ein Objekt sein.")
+            raise DomainError("validation.6161428e7a")
         for field in ("nodes", "edges", "groups", "runs"):
             if not isinstance(doc.get(field), list):
                 raise ValueError(field + " muss eine Liste sein.")
         if len(doc["nodes"]) > 5000 or len(doc["edges"]) > 15000:
-            raise ValueError("Projektlimit der Grundversion überschritten.")
+            raise DomainError("validation.5fea98af5a")
         ids = set()
         schemas = self.schemas()
         valid_types = TYPES | set(schemas)
@@ -288,47 +295,47 @@ class GraphSchema:
                 not isinstance(node, dict)
                 or not isinstance(node.get("id"), str)
                 or node.get("type") not in valid_types
-                or not isinstance(node.get("data"), dict)
+                or (not isinstance(node.get("data"), dict))
             ):
-                raise ValueError("Ungültiger Knoten.")
+                raise DomainError("validation.42b6431705")
             if node["id"] in ids:
-                raise ValueError("Doppelte Knoten-ID.")
+                raise DomainError("validation.8f7f5f5827")
             ids.add(node["id"])
             self.canonicalize_node(node, schemas)
             if len(str(node.get("label", ""))) > 1000:
-                raise ValueError("Knotenbezeichnung zu lang.")
+                raise DomainError("validation.193fd08cda")
             for key in ("x", "y"):
                 value = node.get(key, 0)
                 if (
                     isinstance(value, bool)
                     or not isinstance(value, (float, int))
-                    or not (-1e7 < value < 1e7)
+                    or (not -10000000.0 < value < 10000000.0)
                 ):
-                    raise ValueError("Ungültige Knotenposition.")
+                    raise DomainError("validation.de37372c79")
         edge_ids = set()
         for edge in doc["edges"]:
             if not isinstance(edge, dict):
-                raise ValueError("Ungültige Verbindung.")
+                raise DomainError("validation.8fda53f076")
             edge.setdefault("id", uuid4().hex)
             if not isinstance(edge["id"], str) or edge["id"] in edge_ids:
-                raise ValueError("Ungültige oder doppelte Verbindungs-ID.")
+                raise DomainError("validation.568c9fa89a")
             edge_ids.add(edge["id"])
             if edge.get("source") not in ids or edge.get("target") not in ids:
-                raise ValueError("Verbindung verweist auf unbekannten Knoten.")
+                raise DomainError("validation.3597d45967")
         gids = set()
         for group in doc["groups"]:
             if (
                 not isinstance(group, dict)
                 or not isinstance(group.get("id"), str)
                 or group["id"] in gids
-                or not isinstance(group.get("members"), list)
-                or any(x not in ids for x in group["members"])
+                or (not isinstance(group.get("members"), list))
+                or any((x not in ids for x in group["members"]))
             ):
-                raise ValueError("Ungültige Gruppe.")
+                raise DomainError("validation.5527a34613")
             gids.add(group["id"])
-        if any(not isinstance(run, dict) for run in doc["runs"]):
-            raise ValueError("Ungültiger Rechercheverlauf.")
+        if any((not isinstance(run, dict) for run in doc["runs"])):
+            raise DomainError("validation.048d17c017")
         if not isinstance(doc.get("preferences", {}), dict):
-            raise ValueError("Ungültige Projekteinstellungen.")
+            raise DomainError("validation.2a231409f1")
         validate_group_tree(doc["groups"])
         return doc

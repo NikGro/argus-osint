@@ -1,3 +1,4 @@
+import messageKeys from './message-keys.json';
 export let language = 'de',
   messages = {},
   fallbackMessages = {};
@@ -12,6 +13,7 @@ function sources() {
 }
 export function t(key, params = {}) {
   if (key === undefined || key === null) return '';
+  key = Object.hasOwn(messageKeys, key) ? messageKeys[key] : key;
   let value = messages[key] ?? fallbackMessages[key];
   if (value === undefined) {
     value = String(key);
@@ -33,6 +35,9 @@ export function t(key, params = {}) {
 }
 export function diagnostic(value) {
   let text = String(value ?? '');
+  const errorKey = 'errors.' + text;
+  if (Object.hasOwn(messages, errorKey) || Object.hasOwn(fallbackMessages, errorKey))
+    return t(errorKey);
   for (const source of sources()) {
     if (source.length >= 10 && source !== messages[source])
       text = text.replaceAll(source, messages[source]);

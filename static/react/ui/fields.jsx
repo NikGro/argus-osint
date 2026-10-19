@@ -32,7 +32,7 @@ export function Field({
     );
   const object = value !== null && typeof value === 'object';
   const array = Array.isArray(value);
-  const numeric = typeof value === 'number';
+  const numeric = typeof value === 'number' || schema.type === 'number';
   const display =
     raw ??
     (object
@@ -66,6 +66,7 @@ export function Field({
       setInvalid(false);
       if (numeric) {
         setRaw(text);
+        if (text === '' && schema.nullable) onChange(null);
         if (text !== '' && Number.isFinite(Number(text)) && event.target.validity.valid)
           onChange(Number(text));
       } else if (object) {
@@ -169,7 +170,7 @@ export function Field({
       )}
       {invalid && (
         <p id={id + '-error'} className="field-error" role="alert">
-          {t('Bitte eine gültige E-Mail-Adresse eingeben.')}
+          {t('ui.please_enter_a_valid_email_address')}
         </p>
       )}
       {help && <p className="source-help">{help}</p>}
@@ -254,7 +255,7 @@ export function Facts({ value }) {
               {typeof item === 'object' ? (
                 <details>
                   <summary>
-                    {Array.isArray(item) ? item.length + t(' Einträge') : t('Details anzeigen')}
+                    {Array.isArray(item) ? item.length + t('ui.entries') : t('ui.show_details')}
                   </summary>
                   <Facts value={item} />
                 </details>

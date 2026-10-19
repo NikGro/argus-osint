@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LocaleContracts(unittest.TestCase):
+
     def test_error_codes_and_validation_fragments_have_english_translations(self):
         packs = {
             locale: json.loads(
@@ -19,7 +20,7 @@ class LocaleContracts(unittest.TestCase):
             )["messages"]
             for locale in ("de", "en")
         }
-        codes, diagnostics = set(), set()
+        codes, diagnostics = (set(), set())
         for path in [
             *ROOT.glob("*.py"),
             *(ROOT / "core").glob("*.py"),
@@ -29,7 +30,7 @@ class LocaleContracts(unittest.TestCase):
                 if (
                     isinstance(node, ast.Call)
                     and isinstance(node.func, ast.Name)
-                    and node.func.id == "AppError"
+                    and (node.func.id in {"AppError", "DomainError"})
                     and node.args
                     and isinstance(node.args[0], ast.Constant)
                 ):

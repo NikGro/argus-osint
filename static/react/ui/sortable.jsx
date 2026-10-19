@@ -99,7 +99,7 @@ export function SortList({
                     })
                   }
                 >
-                  {t('Einstellungen aufklappen')}
+                  {t('ui.expand_settings')}
                 </Button>
               )}
               <span
@@ -107,7 +107,7 @@ export function SortList({
                 role="button"
                 tabIndex={0}
                 draggable
-                aria-label={t('Quelle verschieben')}
+                aria-label={t('ui.move_source')}
                 onDragStart={(event) => {
                   const boxTop = list.current.getBoundingClientRect().top;
                   const rows = [...list.current.children].map((row) => {
@@ -155,7 +155,7 @@ export function SortList({
                   className="danger-filled"
                   onClick={() => onChange(items.filter((_, i) => i !== index))}
                 >
-                  {t('Entfernen')}
+                  {t('ui.remove')}
                 </Button>
               )}
               {moveButtons && (
@@ -167,7 +167,7 @@ export function SortList({
                     disabled={index === 0}
                     onClick={() => move(index, index - 1)}
                   >
-                    {t('Nach oben')}
+                    {t('ui.move_up')}
                   </Button>
                   <Button
                     icon="chevron-down"
@@ -176,7 +176,7 @@ export function SortList({
                     disabled={index === items.length - 1}
                     onClick={() => move(index, index + 1)}
                   >
-                    {t('Nach unten')}
+                    {t('ui.move_down')}
                   </Button>
                 </>
               )}
@@ -200,7 +200,7 @@ export function SearchProfiles({ catalog, value = [], onChange }) {
       );
   const available = [
     ...entries.filter((item) => item.id !== 'custom'),
-    { id: 'custom', label: t('Eigene Websites') }
+    { id: 'custom', label: t('ui.custom_websites') }
   ]
     .filter((item) => !value.some((selected) => selected.id === item.id && item.id !== 'custom'))
     .filter((item) =>
@@ -211,9 +211,9 @@ export function SearchProfiles({ catalog, value = [], onChange }) {
   return (
     <div className="research-profiles">
       <Select
-        label={t('Suchprofil hinzufügen')}
+        label={t('ui.add_search_profile')}
         value=""
-        placeholder={t('Suchprofil hinzufügen …')}
+        placeholder={t('ui.add_search_profile_a2a8ee86')}
         options={available.map((item) => ({
           value: item.id,
           label: t(item.label || item.name || item.id)
@@ -235,7 +235,7 @@ export function SearchProfiles({ catalog, value = [], onChange }) {
       />
       <SortList
         items={value}
-        label={t('Suchprofile')}
+        label={t('ui.search_profiles_9375fc35')}
         onChange={onChange}
         renderItem={(item, index) => (
           <>
@@ -248,7 +248,7 @@ export function SearchProfiles({ catalog, value = [], onChange }) {
             </span>
             {item.id === 'custom' && (
               <Field
-                label={t('Websites')}
+                label={t('ui.websites')}
                 value={item.sites || []}
                 onChange={(sites) =>
                   onChange(value.map((row, i) => (i === index ? { ...row, sites } : row)))
@@ -259,7 +259,7 @@ export function SearchProfiles({ catalog, value = [], onChange }) {
         )}
       />
       {!value.length && (
-        <p className="source-help">{t('Ohne Suchprofile werden alle Websites durchsucht.')}</p>
+        <p className="source-help">{t('ui.without_search_profiles_all_websites_are_searched')}</p>
       )}
     </div>
   );

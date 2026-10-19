@@ -1,0 +1,383 @@
+/* Shared application tokens and controls; tables scroll within their own region. */
+.content-view {
+  max-width: 1520px;
+  margin: 0 auto;
+  padding: 32px;
+}
+.view-heading,
+.database-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.view-heading h1,
+.database-heading h2 {
+  margin: 0;
+}
+.view-heading p {
+  color: var(--muted);
+  margin: 8px 0 0;
+}
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.inline-error {
+  color: #fca5a5;
+  padding: 16px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+}
+.database-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 32px;
+}
+.database-list {
+  border-right: 1px solid var(--line);
+  padding-right: 20px;
+}
+.database-list-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 12px;
+  border-color: transparent;
+  text-align: left;
+  background: transparent;
+}
+.database-list-item span {
+  min-width: 0;
+}
+.database-list-item strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.database-list-item small,
+.database-table th small,
+.mapping-row small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  margin-top: 4px;
+}
+.database-list-item.active {
+  color: var(--accent);
+  background: var(--control);
+  border-color: var(--control-border);
+}
+.database-content {
+  min-width: 0;
+}
+.database-search {
+  margin: 20px 0;
+}
+.database-search input {
+  flex: 1;
+  min-width: 180px;
+}
+.empty-state {
+  padding: 40px 24px;
+  color: var(--muted);
+  text-align: center;
+}
+.empty-state > .ui-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--accent);
+}
+.database-table-wrap {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.database-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.database-table th {
+  background: var(--control);
+  position: sticky;
+  top: 0;
+  font-weight: 600;
+  z-index: 1;
+}
+.database-table th,
+.database-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  min-width: 150px;
+  max-width: 360px;
+}
+.database-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.database-table tbody tr:hover {
+  background: var(--panel);
+}
+.cell-value {
+  display: block;
+  max-width: 340px;
+  max-height: 180px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.cell-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cell-files a {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 130px;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.cell-files img {
+  width: 110px;
+  height: 76px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: var(--input-surface);
+}
+.database-pagination {
+  margin-top: 16px;
+  justify-content: flex-end;
+  color: var(--muted);
+}
+.schema-editor,
+.record-editor,
+.import-workbench {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 24px;
+  margin: 20px 0;
+}
+.schema-editor p,
+.import-workbench > p {
+  color: var(--muted);
+}
+.schema-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) minmax(100px, 160px) 36px 36px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.schema-add {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(140px, 220px) auto;
+  align-items: end;
+  gap: 16px;
+  margin-top: 20px;
+}
+.schema-add .react-field {
+  margin: 0;
+}
+.database-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px 24px;
+  margin: 20px 0;
+  align-items: start;
+}
+.database-fields .react-field {
+  margin: 0;
+  min-width: 0;
+}
+.database-fields textarea {
+  min-height: 110px;
+  width: 100%;
+}
+.database-fields input[type='file'] {
+  max-width: 100%;
+  font-size: 12px;
+}
+.record-editor > h3 {
+  margin-top: 0;
+}
+.import-workbench {
+  margin-top: 0;
+}
+.import-dropzone {
+  padding: 28px;
+  border: 1px dashed var(--control-border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.import-dropzone label {
+  font-weight: 600;
+  color: var(--text);
+}
+.import-dropzone small {
+  max-width: 85ch;
+  color: var(--muted);
+}
+.import-dropzone input {
+  max-width: 100%;
+}
+.import-file-list {
+  max-height: 220px;
+  overflow: auto;
+  margin: 16px 0;
+}
+.import-file-list > div {
+  display: grid;
+  grid-template-columns: 1fr auto 36px;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.import-file-list small {
+  color: var(--muted);
+}
+.import-options {
+  padding: 16px 0;
+}
+.import-mapping {
+  margin: 20px 0 28px;
+}
+.mapping-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.2fr) minmax(200px, 1fr) minmax(150px, 1fr) minmax(
+      140px,
+      0.8fr
+    );
+  gap: 16px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.mapping-row > div:first-child {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.mapping-row .react-field {
+  margin: 0;
+}
+.mapping-row.skipped > div:first-child {
+  opacity: 0.5;
+}
+.select-limit {
+  display: block;
+  padding: 4px 8px 8px;
+  color: var(--muted);
+}
+.help-view {
+  max-width: 1200px;
+}
+.help-view .view-heading input {
+  width: 300px;
+}
+.help-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 48px;
+}
+.help-layout nav {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  gap: 8px;
+  position: sticky;
+  top: 100px;
+}
+.help-layout nav a {
+  padding: 8px 0;
+  color: var(--muted);
+  text-decoration: none;
+}
+.help-layout nav a:hover {
+  color: var(--accent);
+}
+.help-layout article {
+  max-width: 75ch;
+}
+.help-layout section {
+  scroll-margin-top: 100px;
+  margin-bottom: 40px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.help-layout h2 {
+  color: var(--text);
+  margin-top: 0;
+}
+.help-layout h3 {
+  margin: 24px 0 8px;
+  font-size: 15px;
+}
+.help-layout p {
+  line-height: 1.75;
+  color: var(--muted);
+  margin: 0;
+}
+.report-view {
+  max-width: 1200px;
+  margin: auto;
+  padding: 28px;
+}
+.report-view .view-heading {
+  margin-bottom: 16px;
+}
+.report-controls {
+  max-width: 960px;
+  margin: auto;
+}
+.report-controls > p {
+  color: var(--muted);
+  font-size: 13px;
+}
+.report-notes {
+  padding: 12px 0;
+  border-block: 1px solid var(--line);
+}
+.report-view #reportFrame {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  height: calc(100dvh - 260px);
+  min-height: 600px;
+  background: var(--panel);
+}
+@media (max-width: 1100px) {
+  .database-layout {
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 20px;
+  }
+  .view-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .mapping-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.database-list-item {
+  white-space: normal;
+}
+.import-workbench .detail-section > .primary:last-child {
+  margin-top: 16px;
+}

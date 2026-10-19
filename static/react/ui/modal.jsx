@@ -7,8 +7,10 @@ export function Modal({ app }) {
   const request = app.ui.dialog;
   const ref = useRef(null);
   const [values, setValues] = useState({});
+  const [error, setError] = useState('');
   useEffect(() => {
     if (!request) return;
+    setError('');
     const initial = { ...request.values };
     for (const field of request.fields || []) {
       initial[field.key] = field.transient
@@ -37,6 +39,18 @@ export function Modal({ app }) {
       <form
         onSubmit={(event) => {
           event.preventDefault();
+          if (
+            request.fields?.some(
+              (field) =>
+                field.required &&
+                (values[field.key] === '' ||
+                  values[field.key] == null ||
+                  (field.type === 'checkbox' && !values[field.key]))
+            )
+          ) {
+            setError(t('ui.complete_all_required_fields'));
+            return;
+          }
           app.settle(
             request.mode === 'confirm'
               ? true
@@ -106,8 +120,13 @@ export function Modal({ app }) {
             ))}
           </>
         )}
+        {error && (
+          <p role="alert" className="field-error">
+            {error}
+          </p>
+        )}
         <div className="dialog-actions">
-          <Button onClick={() => app.settle(null)}>{t('Abbrechen')}</Button>
+          <Button onClick={() => app.settle(null)}>{t('ui.cancel')}</Button>
           {!request.choices && request.mode !== 'notice' && (
             <button type="submit" className="primary">
               {t(

@@ -8,7 +8,7 @@ import re
 import tempfile
 from urllib.parse import urlsplit
 from plugins._process import bounded_run
-from provider_registry import identity
+from core.provider_registry import identity
 
 SECTIONS = {
     "profile": True,

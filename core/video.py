@@ -1,5 +1,6 @@
 """Local video metadata inspection, independent of names supplied during upload."""
 
+from core.errors import DomainError
 import json
 import math
 import subprocess
@@ -29,7 +30,7 @@ def probe_video(path, required=True):
         duration = float(
             info.get("format", {}).get("duration") or stream.get("duration") or 0
         )
-        width, height = int(stream["width"]), int(stream["height"])
+        width, height = (int(stream["width"]), int(stream["height"]))
         rotation = next(
             (
                 item["rotation"]
@@ -39,9 +40,9 @@ def probe_video(path, required=True):
             stream.get("tags", {}).get("rotate", 0),
         )
         if int(float(rotation)) % 180 == 90:
-            width, height = height, width
-        if not math.isfinite(duration) or duration <= 0 or width <= 0 or height <= 0:
-            raise ValueError("invalid video")
+            width, height = (height, width)
+        if not math.isfinite(duration) or duration <= 0 or width <= 0 or (height <= 0):
+            raise DomainError("validation.4712582c31")
         formats = info.get("format", {}).get("format_name", "").split(",")
         mime = (
             "video/webm"
@@ -59,5 +60,5 @@ def probe_video(path, required=True):
         return {"duration": duration, "width": width, "height": height, "mime": mime}
     except (OSError, ValueError, KeyError, IndexError, subprocess.SubprocessError):
         if required:
-            raise ValueError("The file is not a supported, readable video.") from None
+            raise DomainError("validation.9c5a20da87") from None
         return {}

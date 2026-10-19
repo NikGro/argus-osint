@@ -1,6 +1,6 @@
 {
   "name": "argus-workbench",
-  "version": "26.10.1-beta.1",
+  "version": "26.10.2-beta.1",
   "private": true,
   "type": "module",
   "description": "Development tooling for the ARGUS React frontend; no Node runtime is needed in production.",

@@ -201,8 +201,15 @@ class ProjectRepository:
                     ).fetchone()[0]
                 )
             )
-            if conn.execute("SELECT 1 FROM sqlite_master WHERE name='project_files'").fetchone():
-                candidates.update(row[0] for row in conn.execute("SELECT file_id FROM project_files WHERE project_id=?", (pid,)))
+            if conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE name='project_files'"
+            ).fetchone():
+                candidates.update(
+                    row[0]
+                    for row in conn.execute(
+                        "SELECT file_id FROM project_files WHERE project_id=?", (pid,)
+                    )
+                )
             for row in conn.execute(
                 "SELECT record FROM run_history WHERE project_id=?", (pid,)
             ):

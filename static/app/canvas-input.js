@@ -550,7 +550,7 @@ var canvas_input_default = {
         target,
         source_port: 'right',
         target_port: state.port.startsWith('left') ? state.port : state.targetPort,
-        label: t('verbunden mit')
+        label: t('ui.connected_to')
       });
       change();
       render();

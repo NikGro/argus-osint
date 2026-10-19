@@ -9,6 +9,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 DIRECTORIES = {
+    ".github",
     "core",
     "plugins",
     "data_plugins",
@@ -49,6 +50,7 @@ ROOT_FILES = {
     "requirements.txt",
     "requirements-core.txt",
     "requirements-dev.txt",
+    "requirements-test.txt",
     "server.py",
     "plugin_manager.py",
     "provider_registry.py",
@@ -99,11 +101,20 @@ def payloads():
         ):
             continue
         if relative.as_posix() not in ROOT_FILES:
-            if relative.parts[0] not in DIRECTORIES or file.suffix not in SUFFIXES:
+            if relative.parts[0] not in DIRECTORIES or (
+                file.suffix not in SUFFIXES
+                and relative.as_posix()
+                not in {"deploy/apparmor-argus", "deploy/LICENSE.moby"}
+            ):
                 continue
-            if any(part.startswith(".") for part in relative.parts):
+            if any(
+                part.startswith(".") for part in relative.parts if part != ".github"
+            ):
                 continue
-        if relative.as_posix().startswith("tests/fixtures/") and file.name != "frontend-manifest.json":
+        if (
+            relative.as_posix().startswith("tests/fixtures/")
+            and file.name != "frontend-manifest.json"
+        ):
             continue  # Retired snapshots; active tests import the production bundle.
         if relative.as_posix() in {
             "docs/test-history.md",

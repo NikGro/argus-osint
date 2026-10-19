@@ -45,7 +45,7 @@ var resources_default = {
     function openLink(node) {
       const link = safeLink(node.data.value);
       if (link) window.open(link, '_blank', 'noopener,noreferrer');
-      else toast(t('Ung\xFCltige URL'));
+      else toast(t('ui.invalid_url'));
     }
     function mapSources(kind) {
       const entry = pluginsState.dataTypes.get('location'),
@@ -108,7 +108,7 @@ var resources_default = {
             : [];
     }
     function displayControls(panel, node) {
-      panel.append(el('h3', {}, t('Quick Actions & Glances')));
+      panel.append(el('h3', {}, t('ui.quick_actions_glances')));
       for (const action of resourceActions(node))
         panel.append(
           button(t(action.label), () => openNodeResource(node, action.provider), 'quick-action')
@@ -237,7 +237,7 @@ var resources_default = {
               value: node.data.url
             }
           });
-        else toast(t('Keine \xF6ffentliche Profil-URL'));
+        else toast(t('ui.no_public_profile_url'));
         return;
       }
       if (node.type === 'image' && !node.data.file_id && safeResourceUrl(node.data.url)) {
@@ -255,21 +255,21 @@ var resources_default = {
             ? mapsUrl(node, false, provider)
             : null;
       if (url) window.open(url, '_blank', 'noopener,noreferrer');
-      else toast(t('Noch keine anzeigbaren Daten vorhanden.'));
+      else toast(t('ui.no_displayable_data_yet'));
     }
     function refreshDetailMap(panel, node) {
       const box = panel.querySelector('.detail-map');
       if (!box) return;
       const src = mapsUrl(node, true);
       if (!src) {
-        box.replaceChildren(el('p', {}, t('Ort erg\xE4nzen, um die Karte anzuzeigen.')));
+        box.replaceChildren(el('p', {}, t('ui.enter_a_location_to_display_the_map')));
         return;
       }
       let frame = box.querySelector('iframe');
       if (!frame) {
         frame = el('iframe', {
           class: 'embedded-map',
-          title: t('Kartenvorschau'),
+          title: t('ui.map_preview'),
           loading: 'lazy',
           referrerpolicy: 'no-referrer'
         });
@@ -390,7 +390,7 @@ var resources_default = {
           wrap.append(
             el('iframe', {
               class: 'embedded-map',
-              title: t('Kartenvorschau'),
+              title: t('ui.map_preview'),
               referrerpolicy: 'no-referrer',
               loading: 'lazy'
             })

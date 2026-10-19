@@ -438,8 +438,8 @@ main:not(#workspace) {
 }
 .toolbar input#zoomLevel {
   width: 64px;
-  min-height: 32px;
-  height: 32px;
+  min-height: var(--control-height);
+  height: var(--control-height);
   padding: 4px 6px;
   text-align: center;
   font-size: 12px;

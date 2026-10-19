@@ -11,19 +11,19 @@ export function Plugins({ app }) {
   return (
     <main id="pluginsView" hidden={app.ui.view !== 'pluginsView'}>
       <div className="intro">
-        <h1>{t('Installierte Plugins')}</h1>
-        <p>{t('Suche, konfiguriere und verwalte deine installierten Plugins.')}</p>
+        <h1>{t('ui.installed_plugins')}</h1>
+        <p>{t('ui.search_configure_and_manage_your_installed_plugins')}</p>
       </div>
       <section className="home-tools">
         <input
           type="search"
           value={query}
-          aria-label={t('Plugins suchen')}
-          placeholder={t('Plugins suchen …')}
+          aria-label={t('ui.search_plugins_3313d63d')}
+          placeholder={t('ui.search_plugins')}
           onChange={(event) => setQuery(event.target.value)}
         />
         <Button className="primary" icon="plus" onClick={() => setLibrary(!library)}>
-          {t('Plugins hinzufügen')}
+          {t('ui.add_plugins_a728662a')}
         </Button>
       </section>
       {library && <Library app={app} />}
@@ -122,7 +122,7 @@ function Plugin({ app, plugin }) {
     setConnecting(true);
     try {
       await persist();
-      if (pending.current || running.current) throw Error(t('Bitte das Speichern abwarten.'));
+      if (pending.current || running.current) throw Error(t('ui.wait_for_saving_to_complete'));
       let transient = {};
       for (let attempt = 0; attempt < 4; attempt++) {
         const job = await c.api('/api/plugin/connection', {
@@ -141,14 +141,12 @@ function Plugin({ app, plugin }) {
           continue;
         }
         if (!finished.result?.authenticated)
-          throw Error(
-            (finished.result?.warnings || []).join(' · ') || t('Anmeldung fehlgeschlagen.')
-          );
+          throw Error((finished.result?.warnings || []).join(' · ') || t('ui.login_failed'));
         await c.refreshCatalog();
-        c.toast(t('Instagram-Anmeldung erfolgreich.'));
+        c.toast(t('ui.instagram_login_successful'));
         return;
       }
-      throw Error(t('Zu viele aufeinanderfolgende Eingabeanforderungen.'));
+      throw Error(t('ui.too_many_consecutive_input_requests'));
     } finally {
       setConnecting(false);
     }
@@ -167,7 +165,7 @@ function Plugin({ app, plugin }) {
             else s.pluginsState.pluginSettingsOpen.add(plugin.id);
           }}
         >
-          {t('Plugin-Einstellungen')}
+          {t('ui.plugin_settings')}
         </Button>
         <div className="plugin-copy">
           <strong>{c.pluginDisplayName(plugin)}</strong>
@@ -185,7 +183,7 @@ function Plugin({ app, plugin }) {
             app.redraw();
           }}
         >
-          {t('Entfernen')}
+          {t('ui.remove')}
         </Button>
       </div>
       <div className="plugin-settings" hidden={!open}>
@@ -196,7 +194,7 @@ function Plugin({ app, plugin }) {
           <section key={node.type}>
             <h3>{c.pluginText(plugin, node.name)}</h3>
             <section className="plugin-default-section">
-              <h4>{t('Standardwerte für neue Knoten')}</h4>
+              <h4>{t('ui.defaults_for_new_nodes')}</h4>
               <Fields
                 values={
                   settings.nodes?.[node.type]?.defaults ||
@@ -224,7 +222,7 @@ function Plugin({ app, plugin }) {
             </section>
             {(displayOptions[node.type] || []).length > 0 && (
               <section className="plugin-display-section">
-                <h4>{t('Quick Actions & Glances')}</h4>
+                <h4>{t('ui.quick_actions_glances')}</h4>
                 {(displayOptions[node.type] || []).map(([key, label]) => (
                   <Check
                     key={key}
@@ -312,11 +310,9 @@ function Plugin({ app, plugin }) {
             <section key={action.id}>
               <h3>{c.pluginText(plugin, action.name)}</h3>
               <section className="plugin-config-section">
-                <h4>{t('Plugin-Einstellungen')}</h4>
+                <h4>{t('ui.plugin_settings')}</h4>
                 <p className="source-help">
-                  {t(
-                    'Gilt für das gesamte Plugin, zum Beispiel Zugangsdaten und Quellenkonfiguration.'
-                  )}
+                  {t('ui.applies_to_the_whole_plugin_including_credentials_and_source_conf')}
                 </p>
                 {order.length > 0 && (
                   <SortList
@@ -349,10 +345,10 @@ function Plugin({ app, plugin }) {
                         />
                         {action.research_profiles?.[id] ? (
                           <section className="provider-defaults">
-                            <h4>{t('Standardwerte für neue Tools')}</h4>
+                            <h4>{t('ui.defaults_for_new_tools')}</h4>
                             <p className="source-help">
                               {t(
-                                'Diese Werte kannst du später für jedes Tool in den Knotendetails ändern.'
+                                'ui.you_can_change_these_values_for_each_tool_in_its_node_details'
                               )}
                             </p>
                             <SearchProfiles
@@ -369,9 +365,7 @@ function Plugin({ app, plugin }) {
                         ) : (
                           !(providerFields[id] || []).some((key) => key in params) && (
                             <p className="source-help">
-                              {t(
-                                'Für diese Quelle sind keine weiteren Einstellungen erforderlich.'
-                              )}
+                              {t('ui.no_additional_settings_are_required_for_this_provider')}
                             </p>
                           )
                         )}
@@ -416,9 +410,9 @@ function Plugin({ app, plugin }) {
                 />
               </section>
               <section className="plugin-default-section">
-                <h4>{t('Standardwerte für neue Tools')}</h4>
+                <h4>{t('ui.defaults_for_new_tools')}</h4>
                 <p className="source-help">
-                  {t('Diese Werte kannst du später für jedes Tool in den Knotendetails ändern.')}
+                  {t('ui.you_can_change_these_values_for_each_tool_in_its_node_details')}
                 </p>
                 <Fields
                   values={Object.fromEntries(
@@ -465,12 +459,12 @@ function Library({ app }) {
   }, []);
   return (
     <section className="plugin-library">
-      <h2>{t('Plugin-Bibliothek')}</h2>
+      <h2>{t('ui.plugin_library_4ba1045f')}</h2>
       <input
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder={t('Plugins suchen …')}
+        placeholder={t('ui.search_plugins')}
       />
       {data.plugins
         .filter((plugin) =>
@@ -489,10 +483,8 @@ function Library({ app }) {
                 if (
                   plugin.origin === 'community' &&
                   !(await c.askConfirm(
-                    t('Community-Plugin installieren'),
-                    t(
-                      'Der Python-Code dieses Repositories wird im Argus-Container ausgeführt. Nur vertrauenswürdige Repositories installieren.'
-                    )
+                    t('ui.install_community_plugin'),
+                    t('ui.this_repository_s_python_code_runs_in_the_argus_container_install')
                   ))
                 )
                   return;
@@ -506,7 +498,7 @@ function Library({ app }) {
             </Button>
           </article>
         ))}
-      <h3>{t('Community-Repositories')}</h3>
+      <h3>{t('ui.community_repositories')}</h3>
       {data.repositories.map((repo) => (
         <article key={repo.id}>
           <strong>{repo.url}</strong>
@@ -519,7 +511,7 @@ function Library({ app }) {
               await load();
             }}
           >
-            {t('Aktualisieren')}
+            {t('ui.refresh')}
           </Button>
           <Button
             app={app}
@@ -530,7 +522,7 @@ function Library({ app }) {
               await load();
             }}
           >
-            {t('Entfernen')}
+            {t('ui.remove')}
           </Button>
         </article>
       ))}
@@ -544,8 +536,8 @@ function Library({ app }) {
           });
         }}
       >
-        <Field label={t('Repository-URL')} value={url} onChange={setURL} />
-        <button type="submit">{t('Hinzufügen')}</button>
+        <Field label={t('ui.repository_url')} value={url} onChange={setURL} />
+        <button type="submit">{t('ui.add')}</button>
       </form>
     </section>
   );

@@ -1,0 +1,156 @@
+:root {
+  color-scheme: dark;
+  font:
+    14px/1.6 system-ui,
+    sans-serif;
+  background: #101722;
+  color: #233142;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  padding: 24px;
+}
+.report-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 210mm;
+  margin: 0 auto 20px;
+  color: #aebfd2;
+}
+button {
+  min-height: 36px;
+  border: 1px solid #40506a;
+  border-radius: 6px;
+  background: #1b293c;
+  color: #edf3fa;
+  font: inherit;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+button:hover {
+  background: #27384f;
+}
+button:focus-visible {
+  outline: 2px solid #ff9e42;
+  outline-offset: 3px;
+}
+.report-sheet {
+  color-scheme: light;
+  max-width: 210mm;
+  min-height: 297mm;
+  margin: auto;
+  padding: 18mm;
+  background: #e7ebef;
+  border-radius: 12px;
+}
+h1 {
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+h2 {
+  font-size: 19px;
+  line-height: 1.35;
+  margin: 10px 0 16px;
+  overflow-wrap: anywhere;
+}
+h3 {
+  font-size: 14px;
+  margin-top: 22px;
+}
+p,
+li {
+  overflow-wrap: anywhere;
+}
+small {
+  color: #495c70;
+}
+.report-node {
+  margin-top: 28px;
+  border-top: 1px solid #b8c4d0;
+  padding-top: 20px;
+}
+.report-node img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 10px;
+  border-bottom: 1px solid #c5ced8;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-weight: 400;
+}
+th {
+  width: 34%;
+  color: #435267;
+  font-size: 12px;
+}
+td {
+  width: 66%;
+}
+tr {
+  break-inside: avoid;
+}
+a {
+  color: #244f78;
+}
+@page {
+  size: A4;
+  margin: 16mm;
+}
+@media print {
+  :root,
+  body {
+    background: white;
+    color: #182838;
+  }
+  body {
+    padding: 0;
+    margin: 0;
+    font-size: 10pt;
+  }
+  .report-actions {
+    display: none;
+  }
+  .report-sheet {
+    background: white;
+    min-height: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+  }
+  h1,
+  h2,
+  h3,
+  small {
+    break-after: avoid;
+  }
+  .report-node {
+    break-inside: auto;
+  }
+  th,
+  td {
+    border-color: #d0d5db;
+  }
+}

@@ -104,7 +104,7 @@ var node_commands_default = {
       if (selectionState.selectedGroup && !inputOverride)
         inputs = inputs.filter((n) => actionAcceptsNode(action, n));
       if (actorIncompatible(action, inputs, true))
-        throw Error(t('Die ausgew\xE4hlten Daten passen nicht zu diesem Aktor.'));
+        throw Error(t('ui.the_selected_data_is_incompatible_with_this_tool'));
       const x = inputs.length ? Math.max(...inputs.map((n) => n.x + nodeRect(n).w)) + 200 : void 0,
         y = inputs[0] ? inputs[0].y + (nodeRect(inputs[0]).h - 76) / 2 : void 0;
       const actor = newNode(
@@ -138,7 +138,7 @@ var node_commands_default = {
           target: actor.id,
           source_port: 'right',
           target_port: `left:${index}:${Math.max(1, action.min_inputs || 1)}`,
-          label: t('Eingabe')
+          label: t('ui.input')
         });
       change(actor.id);
       render();

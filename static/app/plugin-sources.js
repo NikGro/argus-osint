@@ -31,7 +31,7 @@ var plugin_sources_default = {
           {
             class: 'source-help'
           },
-          t('Quellen ziehen, um die Abfragereihenfolge zu \xE4ndern.')
+          t('ui.drag_sources_to_change_their_query_order')
         )
       );
       const list = el('div', {
@@ -75,7 +75,7 @@ var plugin_sources_default = {
               el(
                 'p',
                 { class: 'source-help' },
-                t('Suchprofile werden unter den Standardwerten festgelegt.')
+                t('ui.search_profiles_are_configured_under_defaults')
               )
             );
           }
@@ -100,7 +100,7 @@ var plugin_sources_default = {
               {
                 class: 'source-help'
               },
-              t('Keine zus\xE4tzlichen Anbieter-Einstellungen.')
+              t('ui.no_additional_provider_settings')
             )
           );
         body.addEventListener('input', onChange);
@@ -138,13 +138,13 @@ var plugin_sources_default = {
           expand.type = 'button';
           expand.replaceChildren(icon(body.hidden ? 'chevron-right' : 'chevron-down'));
           expand.setAttribute('aria-expanded', String(!body.hidden));
-          expand.setAttribute('aria-label', t('Anbieter-Einstellungen'));
+          expand.setAttribute('aria-label', t('ui.provider_settings'));
           const handle = el('span', {
             class: 'source-handle',
             role: 'button',
             tabindex: 0,
             draggable: 'true',
-            'aria-label': t('Quelle verschieben')
+            'aria-label': t('ui.move_source')
           });
           handle.append(icon('drag'));
           const checkbox = el('input', {
@@ -163,21 +163,21 @@ var plugin_sources_default = {
             document.createTextNode(options.labels?.[key] || sourceLabel(key))
           );
           const up = button(
-              t('Nach oben'),
+              t('ui.move_up'),
               () => {
                 if (index) reorder(key, order[index - 1]);
               },
               'source-move'
             ),
             down = button(
-              t('Nach unten'),
+              t('ui.move_down'),
               () => {
                 if (index < order.length - 1) reorder(key, order[index + 1], true);
               },
               'source-move'
             );
-          buttonContent(up, t('Nach oben'), 'chevron-up', true);
-          buttonContent(down, t('Nach unten'), 'chevron-down', true);
+          buttonContent(up, t('ui.move_up'), 'chevron-up', true);
+          buttonContent(down, t('ui.move_down'), 'chevron-down', true);
           up.type = down.type = 'button';
           up.disabled = index === 0;
           down.disabled = index === order.length - 1;
@@ -292,11 +292,11 @@ var plugin_sources_default = {
       form.append(el('h3', {}, pluginText(plugin, node.name)));
       const presets = el('section', { class: 'plugin-default-section' });
       presets.append(
-        el('h4', {}, t('Standardwerte für neue Daten-Nodes')),
+        el('h4', {}, t('ui.defaults_for_new_data_nodes')),
         el(
           'p',
           { class: 'source-help' },
-          t('Diese Anzeigeoptionen kannst du später in den Knotendetails ändern.')
+          t('ui.you_can_change_these_display_options_in_the_node_details')
         )
       );
       form.append(presets);
@@ -325,11 +325,11 @@ var plugin_sources_default = {
       const mapReaders = {};
       if (node.type === 'location') {
         configuration.append(
-          el('h4', {}, t('Plugin-Einstellungen')),
+          el('h4', {}, t('ui.plugin_settings')),
           el(
             'p',
             { class: 'source-help' },
-            t('Gilt für das gesamte Plugin, zum Beispiel Zugangsdaten und Quellenkonfiguration.')
+            t('ui.applies_to_the_whole_plugin_including_credentials_and_source_conf')
           )
         );
         form.append(configuration);
@@ -352,7 +352,7 @@ var plugin_sources_default = {
             {
               class: 'source-help'
             },
-            t('Dieser Daten-Node hat keine zus\xE4tzlichen Einstellungen.')
+            t('ui.this_data_node_has_no_additional_settings')
           )
         );
       return () => ({

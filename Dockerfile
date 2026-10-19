@@ -23,6 +23,7 @@ RUN python /tmp/install_toutatis.py && rm /tmp/install_toutatis.py
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
 COPY requirements-media.txt /tmp/requirements-media.txt
 RUN python -m venv /opt/argus-tools/media-venv && /opt/argus-tools/media-venv/bin/pip install --no-cache-dir -r /tmp/requirements-media.txt && rm /tmp/requirements-media.txt
+RUN apt-get update && apt-get install -y --no-install-recommends libseccomp2 && rm -rf /var/lib/apt/lists/*
 COPY . .
 RUN python scripts/verify_frontend.py && python scripts/build_provider_catalogue.py && python scripts/build_research_profiles.py
 USER workbench

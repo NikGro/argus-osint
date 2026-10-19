@@ -30,7 +30,7 @@ def node_bounds(node, preferences=None):
         )
         height = max(
             size["height"],
-            size["header"] + size["line"] * max(1, (len(address) + 38) // 39),
+            76 + size["line"] * (min(5, max(1, (len(address) + 38) // 39)) - 1),
         )
         if display.get("map") and (
             address
@@ -41,7 +41,7 @@ def node_bounds(node, preferences=None):
             )
         ):
             height += LAYOUT["mapHeight"]
-    from node_metadata import badge_height
+    from core.node_metadata import badge_height
 
     height += badge_height(
         node, width, preferences.get("tags", []), preferences.get("language", "de")

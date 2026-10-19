@@ -48,11 +48,11 @@ export function Settings({ app }) {
   return (
     <main id="settingsView" hidden={app.ui.view !== 'settingsView'}>
       <div className="intro">
-        <h1>{t('Einstellungen')}</h1>
+        <h1>{t('ui.settings')}</h1>
       </div>
       <section className="settings-form">
         <Field
-          label={t('Sprache')}
+          label={t('ui.language')}
           value={values.language || 'de'}
           schema={{
             labels: Object.fromEntries(
@@ -64,10 +64,10 @@ export function Settings({ app }) {
           }}
           onChange={(language) => app.safely(() => persist({ language }))}
         />
-        <p>{t('Adressabfragen werden über das installierte Photon-Plugin gesteuert.')}</p>
-        <p>{t('Quick Actions und Glances konfigurierst du im jeweiligen Daten-Plugin.')}</p>
+        <p>{t('ui.address_lookups_are_controlled_through_the_installed_photon_plugi')}</p>
+        <p>{t('ui.configure_quick_actions_and_glances_in_the_corresponding_data_plu')}</p>
         <section className="global-tag-settings">
-          <h2>{t('Globale Tags')}</h2>
+          <h2>{t('ui.global_tags')}</h2>
           <TagSettings
             app={app}
             tags={values.tags || []}
@@ -91,7 +91,7 @@ function TagSettings({ app, tags, onChange }) {
         {tags.map((tag, index) => (
           <div key={tag.id} className="tag-manager-row">
             <Field
-              label={t('Tag-Name')}
+              label={t('ui.tag_name')}
               value={tag.name}
               schema={{ maxLength: 40 }}
               onChange={(name) => {
@@ -101,7 +101,7 @@ function TagSettings({ app, tags, onChange }) {
             />
             <ColorSwatch
               compact
-              label={t('Tag-Farbe')}
+              label={t('ui.tag_color')}
               value={tag.color}
               onChange={(color) =>
                 onChange(tags.map((item, i) => (i === index ? { ...item, color } : item)))
@@ -113,7 +113,7 @@ function TagSettings({ app, tags, onChange }) {
               className="danger-filled"
               onClick={() => onChange(tags.filter((item) => item.id !== tag.id))}
             >
-              {t('Tag löschen')}
+              {t('ui.delete_tag')}
             </Button>
           </div>
         ))}
@@ -122,14 +122,14 @@ function TagSettings({ app, tags, onChange }) {
         app={app}
         icon="plus"
         onClick={async () => {
-          const name = await app.commands.askText(t('Tag erstellen'), t('Tag-Name'), '');
+          const name = await app.commands.askText(t('ui.create_tag'), t('ui.tag_name'), '');
           if (!name?.trim()) return;
           if (tags.some((tag) => tag.name.toLowerCase() === name.trim().toLowerCase()))
-            throw Error(t('Ein Tag mit diesem Namen existiert bereits.'));
+            throw Error(t('ui.a_tag_with_this_name_already_exists'));
           onChange([...tags, { id: app.commands.uid(), name: name.trim(), color: '#8799b2' }]);
         }}
       >
-        {t('Tag hinzufügen')}
+        {t('ui.add_tag')}
       </Button>
     </>
   );
@@ -194,7 +194,7 @@ function VPNSettings({ app }) {
         <h2>
           <Icon name="vpn" /> VPN
         </h2>
-        <p>{error || t('Lädt …')}</p>
+        <p>{error || t('ui.loading')}</p>
       </section>
     );
   const { settings, status } = data;
@@ -217,7 +217,7 @@ function VPNSettings({ app }) {
         <i className={status.connected ? 'connected' : settings.enabled ? 'warning' : ''} />
       </span>
       <p className="source-help">
-        {t('Während eines VPN-Wechsels warten Tools auf die nächste geprüfte Verbindung.')}
+        {t('ui.during_a_vpn_change_tools_wait_for_the_next_verified_connection')}
       </p>
       {error && <p role="alert">{error}</p>}
       <div className="vpn-controls">
@@ -226,27 +226,27 @@ function VPNSettings({ app }) {
           disabled={busy || !status.available}
           onChange={(enabled) => save({ enabled })}
         >
-          {t('VPN verwenden')}
+          {t('ui.use_vpn')}
         </Check>
         <Check
           checked={settings.rotation_enabled}
           disabled={busy}
           onChange={(rotation_enabled) => save({ rotation_enabled })}
         >
-          {t('Rotation aktivieren')}
+          {t('ui.enable_rotation')}
         </Check>
         <Field
-          label={t('VPN-Rotation')}
+          label={t('ui.vpn_rotation')}
           value={settings.rotation_mode}
           schema={{
             enum: ['interval', 'actor'],
-            labels: { interval: t('Nach Zeitintervall'), actor: t('Nach jedem Tool') }
+            labels: { interval: t('ui.at_a_time_interval'), actor: t('ui.after_each_tool') }
           }}
           disabled={busy || !settings.rotation_enabled}
           onChange={(rotation_mode) => save({ rotation_mode })}
         />
         <Field
-          label={t('Intervall in Minuten')}
+          label={t('ui.interval_in_minutes')}
           value={settings.interval_seconds / 60}
           schema={{ min: 1, max: 1440, step: 1 }}
           disabled={busy || settings.rotation_mode !== 'interval'}
@@ -257,7 +257,7 @@ function VPNSettings({ app }) {
           disabled={busy || !settings.enabled || !status.available}
           onClick={() => save({}, true)}
         >
-          {t('VPN jetzt wechseln')}
+          {t('ui.switch_vpn_now')}
         </Button>
       </div>
       <SortList
@@ -278,14 +278,14 @@ function VPNSettings({ app }) {
                 save({ profiles: settings.profiles.filter((row) => row.id !== item.id) })
               }
             >
-              {t('Entfernen')}
+              {t('ui.remove')}
             </Button>
           </div>
         )}
         renderDetails={(item) => (
           <>
             <Field
-              label={t('Profilname')}
+              label={t('ui.profile_name')}
               value={item.name}
               disabled={busy}
               onChange={(name) =>
@@ -297,15 +297,13 @@ function VPNSettings({ app }) {
               }
             />
             <p className="source-help">
-              {t(
-                'Zugangsdaten werden verschlüsselt gespeichert. Zum Ersetzen das Profil entfernen und neu hinzufügen.'
-              )}
+              {t('ui.credentials_are_stored_encrypted_to_replace_them_remove_the_profi')}
             </p>
           </>
         )}
       />
       <Button className="primary" icon="plus" onClick={() => setAdding(!adding)}>
-        {t('VPN-Profil hinzufügen')}
+        {t('ui.add_vpn_profile')}
       </Button>
       {adding && (
         <form
@@ -313,7 +311,7 @@ function VPNSettings({ app }) {
             event.preventDefault();
             app.safely(async () => {
               if (!profile.name.trim() || !profile.config.trim())
-                throw Error(t('Bitte alle Pflichtfelder ausfüllen.'));
+                throw Error(t('ui.complete_all_required_fields'));
               if (await save({ profiles: [...settings.profiles, profile] })) {
                 setAdding(false);
                 setProfile({ name: '', type: 'openvpn', config: '', username: '', password: '' });
@@ -324,12 +322,12 @@ function VPNSettings({ app }) {
           <input
             type="file"
             accept=".ovpn,.conf,.txt"
-            aria-label={t('Profildatei importieren')}
+            aria-label={t('ui.import_profile_file')}
             onChange={(event) =>
               app.safely(async () => {
                 const file = event.target.files[0];
                 if (!file) return;
-                if (file.size > 131072) throw Error(t('Profildatei zu groß.'));
+                if (file.size > 131072) throw Error(t('ui.profile_file_is_too_large'));
                 const config = await file.text();
                 setProfile({
                   ...profile,
@@ -360,7 +358,7 @@ function VPNSettings({ app }) {
             />
           ))}
           <button type="submit" className="primary" disabled={busy}>
-            {t('Profil speichern')}
+            {t('ui.save_profile')}
           </button>
         </form>
       )}
@@ -424,7 +422,7 @@ export function LogViewer({ app, project = false }) {
       <div className="view-heading">
         {project && (
           <Button only icon="back" onClick={() => c.show('workspace')}>
-            {t('Zurück')}
+            {t('ui.back')}
           </Button>
         )}
         <h2>
@@ -434,16 +432,16 @@ export function LogViewer({ app, project = false }) {
       <div className="system-log-controls">
         <input
           type="search"
-          aria-label={t('Systemlogs durchsuchen')}
-          placeholder={t('Systemlogs durchsuchen')}
+          aria-label={t('ui.search_system_logs')}
+          placeholder={t('ui.search_system_logs')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
         <Button icon="refresh" onClick={() => load()}>
-          {t('Aktualisieren')}
+          {t('ui.refresh')}
         </Button>
         <Field
-          label={t('Exportzeilen (0 = alle)')}
+          label={t('ui.export_lines_0_all')}
           value={limit}
           schema={{ min: 0, step: 1 }}
           onChange={setLimit}
@@ -461,7 +459,7 @@ export function LogViewer({ app, project = false }) {
           download="argus-logs.txt"
         >
           <Icon name="download" />
-          {t('Exportieren')}
+          {t('ui.export')}
         </a>
         <Button
           app={app}
@@ -480,7 +478,7 @@ export function LogViewer({ app, project = false }) {
             await load();
           }}
         >
-          {t('Systemlogs leeren')}
+          {t('ui.clear_system_logs')}
         </Button>
       </div>
       <div className="system-log-options">
@@ -491,7 +489,7 @@ export function LogViewer({ app, project = false }) {
             localStorage.setItem('argus.logs.autoRefresh', String(value));
           }}
         >
-          {t('Automatisch aktualisieren')}
+          {t('ui.auto_refresh')}
         </Check>
         <Check
           checked={follow}
@@ -500,7 +498,7 @@ export function LogViewer({ app, project = false }) {
             localStorage.setItem('argus.logs.autoScroll', String(value));
           }}
         >
-          {t('Automatisch nach unten scrollen')}
+          {t('ui.auto_scroll_to_bottom')}
         </Check>
       </div>
       {error && <p role="alert">{error}</p>}
@@ -510,10 +508,10 @@ export function LogViewer({ app, project = false }) {
           .map((row) => row.text)
           .join('\n')}
       </pre>
-      <p role="status">{t('Logzeilen: {count}', { count: data.total })}</p>
+      <p role="status">{t('ui.log_lines_count', { count: data.total })}</p>
       {(data.more || data.lines.length < data.total) && (
         <Button icon="plus" onClick={() => load(true)}>
-          {t('Weitere laden')}
+          {t('ui.load_more')}
         </Button>
       )}
     </section>

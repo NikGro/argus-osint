@@ -15,8 +15,8 @@ from unittest.mock import patch, Mock
 import urllib.request
 import urllib.error
 from uuid import uuid4
-
-import server
+from core.http_server import Handler, ApplicationServer
+from runtime_fixture import app
 from core.access import Access
 from core.database import connect
 from core.errors import AppError
@@ -39,6 +39,7 @@ def document():
 
 
 class AccessContracts(unittest.TestCase):
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -85,7 +86,7 @@ class AccessContracts(unittest.TestCase):
         with self.assertRaises(AppError):
             self.access.login(code, "fixture")
         self.assertEqual(
-            (Path(self.temp.name) / ".access-key").stat().st_mode & 0o777, 0o600
+            (Path(self.temp.name) / ".access-key").stat().st_mode & 511, 384
         )
 
     def test_builtin_runtime_strings_survive_save_without_becoming_secrets(self):
@@ -105,7 +106,7 @@ class AccessContracts(unittest.TestCase):
                         "data": {"plugin": plugin, "action": action, "params": params},
                     }
                 ]
-                project = server.PROJECTS.create("runtime string fixture", doc)
+                project = app.PROJECTS.create("runtime string fixture", doc)
                 self.assertEqual(
                     project["document"]["nodes"][0]["data"]["params"], params
                 )
@@ -120,6 +121,7 @@ class AccessContracts(unittest.TestCase):
 
 
 class PublicNetworkContracts(unittest.TestCase):
+
     def test_private_and_mixed_dns_answers_rejected(self):
         for ips in [
             ["127.0.0.1"],
@@ -171,7 +173,7 @@ class PublicNetworkContracts(unittest.TestCase):
             bounded_run(
                 [sys.executable, "-c", "import time;time.sleep(10)"],
                 timeout=0.2,
-                payload="x" * 2_000_000,
+                payload="x" * 2000000,
             )
         self.assertLess(time.monotonic() - started, 3)
 
@@ -190,24 +192,23 @@ class PublicNetworkContracts(unittest.TestCase):
 
 
 class PersistenceContracts(unittest.TestCase):
+
     def test_rename_preserves_graph_and_checks_revision_including_archive(self):
-        project = server.PROJECTS.create("before", document())
-        renamed = server.PROJECTS.rename(project["id"], "after", project["revision"])
+        project = app.PROJECTS.create("before", document())
+        renamed = app.PROJECTS.rename(project["id"], "after", project["revision"])
         self.assertEqual(renamed["title"], "after")
         self.assertEqual(renamed["document"], project["document"])
         with self.assertRaises(AppError):
-            server.PROJECTS.rename(project["id"], "stale", project["revision"])
-        archived = server.PROJECTS.archive(project["id"], True, renamed["revision"])
-        renamed_archive = server.PROJECTS.rename(
+            app.PROJECTS.rename(project["id"], "stale", project["revision"])
+        archived = app.PROJECTS.archive(project["id"], True, renamed["revision"])
+        renamed_archive = app.PROJECTS.rename(
             project["id"], "archived title", archived["revision"]
         )
         self.assertEqual(renamed_archive["document"], project["document"])
         self.assertTrue(renamed_archive["archived_at"])
         for title in ["", "   ", None, "x" * 201]:
             with self.assertRaises(AppError):
-                server.PROJECTS.rename(
-                    project["id"], title, renamed_archive["revision"]
-                )
+                app.PROJECTS.rename(project["id"], title, renamed_archive["revision"])
 
     def test_database_context_closes_after_success_and_failure(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -226,15 +227,15 @@ class PersistenceContracts(unittest.TestCase):
     def test_validation_is_nonmutating_and_version_migration_is_persisted(self):
         doc = document()
         original = copy.deepcopy(doc)
-        server.validate(doc)
+        app.validate(doc)
         self.assertEqual(doc, original)
-        p = server.PROJECTS.create("fixture", doc)
+        p = app.PROJECTS.create("fixture", doc)
         self.assertEqual(p["document"]["schema_version"], 1)
-        again = server.load_project(p["id"])
+        again = app.load_project(p["id"])
         self.assertEqual(again, p)
 
     def test_large_history_does_not_expand_project_save_payload(self):
-        p = server.PROJECTS.create("fixture", document())
+        p = app.PROJECTS.create("fixture", document())
         for i in range(5):
             doc = p["document"]
             doc["runs"].append(
@@ -246,15 +247,15 @@ class PersistenceContracts(unittest.TestCase):
                     "input_snapshot": [{"fixture": True}],
                 }
             )
-            p = server.save_project(p["id"], p["title"], doc, p["revision"])
+            p = app.save_project(p["id"], p["title"], doc, p["revision"])
         self.assertLess(len(json.dumps(p["document"])), 20000)
-        page = server.PROJECTS.history.page(p["id"])
+        page = app.PROJECTS.history.page(p["id"])
         self.assertEqual(page["total"], 5)
         self.assertEqual(len(page["runs"][0]["log"]), 4 * 1024 * 1024)
-        p = server.PROJECTS.save(
+        p = app.PROJECTS.save(
             p["id"], p["title"], p["document"], p["revision"], client=True
         )
-        self.assertEqual(server.PROJECTS.history.page(p["id"])["total"], 5)
+        self.assertEqual(app.PROJECTS.history.page(p["id"])["total"], 5)
 
     def test_reconciliation_uses_key_order_independent_equality(self):
         from core.graph import merge_documents
@@ -270,16 +271,17 @@ class PersistenceContracts(unittest.TestCase):
         )
 
     def test_archive_blocks_mutation_until_restored(self):
-        p = server.PROJECTS.create("fixture", document())
-        p = server.archive_project(p["id"], True, p["revision"])
+        p = app.PROJECTS.create("fixture", document())
+        p = app.archive_project(p["id"], True, p["revision"])
         with self.assertRaises(AppError) as error:
-            server.save_project(p["id"], p["title"], p["document"], p["revision"])
+            app.save_project(p["id"], p["title"], p["document"], p["revision"])
         self.assertEqual(error.exception.code, "archived_project")
 
 
 class DurableJobContracts(unittest.TestCase):
+
     def test_retry_is_idempotent_and_execution_survives_the_request(self):
-        p = server.PROJECTS.create(
+        p = app.PROJECTS.create(
             "job fixture",
             {
                 **document(),
@@ -301,16 +303,16 @@ class DurableJobContracts(unittest.TestCase):
         def execute(pid, body):
             calls.append(pid)
             gate.wait(2)
-            value = server.load_project(pid)
+            value = app.load_project(pid)
             value["document"]["runs"].append(
                 {
                     "id": uuid4().hex,
                     "actor_id": "actor",
                     "status": "completed",
-                    "started_at": server.now(),
+                    "started_at": app.now(),
                 }
             )
-            return server.save_project(
+            return app.save_project(
                 pid, value["title"], value["document"], value["revision"]
             )
 
@@ -326,7 +328,7 @@ class DurableJobContracts(unittest.TestCase):
             )
         projects = Mock()
         projects.load.return_value = p
-        jobs = Jobs(fixture_connect, projects, execute, server.now, start=False)
+        jobs = Jobs(fixture_connect, projects, execute, app.now, start=False)
         try:
             first = jobs.submit(
                 p["id"], {"actor_id": "actor"}, "fixture-idempotent-key"
@@ -363,9 +365,10 @@ class DurableJobContracts(unittest.TestCase):
 
 
 class HttpAccessContracts(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
-        cls.http = server.ApplicationServer(("127.0.0.1", 0), server.Handler)
+        cls.http = ApplicationServer(("127.0.0.1", 0), Handler)
         cls.base = "http://127.0.0.1:" + str(cls.http.server_port)
         cls.thread = threading.Thread(target=cls.http.serve_forever, daemon=True)
         cls.thread.start()

@@ -104,7 +104,7 @@ export function DateTimeInput({ type, label, value, onChange, ...inputProps }) {
                   icon="chevron-left"
                   onClick={() => setMonth(new Date(year, index - 1, 1))}
                 >
-                  {t('Vorheriger Monat')}
+                  {t('ui.previous_month')}
                 </Button>
                 <strong>
                   {new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric' }).format(
@@ -117,7 +117,7 @@ export function DateTimeInput({ type, label, value, onChange, ...inputProps }) {
                   icon="chevron-right"
                   onClick={() => setMonth(new Date(year, index + 1, 1))}
                 >
-                  {t('Nächster Monat')}
+                  {t('ui.next_month')}
                 </Button>
               </div>
               <div className="calendar-days">
@@ -158,14 +158,14 @@ export function DateTimeInput({ type, label, value, onChange, ...inputProps }) {
                   setOpen(false);
                 }}
               >
-                {t('Heute')}
+                {t('ui.today')}
               </Button>
             </>
           ) : (
             <div className="time-columns">
               {[
-                [24, t('Stunden')],
-                [60, t('Minuten')]
+                [24, t('ui.hours')],
+                [60, t('ui.minutes')]
               ].map(([count, title], part) => (
                 <div key={part}>
                   <strong>{title}</strong>
@@ -278,7 +278,7 @@ function ColorChooser({ value, onChange }) {
           />
         ))}
       </div>
-      {[t('Farbton'), t('Sättigung'), t('Helligkeit')].map((name, i) => (
+      {[t('ui.hue'), t('ui.saturation'), t('ui.lightness')].map((name, i) => (
         <label className="color-slider" key={i}>
           {name}
           <input

@@ -18,7 +18,11 @@ def main():
         # Explicit maintenance/test commands do not start application services.
         os.execvp(command[0], command)
     if os.geteuid() != 0:
-        print("Integrated VPN/browser/community runtime requires the supplied Compose permissions; starting the unprivileged application. Unavailable isolated features remain disabled.", file=sys.stderr, flush=True)
+        print(
+            "Integrated VPN/browser/community runtime requires the supplied Compose permissions; starting the unprivileged application. Unavailable isolated features remain disabled.",
+            file=sys.stderr,
+            flush=True,
+        )
         os.execvp(command[0], command)
     # Fail closed: an explicitly requested worker configuration must support isolation.
     subprocess.run(

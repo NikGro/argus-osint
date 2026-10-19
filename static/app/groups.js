@@ -354,8 +354,8 @@ var groups_default = {
         !selectionState.selectedGroup &&
         !selectionState.selectedGroups.size
       )
-        throw Error(t('Bitte Knoten ausw\xE4hlen.'));
-      const label = await askText(t('Gruppe erstellen'), t('Gruppenbezeichnung'), t('Neue Gruppe'));
+        throw Error(t('ui.select_nodes_first'));
+      const label = await askText(t('ui.create_group'), t('ui.group_label'), t('ui.new_group'));
       if (!label) return;
       const doc = workspaceState.project.document,
         groupIds = new Set(

@@ -7,12 +7,12 @@ export function researchProfiles(parent, initial, catalog, changed) {
   const root = document.createElement('div');
   root.className = 'research-profiles';
   const label = document.createElement('label');
-  label.textContent = t('Suchprofil hinzufügen');
+  label.textContent = t('ui.add_search_profile');
   const select = document.createElement('select');
-  select.setAttribute('aria-label', t('Suchprofil hinzufügen'));
-  select.append(new Option(t('Suchprofil hinzufügen …'), ''));
+  select.setAttribute('aria-label', t('ui.add_search_profile'));
+  select.append(new Option(t('ui.add_search_profile_a2a8ee86'), ''));
   for (const entry of catalog) select.append(new Option(entry.label, entry.id));
-  select.append(new Option(t('Eigene Websites'), 'custom'));
+  select.append(new Option(t('ui.custom_websites'), 'custom'));
   label.append(select);
   const list = document.createElement('div');
   list.className = 'profile-list';
@@ -40,10 +40,8 @@ export function researchProfiles(parent, initial, catalog, changed) {
   function paint() {
     list.replaceChildren();
     help.textContent = rows.length
-      ? t(
-          'Profile werden in dieser Reihenfolge durchsucht. Doppelte Treffer werden zusammengeführt.'
-        )
-      : t('Keine Einschränkung – alle Websites werden durchsucht.');
+      ? t('ui.profiles_are_searched_in_this_order_duplicate_results_are_merged')
+      : t('ui.no_restriction_all_websites_will_be_searched');
     rows.forEach((row, index) => {
       const tile = document.createElement('div');
       tile.className = 'profile-item';
@@ -84,7 +82,7 @@ export function researchProfiles(parent, initial, catalog, changed) {
       const title = document.createElement('span');
       title.textContent =
         row.id === 'custom'
-          ? t('Eigene Websites')
+          ? t('ui.custom_websites')
           : catalog.find((entry) => entry.id === row.id)?.label || row.id;
       const up = control('Nach oben', 'chevron-up', () => move(index, index - 1));
       const down = control('Nach unten', 'chevron-down', () => move(index, index + 1));
@@ -104,8 +102,8 @@ export function researchProfiles(parent, initial, catalog, changed) {
         const input = document.createElement('textarea');
         input.rows = 4;
         input.value = (row.sites || []).join('\n');
-        input.placeholder = t('Eine Website pro Zeile, zum Beispiel GitHub');
-        input.setAttribute('aria-label', t('Eigene Websites – eine pro Zeile'));
+        input.placeholder = t('ui.one_website_per_line_for_example_github');
+        input.setAttribute('aria-label', t('ui.custom_websites_one_per_line'));
         input.addEventListener('input', () => {
           row.sites = input.value
             .split(/\r?\n/)

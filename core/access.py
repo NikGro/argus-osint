@@ -1,5 +1,6 @@
 """Single-installation authentication, CSRF and explicit DNS-rebinding protection."""
 
+from core.errors import DomainError
 import ipaddress
 import hmac
 import os
@@ -12,9 +13,10 @@ from core.errors import AppError
 
 
 class Access:
+
     def __init__(self, data, allowed_hosts=None):
-        self.allow_private_literals = allowed_hosts is None and not os.getenv(
-            "ARGUS_ALLOWED_HOSTS"
+        self.allow_private_literals = allowed_hosts is None and (
+            not os.getenv("ARGUS_ALLOWED_HOSTS")
         )
         self.allowed_hosts = set(
             allowed_hosts
@@ -28,14 +30,14 @@ class Access:
         path = Path(data) / ".access-key"
         configured = os.getenv("ARGUS_ACCESS_TOKEN", "")
         if configured and len(configured) < 24:
-            raise ValueError("ARGUS_ACCESS_TOKEN must have at least 24 characters")
+            raise DomainError("validation.7600724816")
         if not path.exists():
-            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 384)
             with os.fdopen(fd, "w") as f:
                 f.write(configured or secrets.token_urlsafe(32))
         self.key = configured or path.read_text().strip()
-        path.chmod(0o600)
-        self.sessions, self.attempts = {}, {}
+        path.chmod(384)
+        self.sessions, self.attempts = ({}, {})
         self.pairing_code = secrets.token_urlsafe(32)
         self.pairing_expires = time.monotonic() + 86400
         self.lock = threading.Lock()
@@ -59,11 +61,11 @@ class Access:
             valid = (
                 host.hostname
                 and self.host_allowed(host.hostname)
-                and not host.username
-                and not host.password
-                and not host.path
-                and not host.query
-                and not host.fragment
+                and (not host.username)
+                and (not host.password)
+                and (not host.path)
+                and (not host.query)
+                and (not host.fragment)
             )
             _ = host.port
         except ValueError:
@@ -85,20 +87,22 @@ class Access:
         bearer = headers.get("Authorization", "")
         if bearer.startswith("Bearer ") and hmac.compare_digest(bearer[7:], self.key):
             return {"csrf": "bearer"}
-        from http.cookies import SimpleCookie
+        from http.cookies import SimpleCookie, CookieError
 
         cookie = SimpleCookie()
         try:
             cookie.load(headers.get("Cookie", ""))
-        except Exception:
+        except CookieError:
             raise AppError("authentication_required", 401) from None
         sid = cookie.get("argus_session")
         with self.lock:
             record = self.sessions.get(sid.value if sid else "")
             if not record or record["expires"] <= time.monotonic():
                 raise AppError("authentication_required", 401)
-            if write and not hmac.compare_digest(
-                headers.get("X-Argus-Token", ""), record["csrf"]
+            if write and (
+                not hmac.compare_digest(
+                    headers.get("X-Argus-Token", ""), record["csrf"]
+                )
             ):
                 raise AppError("csrf_required", 403)
             return dict(record)
@@ -109,7 +113,7 @@ class Access:
             self.attempts = {
                 key: [t for t in values if t > now - 300]
                 for key, values in self.attempts.items()
-                if any(t > now - 300 for t in values)
+                if any((t > now - 300 for t in values))
             }
             if address not in self.attempts and len(self.attempts) >= 10000:
                 raise AppError("login_rate_limited", 429)
@@ -120,7 +124,7 @@ class Access:
             paired = (
                 isinstance(supplied, str)
                 and self.pairing_code is not None
-                and now < self.pairing_expires
+                and (now < self.pairing_expires)
                 and hmac.compare_digest(supplied, self.pairing_code)
             )
             if not isinstance(supplied, str) or not (
@@ -133,9 +137,9 @@ class Access:
             self.sessions = {
                 k: v for k, v in self.sessions.items() if v["expires"] > now
             }
-            sid, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
+            sid, csrf = (secrets.token_urlsafe(32), secrets.token_urlsafe(32))
             self.sessions[sid] = {"csrf": csrf, "expires": now + 12 * 3600}
-            return sid, csrf, paired
+            return (sid, csrf, paired)
 
     def logout(self, headers):
         from http.cookies import SimpleCookie

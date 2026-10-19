@@ -143,21 +143,19 @@ var plugin_settings_default = {
             const actual = el('section', { class: 'plugin-config-section' }),
               preset = el('section', { class: 'plugin-default-section' });
             actual.append(
-              el('h4', {}, t('Plugin-Einstellungen')),
+              el('h4', {}, t('ui.plugin_settings')),
               el(
                 'p',
                 { class: 'source-help' },
-                t(
-                  'Gilt für das gesamte Plugin, zum Beispiel Zugangsdaten und Quellenkonfiguration.'
-                )
+                t('ui.applies_to_the_whole_plugin_including_credentials_and_source_conf')
               )
             );
             preset.append(
-              el('h4', {}, t('Standardwerte für neue Tools')),
+              el('h4', {}, t('ui.defaults_for_new_tools')),
               el(
                 'p',
                 { class: 'source-help' },
-                t('Diese Werte kannst du später für jedes Tool in den Knotendetails ändern.')
+                t('ui.you_can_change_these_values_for_each_tool_in_its_node_details')
               )
             );
             form.append(actual, preset);
@@ -232,15 +230,15 @@ var plugin_settings_default = {
           'plugin-expand'
         );
         expand.replaceChildren(icon(form.hidden ? 'chevron-right' : 'chevron-down'));
-        expand.setAttribute('aria-label', t('Plugin-Einstellungen'));
+        expand.setAttribute('aria-label', t('ui.plugin_settings'));
         expand.setAttribute('aria-expanded', String(!form.hidden));
         expand.setAttribute('aria-controls', form.id);
         const remove = button(
-          t('Entfernen'),
+          t('ui.remove'),
           async () => {
             if (pluginsState.pendingPluginDirty.has(plugin.id)) await persistPluginForm(plugin.id);
             if (pluginsState.pendingPluginSaves.has(plugin.id))
-              throw Error(t('Bitte das Speichern abwarten.'));
+              throw Error(t('ui.wait_for_saving_to_complete'));
             clearTimeout(pluginsState.pendingPluginTimers.get(plugin.id));
             await api('/api/plugin/remove', {
               id: plugin.id
@@ -274,8 +272,7 @@ var plugin_settings_default = {
       }
       for (const category of ['Daten-Nodes', 'Aktoren'])
         if (sections.has(category)) root.append(sections.get(category).section);
-      if (!root.children.length)
-        root.append(el('p', {}, t('Keine passenden Plugins installiert.')));
+      if (!root.children.length) root.append(el('p', {}, t('ui.no_matching_installed_plugins')));
     }
     async function persistPluginForm(id) {
       const model = pluginsState.activePluginForms.get(id);
@@ -382,7 +379,7 @@ var plugin_settings_default = {
         pluginsState.pendingPluginDirty.has(plugin.id) ||
         pluginsState.pendingPluginSaves.has(plugin.id)
       )
-        throw Error(t('Bitte das Speichern abwarten.'));
+        throw Error(t('ui.wait_for_saving_to_complete'));
       let transient = {};
       for (let attempt = 0; attempt < 4; attempt++) {
         const submitted = await api('/api/plugin/connection', {
@@ -404,12 +401,12 @@ var plugin_settings_default = {
           continue;
         }
         if (!result.authenticated)
-          throw Error((result.warnings || []).join(' \xB7 ') || t('Anmeldung fehlgeschlagen.'));
-        toast(t('Instagram-Anmeldung erfolgreich.'));
+          throw Error((result.warnings || []).join(' \xB7 ') || t('ui.login_failed'));
+        toast(t('ui.instagram_login_successful'));
         await refreshCatalog();
         return;
       }
-      throw Error(t('Zu viele aufeinanderfolgende Eingabeanforderungen.'));
+      throw Error(t('ui.too_many_consecutive_input_requests'));
     }
     return { pluginsHome, renderInstalled, persistPluginForm, openPluginSettings, connectPlugin };
   }

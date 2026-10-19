@@ -14,9 +14,7 @@ var canvas_renderer_default = {
     'nodeBadgeHeight',
     'noteInk',
     'pluginText',
-    'renderEdges',
-    'renderGroups',
-    'renderNodes',
+
     'resourceActions',
     'svg',
     'updateMapOverlays'
@@ -36,75 +34,16 @@ var canvas_renderer_default = {
     nodeBadgeHeight,
     noteInk,
     pluginText,
-    renderEdges,
-    renderGroups,
-    renderNodes,
+
     resourceActions,
     svg,
     updateMapOverlays
   }) {
     function renderViewport() {
-      const pan = canvasState.pan;
-      if ($('zoomLevel')) $('zoomLevel').value = Math.round(pan.scale * 100) + '%';
-      $('grid').setAttribute(
-        'patternTransform',
-        `translate(${pan.x} ${pan.y}) scale(${pan.scale})`
-      );
-      $('scene').setAttribute('transform', `translate(${pan.x} ${pan.y}) scale(${pan.scale})`);
-      updateMapOverlays(new Set(graphGroupModel().hidden));
+      /* View adapter supplied by React. */
     }
     function render() {
-      if (!workspaceState.project) return;
-      canvasState.groupBoundsCache = null;
-      measureEdgeText.font = getComputedStyle(document.body).fontFamily;
-      measureEdgeText.cache = new Map();
-      if ($('zoomLevel')) $('zoomLevel').value = Math.round(canvasState.pan.scale * 100) + '%';
-      const scene = $('scene');
-      const previousPositions = new Map(
-        [...scene.querySelectorAll('.node')].map((g) => [g.dataset.id, g.getAttribute('transform')])
-      );
-      scene.replaceChildren();
-      $('grid').setAttribute(
-        'patternTransform',
-        `translate(${canvasState.pan.x} ${canvasState.pan.y}) scale(${canvasState.pan.scale})`
-      );
-      scene.setAttribute(
-        'transform',
-        `translate(${canvasState.pan.x} ${canvasState.pan.y}) scale(${canvasState.pan.scale})`
-      );
-      const doc = workspaceState.project.document,
-        hidden = /* @__PURE__ */ new Map(),
-        groupModel = graphGroupModel(),
-        groupViews = /* @__PURE__ */ new Map(),
-        groupEdges = /* @__PURE__ */ new Map(),
-        labelsByContext = /* @__PURE__ */ new Map(),
-        externalEdges = svg('g', {
-          class: 'external-edges'
-        }),
-        labelOverlay = svg('g', {
-          class: 'edge-label-overlay'
-        });
-      scene.append(externalEdges, labelOverlay);
-      for (const id of groupModel.hidden) hidden.set(id, true);
-      renderGroups({ scene, groupModel, groupViews, groupEdges });
-      renderEdges({
-        doc,
-        hidden,
-        groupModel,
-        groupEdges,
-        externalEdges,
-        labelOverlay,
-        labelsByContext
-      });
-      renderNodes({ doc, hidden, groupModel, groupViews, scene, previousPositions });
-      for (const view of groupViews.values())
-        for (const control of [...view.children].filter(
-          (n) => n.classList.contains('group-toggle') || n.classList.contains('group-title')
-        ))
-          view.append(control);
-      scene.append(labelOverlay);
-      applyGraphHighlights(groupModel);
-      updateMapOverlays(hidden);
+      /* View adapter supplied by React. */
     }
     function nodeRect(node) {
       const size = layout_spec_default[node.type] || layout_spec_default.base;
@@ -121,7 +60,7 @@ var canvas_renderer_default = {
       if (node.type === 'location') {
         h = Math.max(
           size.height,
-          size.header + locationDisplayLines(node.data || {}, w).length * size.line
+          76 + (Math.min(5, locationDisplayLines(node.data || {}, w).length) - 1) * size.line
         );
         if (
           node.display?.map &&
@@ -214,12 +153,13 @@ var canvas_renderer_default = {
       );
     }
     function summary(n) {
+      if (n.type === 'database') return n.data.database_title || t('ui.choose_database');
       if (n.type === 'actor')
         return executionState.activeActors.has(n.id)
-          ? t('L\xE4uft \u2026')
+          ? t('ui.running')
           : executionState.actorQueue.some((job) => job.id === n.id)
-            ? t('In Warteschlange')
-            : t(n.data.status) || t('bereit');
+            ? t('ui.queued')
+            : t(n.data.status) || t('ui.ready_7f2ffe9a');
       if (n.type === 'person')
         return [
           n.data.birth_date,
@@ -240,7 +180,7 @@ var canvas_renderer_default = {
       if (n.type === 'datetime')
         return [n.data.date, n.data.time, n.data.timezone].filter(Boolean).join(' \xB7 ');
       if (n.type === 'location')
-        return formatLocation(n.data) || n.data.formatted_address || t('Standortangabe');
+        return formatLocation(n.data) || n.data.formatted_address || t('ui.location');
       return (
         (n.type === 'value' && n.evidence?.run_id
           ? pluginText(

@@ -1,6 +1,5 @@
 """Fixed bootstrap inside new mount, network and PID namespaces; drops identity before code."""
 
-import ctypes
 import json
 import os
 import resource
@@ -65,11 +64,9 @@ def main():
     resource.setrlimit(resource.RLIMIT_NOFILE, (512, 512))
     resource.setrlimit(resource.RLIMIT_CPU, (600, 600))
     os.chdir("/work")
-    os.setgroups([])
-    os.setgid(uid)
-    os.setuid(uid)
-    if ctypes.CDLL(None).prctl(38, 1, 0, 0, 0) != 0:
-        raise RuntimeError("no_new_privs failed")
+    from core.worker_security import harden_worker
+
+    harden_worker(uid)
     os.umask(0o077)
     bridge = Bridge(("127.0.0.1", 0), Relay)
     threading.Thread(target=bridge.serve_forever, daemon=True).start()
@@ -100,7 +97,7 @@ def main():
         command = [
             "/usr/local/bin/python",
             "-I",
-            "/app/community_runner.py",
+            "/app/core/community_runner.py",
             "/work/plugin.py",
         ]
     else:

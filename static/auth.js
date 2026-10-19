@@ -10,7 +10,7 @@ async function login() {
     headers: { 'Content-Type': 'application/json', 'X-Argus-Client': 'web' },
     body: '{}'
   });
-  if (!response.ok) throw Error(t('Verbindung zu Argus fehlgeschlagen.'));
+  if (!response.ok) throw Error(t('ui.could_not_connect_to_argus'));
   csrf = (await response.json()).csrf_token;
 }
 

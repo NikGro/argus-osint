@@ -42,6 +42,8 @@ DEFAULTS = {
     "include_overlays": True,
     "resize_large_images": False,
     "run_timeout": 300,
+    "column_id": "",
+    "max_comparisons": 100,
 }
 SCHEMA = {
     key: {"secret": False, "enum": options}
@@ -87,9 +89,10 @@ PLUGIN = {
         {
             "id": "verify",
             "name": "Bilder mit DeepFace vergleichen",
-            "inputs": ["image"],
+            "inputs": ["image", "database"],
             "min_inputs": 2,
             "max_inputs": 2,
+            "input_roles": [["image"], ["image", "database"]],
             "external": False,
             "default_params": DEFAULTS,
             "parameter_schema": SCHEMA,
@@ -137,6 +140,10 @@ def validated(params):
 
 
 def run(action, inputs, params, context):
+    if action == "verify" and any(n.get("type") == "database" for n in inputs):
+        from plugins._database_faces import search
+
+        return search(inputs, params, context, run)
     if (
         action != "verify"
         or len(inputs) != 2

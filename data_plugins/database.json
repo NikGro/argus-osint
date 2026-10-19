@@ -1,0 +1,31 @@
+{
+  "id": "data_database",
+  "name": "Datenbank",
+  "description": "Eine globale ARGUS-Datenbank als Tool-Eingabe verwenden.",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "database",
+      "name": "Datenbank",
+      "new_label": "Neue Datenbankreferenz",
+      "icon": "database",
+      "category": "Eigene Angaben",
+      "defaults": {
+        "database_id": "",
+        "database_title": ""
+      },
+      "display_defaults": {}
+    }
+  ],
+  "translations": {
+    "de": {
+      "Datenbank": "Datenbank"
+    },
+    "en": {
+      "Datenbank": "Database",
+      "Neue Datenbankreferenz": "New database reference",
+      "Eigene Angaben": "Custom data",
+      "Eine globale ARGUS-Datenbank als Tool-Eingabe verwenden.": "Use a shared ARGUS database as a tool input."
+    }
+  }
+}

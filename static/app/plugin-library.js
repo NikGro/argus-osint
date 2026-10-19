@@ -51,23 +51,21 @@ var plugin_library_default = {
         row.append(
           el('h3', {}, pluginDisplayName(plugin)),
           el('p', {}, pluginText(plugin, plugin.description || '')),
-          el('small', {}, plugin.origin === 'builtin' ? t('Mitgeliefert') : t('Community'))
+          el('small', {}, plugin.origin === 'builtin' ? t('ui.bundled') : t('ui.community'))
         );
         const install = button(
-          plugin.installed ? t('Installiert') : t('Installieren'),
+          plugin.installed ? t('ui.installed') : t('ui.install'),
           async () => {
             if (plugin.origin === 'community') {
               const accepted = await askConfirm(
-                t('Community-Plugin installieren'),
-                t(
-                  'Der Python-Code dieses Repositories wird im Argus-Container ausgef\xFChrt. Nur vertrauensw\xFCrdige Repositories installieren.'
-                )
+                t('ui.install_community_plugin'),
+                t('ui.this_repository_s_python_code_runs_in_the_argus_container_install')
               );
               if (!accepted) return;
             }
             install.disabled = true;
             install.setAttribute('aria-busy', 'true');
-            install.textContent = t('Wird installiert …');
+            install.textContent = t('ui.installing');
             try {
               await api('/api/plugin/install', {
                 id: plugin.id
@@ -79,7 +77,7 @@ var plugin_library_default = {
             } finally {
               install.disabled = false;
               install.removeAttribute('aria-busy');
-              if (install.isConnected) install.textContent = t('Installieren');
+              if (install.isConnected) install.textContent = t('ui.install');
             }
           },
           'primary'
@@ -89,7 +87,7 @@ var plugin_library_default = {
         root.append(row);
       }
       if (!root.children.length)
-        root.append(el('p', { class: 'empty-state' }, t('Keine passenden Plugins gefunden.')));
+        root.append(el('p', { class: 'empty-state' }, t('ui.no_matching_plugins_found')));
     }
     async function openRepositories() {
       await refreshLibrary();
@@ -105,10 +103,10 @@ var plugin_library_default = {
         });
         row.append(
           el('strong', {}, repo.url),
-          el('p', {}, t(repo.error) || repo.manifest.plugins.length + t(' Plugins'))
+          el('p', {}, t(repo.error) || repo.manifest.plugins.length + t('ui.plugins_77bb9ce6'))
         );
         row.append(
-          button(t('Aktualisieren'), async () => {
+          button(t('ui.refresh'), async () => {
             await api('/api/repositories/refresh', {
               id: repo.id
             });
@@ -117,7 +115,7 @@ var plugin_library_default = {
             renderLibrary();
           }),
           button(
-            t('Entfernen'),
+            t('ui.remove'),
             async () => {
               await api('/api/repositories/remove', {
                 id: repo.id
@@ -132,7 +130,7 @@ var plugin_library_default = {
         root.append(row);
       }
       if (!pluginsState.repositories.length)
-        root.append(el('p', {}, t('Noch keine Community-Repositories hinzugef\xFCgt.')));
+        root.append(el('p', {}, t('ui.no_community_repositories_added_yet')));
     }
     return { refreshLibrary, openLibrary, renderLibrary, openRepositories, renderRepositories };
   }

@@ -115,7 +115,8 @@ class Handler(socketserver.BaseRequestHandler):
                     "--mount-proc",
                     "--kill-child",
                     "/usr/local/bin/python",
-                    "/app/core/worker_entry.py",
+                    "-m",
+                    "core.worker_entry",
                     folder,
                     str(uid),
                 ]

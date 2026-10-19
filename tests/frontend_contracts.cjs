@@ -6,7 +6,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {webcrypto}=require('node:crypto');
 let modules;
-const production=()=>modules??=import('data:text/javascript;base64,'+fs.readFileSync(path.join(__dirname,'../static/app.js')).toString('base64'));
+const production=()=>modules??=import(require('node:url').pathToFileURL(path.join(__dirname,'../static/app.js')).href);
 const doc=()=>({nodes:[],edges:[],groups:[],runs:[],report_notes:''});
 function feature(module,name,state,ports={}){
  const descriptor=module[name];return descriptor.create({...state,...Object.fromEntries(descriptor.dependencies.map(key=>[key,()=>{}])),...ports});
@@ -68,5 +68,5 @@ test('Archived workspace never submits edits',async()=>{
 test('Every declared callback has an explicit composition owner',async()=>{
  const m=await production(),app=m.createApplication();
  for(const feature of Object.values(app.features))for(const callback of Object.values(feature))assert.equal(typeof callback,'function');
- assert.ok(Object.keys(app.features).length>=30);
+ assert.ok(app.features.groups && app.features.actors && app.features.tags); assert.equal(app.features.nodeRenderer,undefined);
 });

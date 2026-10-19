@@ -1,5 +1,6 @@
 """Validated file intake, metadata storage and conservative content delivery."""
 
+from core.errors import DomainError
 import io
 import re
 import os
@@ -41,10 +42,10 @@ class FileRepository:
             )
 
     def project_path(self, pid, fid):
-        if not isinstance(pid, str) or not re.fullmatch(r"[a-f0-9]{32}", pid):
-            raise ValueError("Invalid project ID.")
-        if not isinstance(fid, str) or not re.fullmatch(r"[a-f0-9]{32}", fid):
-            raise ValueError("Invalid file ID.")
+        if not isinstance(pid, str) or not re.fullmatch("[a-f0-9]{32}", pid):
+            raise DomainError("validation.55f0f81352")
+        if not isinstance(fid, str) or not re.fullmatch("[a-f0-9]{32}", fid):
+            raise DomainError("validation.d2673f7901")
         return self.directory / "projects" / pid / fid
 
     def attach(self, conn, pid, document):
@@ -78,8 +79,6 @@ class FileRepository:
                 except FileExistsError:
                     pass
                 except OSError:
-                    # Cross-device filesystems may not support links. Atomic copy
-                    # prevents serving an interrupted partial project artifact.
                     temporary = target.with_name(fid + "." + uuid4().hex + ".tmp")
                     try:
                         shutil.copyfile(source, temporary)
@@ -89,8 +88,8 @@ class FileRepository:
             conn.execute("INSERT OR IGNORE INTO project_files VALUES (?,?)", (pid, fid))
 
     def resolve(self, fid):
-        if not isinstance(fid, str) or not re.fullmatch(r"[a-f0-9]{32}", fid):
-            raise ValueError("Ungültige Datei-ID.")
+        if not isinstance(fid, str) or not re.fullmatch("[a-f0-9]{32}", fid):
+            raise DomainError("validation.8e525d9dc3")
         path = self.directory / fid
         if not path.is_file():
             with self.connect() as conn:
@@ -102,7 +101,7 @@ class FileRepository:
                 None,
             )
         if path is None or not path.is_file():
-            raise ValueError("Bilddatei nicht gefunden.")
+            raise DomainError("validation.4c17f3876f")
         return path
 
     def upload(self, data, original_name, project_id=None):
@@ -152,8 +151,8 @@ class FileRepository:
                     mime = Image.MIME.get(image.format, mime)
                     image.verify()
                     is_image = True
-            except Exception:
-                pass  # Unknown files remain downloads, never executable HTML.
+            except (OSError, ValueError, SyntaxError, Image.DecompressionBombError):
+                pass
             video = {}
             if not is_image:
                 from core.video import probe_video
@@ -202,17 +201,46 @@ class FileRepository:
             try:
                 original = probe_video(source)
                 subprocess.run(
-                    ["ffmpeg", "-nostdin", "-v", "error", "-i", str(source),
-                     "-map", "0:v:0", "-map", "0:a:0?",
-                     "-vf", "scale=1280:720:force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
-                     "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-                     "-threads", "2", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
-                     "-movflags", "+faststart", "-fs", "536870912", str(temporary)],
-                    check=True, capture_output=True, timeout=180,
+                    [
+                        "ffmpeg",
+                        "-nostdin",
+                        "-v",
+                        "error",
+                        "-i",
+                        str(source),
+                        "-map",
+                        "0:v:0",
+                        "-map",
+                        "0:a:0?",
+                        "-vf",
+                        "scale=1280:720:force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
+                        "-c:v",
+                        "libx264",
+                        "-preset",
+                        "veryfast",
+                        "-crf",
+                        "23",
+                        "-threads",
+                        "2",
+                        "-pix_fmt",
+                        "yuv420p",
+                        "-c:a",
+                        "aac",
+                        "-b:a",
+                        "128k",
+                        "-movflags",
+                        "+faststart",
+                        "-fs",
+                        "536870912",
+                        str(temporary),
+                    ],
+                    check=True,
+                    capture_output=True,
+                    timeout=180,
                 )
                 result = probe_video(temporary)
                 if result["duration"] < original["duration"] - 0.5:
-                    raise ValueError("Incomplete playback copy")
+                    raise DomainError("validation.1f425d1edb")
                 os.replace(temporary, target)
                 return target
             except (OSError, ValueError, subprocess.SubprocessError):
@@ -236,7 +264,11 @@ class FileRepository:
                     mime = Image.MIME.get(image.format, mime)
             except Exception:
                 pass
-        return path.read_bytes(), mime, None if mime in self.INLINE_MIMES else filename
+        return (
+            path.read_bytes(),
+            mime,
+            None if mime in self.INLINE_MIMES else filename,
+        )
 
     def collect_unused(self, candidates=None):
         """Delete only project-owned candidates, with a short lease for concurrent clipboard/upload work."""
@@ -260,6 +292,18 @@ class FileRepository:
                 documents += [
                     r[0] for r in conn.execute("SELECT record FROM run_history")
                 ]
+            if conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE name='dataset_rows'"
+            ).fetchone():
+                documents += [
+                    r[0] for r in conn.execute("SELECT cells FROM dataset_rows")
+                ]
+            if conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE name='dataset_imports'"
+            ).fetchone():
+                documents += [
+                    r[0] for r in conn.execute("SELECT payload FROM dataset_imports")
+                ]
             referenced = set()
             for encoded in documents:
                 referenced.update(file_references(json.loads(encoded)))
@@ -267,7 +311,7 @@ class FileRepository:
                 "SELECT 1 FROM sqlite_master WHERE name='remote_media'"
             ).fetchone():
                 for url, fid in conn.execute("SELECT url,file_id FROM remote_media"):
-                    if any(url in encoded for encoded in documents):
+                    if any((url in encoded for encoded in documents)):
                         referenced.add(fid)
             for (fid,) in conn.execute(
                 "SELECT file_id FROM file_gc WHERE eligible_at<=?", (time.time(),)
@@ -296,7 +340,7 @@ def file_references(value):
     result = set()
     if isinstance(value, dict):
         if isinstance(value.get("file_id"), str) and re.fullmatch(
-            r"[a-f0-9]{32}", value["file_id"]
+            "[a-f0-9]{32}", value["file_id"]
         ):
             result.add(value["file_id"])
         for child in value.values():

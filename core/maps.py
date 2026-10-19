@@ -77,7 +77,9 @@ class Maps:
         # must show the localized unavailable state, not a grid of broken images.
         count = 2**14
         x = int((longitude + 180) / 360 * count) % count
-        y = int((1 - math.asinh(math.tan(math.radians(latitude))) / math.pi) / 2 * count)
+        y = int(
+            (1 - math.asinh(math.tan(math.radians(latitude))) / math.pi) / 2 * count
+        )
         self.tile(14, x, max(0, min(count - 1, y)))
         caption = "Kartenvorschau" if language == "de" else "Map preview"
         html = (

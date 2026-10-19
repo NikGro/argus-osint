@@ -97,7 +97,7 @@ export function MapPreview({ src, title, className = '' }) {
           loading="lazy"
         />
       ) : (
-        <p role="status">{t('Lädt …')}</p>
+        <p role="status">{t('ui.loading')}</p>
       )}
     </div>
   );

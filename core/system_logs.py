@@ -1,14 +1,16 @@
 """Bounded persistent operational logs, separate from research/project history."""
 
+from core.errors import DomainError
 import json
 import logging
 from core.secrets import redact
 
 
 class SystemLogs(logging.Handler):
+
     def __init__(self, connect, now, capacity=50000):
         super().__init__()
-        self.connect, self.now, self.capacity = connect, now, capacity
+        self.connect, self.now, self.capacity = (connect, now, capacity)
         with connect() as conn:
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS system_logs (id INTEGER PRIMARY KEY AUTOINCREMENT,created_at TEXT NOT NULL,level TEXT NOT NULL,message TEXT NOT NULL)"
@@ -16,8 +18,6 @@ class SystemLogs(logging.Handler):
 
     def emit(self, record):
         try:
-            # Only structured application events enter this store. Arbitrary third-party
-            # exception text and request bodies can contain credentials.
             try:
                 event = json.loads(record.getMessage())
             except (ValueError, TypeError):
@@ -39,7 +39,7 @@ class SystemLogs(logging.Handler):
 
     def page(self, search="", offset=0, limit=200):
         if offset < 0 or not 1 <= limit <= 1000:
-            raise ValueError("Invalid log page")
+            raise DomainError("validation.6634399cae")
         with self.connect() as conn:
             total = conn.execute(
                 "SELECT COUNT(*) FROM system_logs WHERE instr(lower(message),lower(?))>0 OR instr(lower(level),lower(?))>0",
@@ -57,14 +57,14 @@ class SystemLogs(logging.Handler):
 
     def export(self, search="", limit=0):
         if limit < 0:
-            raise ValueError("Invalid log limit")
+            raise DomainError("validation.40a542f847")
         with self.connect() as conn:
             rows = conn.execute(
                 "SELECT created_at,level,message FROM system_logs WHERE instr(lower(message),lower(?))>0 OR instr(lower(level),lower(?))>0 ORDER BY id DESC LIMIT ?",
                 (search, search, limit or -1),
             )
             for row in rows:
-                yield " ".join(row) + "\n"
+                yield (" ".join(row) + "\n")
 
     def clear(self):
         with self.connect() as conn:

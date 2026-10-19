@@ -3,12 +3,12 @@
 import json
 import time
 import urllib.request
-import server
+from runtime_fixture import app
 
 
 def request(*args, **kwargs):
     headers = dict(kwargs.pop("headers", {}) or {})
-    headers["Authorization"] = "Bearer " + server.AUTH.key
+    headers["Authorization"] = "Bearer " + app.AUTH.key
     return urllib.request.Request(*args, headers=headers, **kwargs)
 
 

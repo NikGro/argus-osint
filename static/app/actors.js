@@ -45,7 +45,7 @@ var actors_default = {
         const worker = new Worker('/transform-worker.js');
         const timer = setTimeout(() => {
           worker.terminate();
-          reject(Error(t('Transform nach 2 Sekunden abgebrochen.')));
+          reject(Error(t('ui.transform_stopped_after_2_seconds')));
         }, 2e3);
         worker.onmessage = (e) => {
           clearTimeout(timer);
@@ -249,10 +249,10 @@ var actors_default = {
           continue;
         }
         if (last?.candidates?.some((c) => !c.chosen)) await handleManualChoices(job.pid, last);
-        toast(last?.status === 'failed' ? diagnostic(last.error) : t('Aktion abgeschlossen.'));
+        toast(last?.status === 'failed' ? diagnostic(last.error) : t('ui.action_completed'));
         return;
       }
-      throw Error(t('Zu viele aufeinanderfolgende Eingabeanforderungen.'));
+      throw Error(t('ui.too_many_consecutive_input_requests'));
     }
     async function persistActorParameters(job, current, node) {
       if (workspaceState.project?.id === job.pid) {
@@ -287,8 +287,8 @@ var actors_default = {
       for (const choice of run2.candidates || []) {
         if (choice.chosen || choice.cancelled || run2.status === 'cancelled') continue;
         const value = await modalChoice(
-          t('Adresse ausw\xE4hlen'),
-          t('Bitte die passende Ortsangabe ausw\xE4hlen.'),
+          t('ui.select_address'),
+          t('ui.select_the_matching_place'),
           choice.options.map((option, index) => ({
             label:
               (option.formatted_address || option.locality || option.country || String(index + 1)) +
@@ -334,19 +334,17 @@ var actors_default = {
         return true;
       const pid = workspaceState.project.id,
         result = await ui_default.notice({
-          title: t('Instagram ohne Anmeldung'),
-          message: t(
-            'Ohne Instagram-Zugangsdaten sind m\xF6glicherweise nicht alle Ergebnisse verf\xFCgbar. Du kannst fortfahren oder Zugangsdaten in den Plugin-Einstellungen hinterlegen.'
-          ),
-          checkboxText: t('F\xFCr dieses Projekt nicht mehr anzeigen'),
+          title: t('ui.instagram_without_login'),
+          message: t('ui.without_instagram_credentials_some_results_may_be_unavailable_con'),
+          checkboxText: t('ui.do_not_show_again_for_this_project'),
           actions: [
             {
               id: 'settings',
-              label: t('Plugin-Einstellungen')
+              label: t('ui.plugin_settings')
             },
             {
               id: 'continue',
-              label: t('Ohne Anmeldung fortfahren'),
+              label: t('ui.continue_without_login'),
               primary: true
             }
           ]

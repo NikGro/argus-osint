@@ -2,17 +2,18 @@
 
 import json
 from pathlib import Path
+from core.database import connect as sqlite_connect
 import sqlite3
 import tempfile
 import unittest
 from unittest.mock import Mock
-
 from core.actor_results import ResultBuilder
 from core.files import FileRepository
 from core.settings import SettingsRepository
 
 
 class ExtractedServiceContracts(unittest.TestCase):
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -40,7 +41,7 @@ class ExtractedServiceContracts(unittest.TestCase):
         self.files = FileRepository(self.connect, self.files_dir)
 
     def connect(self):
-        return sqlite3.connect(self.db)
+        return sqlite_connect(self.db)
 
     def test_settings_validate_before_persisting_and_preserve_untouched_preferences(
         self,
@@ -59,6 +60,7 @@ class ExtractedServiceContracts(unittest.TestCase):
         self.assertEqual(value["tags"][0]["name"], "Review")
 
     def test_upload_is_not_left_on_disk_after_a_database_failure(self):
+
         def broken_connection():
             raise sqlite3.OperationalError("fixture")
 
@@ -107,10 +109,13 @@ class ExtractedServiceContracts(unittest.TestCase):
 
 
 class ActorDiagnosticContracts(unittest.TestCase):
+
     def test_logs_warnings_errors_and_transient_codes_are_redacted_before_persistence(
         self,
     ):
-        import server
+        from core.application import get_default_application
+
+        app = get_default_application()
         from unittest.mock import patch
 
         doc = {
@@ -136,7 +141,7 @@ class ActorDiagnosticContracts(unittest.TestCase):
             "groups": [],
             "runs": [],
         }
-        project = server.PROJECTS.create("Diagnostics fixture", doc)
+        project = app.PROJECTS.create("Diagnostics fixture", doc)
         result = {
             "outputs": [],
             "warnings": ["fixture-password / 654321"],
@@ -146,13 +151,13 @@ class ActorDiagnosticContracts(unittest.TestCase):
         }
         with (
             patch.object(
-                server.MANAGER,
+                app.MANAGER,
                 "action_params",
                 return_value={"login_password": "fixture-password"},
             ),
-            patch.object(server.PLUGINS["email"], "run", return_value=result),
+            patch.object(app.PLUGINS["email"], "run", return_value=result),
         ):
-            finished = server.execute(
+            finished = app.execute(
                 project["id"],
                 {
                     "actor_id": "actor",
@@ -168,14 +173,18 @@ class ActorDiagnosticContracts(unittest.TestCase):
 
 
 class HttpLogging(unittest.TestCase):
+
     def test_successful_gets_are_quiet_and_failures_remain_structured(self):
-        import server
+        from core.application import get_default_application
+        from core.http_server import Handler
+
+        app = get_default_application()
         from unittest.mock import patch
 
-        handler = object.__new__(server.Handler)
+        handler = object.__new__(Handler)
         handler.command = "GET"
         handler.request_id = "fixture"
-        with patch.object(server.LOGGER, "info") as log:
+        with patch.object(app.LOGGER, "info") as log:
             for status in (200, 206, 304):
                 handler.log_request(status, 128)
             log.assert_not_called()
@@ -190,6 +199,7 @@ class HttpLogging(unittest.TestCase):
 
 
 class OptionalVpnCapability(unittest.TestCase):
+
     def test_missing_unix_sockets_is_explicitly_unavailable(self):
         from core.vpn import Gateway
         from core.errors import AppError

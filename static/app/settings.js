@@ -158,7 +158,7 @@ var settings_default = {
         });
         $('displayDefaults').after(root);
       }
-      root.replaceChildren(el('h2', {}, t('Globale Tags')));
+      root.replaceChildren(el('h2', {}, t('ui.global_tags')));
       const list = el('div');
       for (const tag of preferencesState.appSettings.tags || []) {
         const row = el('div', {
@@ -168,11 +168,11 @@ var settings_default = {
           name = el('input', {
             type: 'text',
             maxlength: 40,
-            'aria-label': t('Tag-Name')
+            'aria-label': t('ui.tag_name')
           }),
           color = el('input', {
             type: 'color',
-            'aria-label': t('Tag-Farbe')
+            'aria-label': t('ui.tag_color')
           });
         name.value = tag.name;
         color.value = tag.color;
@@ -185,7 +185,7 @@ var settings_default = {
           scheduleGlobalSettings();
         });
         const remove = iconActionButton(
-          t('Tag l\xF6schen'),
+          t('ui.delete_tag'),
           () => {
             preferencesState.appSettings.tags = preferencesState.appSettings.tags.filter(
               (item) => item.id !== tag.id
@@ -196,23 +196,23 @@ var settings_default = {
           'trash',
           'danger-filled'
         );
-        buttonContent(remove, t('Tag l\xF6schen'), 'trash', true);
+        buttonContent(remove, t('ui.delete_tag'), 'trash', true);
         row.append(name, color, remove);
         list.append(row);
       }
       root.append(
         list,
         iconActionButton(
-          t('Tag hinzuf\xFCgen'),
+          t('ui.add_tag'),
           async () => {
-            const value = await askText(t('Tag erstellen'), t('Tag-Name'), '');
+            const value = await askText(t('ui.create_tag'), t('ui.tag_name'), '');
             if (!value?.trim()) return;
             if (
               (preferencesState.appSettings.tags || []).some(
                 (tag) => tag.name.toLocaleLowerCase() === value.trim().toLocaleLowerCase()
               )
             )
-              throw Error(t('Ein Tag mit diesem Namen existiert bereits.'));
+              throw Error(t('ui.a_tag_with_this_name_already_exists'));
             preferencesState.appSettings.tags = [
               ...(preferencesState.appSettings.tags || []),
               {

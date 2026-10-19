@@ -121,14 +121,14 @@ var inspector_default = {
               {
                 class: 'tag'
               },
-              t('Verbindung')
+              t('ui.connection')
             ),
-            el('h2', {}, t('Verbindungsdetails'))
+            el('h2', {}, t('ui.connection_details'))
           );
           for (const edge of workspaceState.project.document.edges.filter((e) =>
             selectionState.selectedEdges.has(e.id)
           )) {
-            const label = inputField(panel, t('Bezeichnung'), edge.label || '');
+            const label = inputField(panel, t('ui.label'), edge.label || '');
             label.addEventListener('input', () => {
               edge.label = label.value;
               change();
@@ -137,7 +137,7 @@ var inspector_default = {
           }
           panel.append(
             iconActionButton(
-              t('Verbindung l\xF6schen'),
+              t('ui.delete_connection'),
               () => deleteEdges([...selectionState.selectedEdges]),
               'trash',
               'danger-filled'
@@ -153,9 +153,9 @@ var inspector_default = {
             {
               class: 'tag'
             },
-            t('Mehrfachauswahl')
+            t('ui.multi_select')
           ),
-          el('h2', {}, nodes.length + t(' Knoten ausgew\xE4hlt'))
+          el('h2', {}, nodes.length + t('ui.nodes_selected'))
         );
         if (
           nodes.some((n) =>
@@ -164,7 +164,7 @@ var inspector_default = {
         )
           panel.append(
             iconActionButton(
-              t('Aus Gruppe l\xF6sen'),
+              t('ui.detach_from_group'),
               () => detachNodes(nodes.map((n) => n.id)),
               'ungroup',
               'wide'
@@ -174,7 +174,7 @@ var inspector_default = {
         report.checked = nodes.every((node) => node.report);
         report.indeterminate = nodes.some((node) => node.report) && !report.checked;
         const label = el('label', { class: 'checkbox-label' });
-        label.append(report, document.createTextNode(t('In Report aufnehmen')));
+        label.append(report, document.createTextNode(t('ui.include_in_report')));
         report.addEventListener('change', () => {
           for (const node of nodes) node.report = report.checked;
           change();
@@ -183,7 +183,7 @@ var inspector_default = {
         actions.append(
           label,
           iconActionButton(
-            t('Knoten l\xF6schen'),
+            t('ui.delete_node'),
             () => deleteNodes(nodes.map((n) => n.id)),
             'trash',
             'danger-filled wide'
@@ -207,9 +207,9 @@ var inspector_default = {
           },
           dataLabel(node.type)
         ),
-        el('h2', {}, t('Knotendetails'))
+        el('h2', {}, t('ui.node_details'))
       );
-      const name = inputField(panel, t('Titel'), node.label, 'node-label');
+      const name = inputField(panel, t('ui.title'), node.label, 'node-label');
       const readers = ['note', 'marker'].includes(node.type)
         ? []
         : editFields(
@@ -301,7 +301,7 @@ var inspector_default = {
         const defaults = actorAction.default_params || {};
         const profiles = node.data.params?.search_profiles ?? defaults.search_profiles ?? {};
         const section = el('section', { class: 'tool-search-profiles' });
-        section.append(el('h3', {}, t('Suchprofile für diese Suche')));
+        section.append(el('h3', {}, t('ui.search_profiles_for_this_search')));
         const labels = {
           consensus: 'Consensus',
           sherlock: 'Sherlock',
@@ -362,7 +362,7 @@ var inspector_default = {
       if (node.type === 'actor') {
         const mod = pluginsState.catalog.find((p) => p.id === node.data.plugin);
         const act = mod?.actions.find((a) => a.id === node.data.action);
-        panel.append(el('h3', {}, t('Ausf\xFChrung')));
+        panel.append(el('h3', {}, t('ui.execution')));
         if (act?.external)
           panel.append(
             el(
@@ -371,11 +371,11 @@ var inspector_default = {
                 class: 'warning'
               },
               pluginText(mod, act.external_notice) ||
-                t('Bei konfiguriertem Geocoder werden Standortangaben an diesen Anbieter gesendet.')
+                t('ui.location_data_is_sent_to_the_configured_geocoder')
             )
           );
         if (act?.execution === 'browser') {
-          panel.append(el('label', {}, t('JavaScript \xB7 inputs = verbundene Datenknoten')));
+          panel.append(el('label', {}, t('ui.javascript_inputs_connected_data_nodes')));
           const code = el('textarea', {
             rows: 12,
             spellcheck: false
@@ -395,12 +395,12 @@ var inspector_default = {
         );
         const runButton = button(
           executionState.activeActors.has(node.id)
-            ? t('L\xE4uft \u2026')
+            ? t('ui.running')
             : queued
-              ? t('In Warteschlange')
+              ? t('ui.queued')
               : executionState.queueRunning
-                ? t('In die Warteschleife hinzuf\xFCgen')
-                : t('Aktor ausf\xFChren'),
+                ? t('ui.add_to_queue')
+                : t('ui.run_tool_f8faf3b9'),
           () => run(node),
           'primary'
         );
@@ -437,13 +437,13 @@ var inspector_default = {
         node.report = checkbox.checked;
         change();
       });
-      reportLabel.append(checkbox, document.createTextNode(t('In Report aufnehmen')));
+      reportLabel.append(checkbox, document.createTextNode(t('ui.include_in_report')));
       reportSection.append(reportLabel);
       panel.append(reportSection);
       const provenance = el('details', {
         class: 'provenance'
       });
-      provenance.append(el('summary', {}, t('Quelle / Herkunft')));
+      provenance.append(el('summary', {}, t('ui.source_origin')));
       facts(provenance, node.evidence || {});
       panel.append(provenance);
       for (const r of workspaceState.project.document.runs
@@ -463,7 +463,7 @@ var inspector_default = {
       if (workspaceState.project.document.groups.some((g) => g.members.includes(node.id)))
         panel.append(
           iconActionButton(
-            t('Aus Gruppe l\xF6sen'),
+            t('ui.detach_from_group'),
             () => detachNodes([node.id]),
             'ungroup',
             'wide'
@@ -471,7 +471,7 @@ var inspector_default = {
         );
       panel.append(
         iconActionButton(
-          t('Knoten l\xF6schen'),
+          t('ui.delete_node'),
           () => deleteNodes([node.id]),
           'trash',
           'danger-filled wide node-delete'
@@ -500,11 +500,11 @@ var inspector_default = {
           {
             class: 'tag'
           },
-          t('GRUPPE')
+          t('ui.group_25b1a7b5')
         ),
         el('h2', {}, groupTitle(group))
       );
-      const name = inputField(panel, t('Bezeichnung'), groupTitle(group));
+      const name = inputField(panel, t('ui.label'), groupTitle(group));
       name.addEventListener('input', () => {
         delete group.label_key;
         group.label = name.value;
@@ -512,7 +512,7 @@ var inspector_default = {
         render();
       });
       panel.append(
-        button(t('Umbenennen'), () => {
+        button(t('ui.rename'), () => {
           group.label = name.value;
           change();
           render();
@@ -520,21 +520,23 @@ var inspector_default = {
         })
       );
       panel.append(
-        button(group.collapsed ? t('Aufklappen') : t('Einklappen'), () => toggleGroup(group))
+        button(group.collapsed ? t('ui.expand_0f644fce') : t('ui.collapse_5503d6ae'), () =>
+          toggleGroup(group)
+        )
       );
       panel.append(
-        button(t('Gruppe in Report aufnehmen'), () => {
+        button(t('ui.include_group_in_report'), () => {
           const ids = groupNodeIds(group);
           for (const n of workspaceState.project.document.nodes) if (ids.has(n.id)) n.report = true;
           change();
-          toast(t('Mitglieder f\xFCr Report markiert.'));
+          toast(t('ui.members_included_in_report'));
         })
       );
       const parent = workspaceState.project.document.groups.find((g) => g.id === group.parent_id);
       if (parent)
         panel.append(
           button(
-            t('\xDCbergeordnete Gruppe') + ': ' + parent.label,
+            t('ui.parent_group') + ': ' + parent.label,
             () => {
               selectionState.selectedGroups = /* @__PURE__ */ new Set([parent.id]);
               selectionState.selected.clear();
@@ -546,7 +548,7 @@ var inspector_default = {
       const children = workspaceState.project.document.groups.filter(
         (g) => g.parent_id === group.id
       );
-      if (children.length) panel.append(el('h3', {}, t('Untergruppen')));
+      if (children.length) panel.append(el('h3', {}, t('ui.subgroups')));
       for (const child of children)
         panel.append(
           button(
@@ -583,13 +585,8 @@ var inspector_default = {
           );
       }
       panel.append(
-        iconActionButton(
-          t('Gruppierung aufl\xF6sen'),
-          () => dissolveGroup(group),
-          'ungroup',
-          'wide'
-        ),
-        button(t('Gruppe l\xF6schen'), () => deleteGroup(group), 'danger-filled')
+        iconActionButton(t('ui.ungroup'), () => dissolveGroup(group), 'ungroup', 'wide'),
+        button(t('ui.delete_group'), () => deleteGroup(group), 'danger-filled')
       );
     }
     function noteInk(color) {
@@ -598,7 +595,7 @@ var inspector_default = {
     }
     function noteControls(panel, node) {
       if (node.type === 'note')
-        panel.append(el('p', {}, t('Notiz direkt auf der Arbeitsfl\xE4che bearbeiten.')));
+        panel.append(el('p', {}, t('ui.edit_this_note_directly_on_the_canvas')));
       for (const [key, label, min, max] of [
         ['width', 'Breite', 200, 900],
         ['height', 'H\xF6he', 120, 800]
@@ -621,7 +618,7 @@ var inspector_default = {
           render();
         });
       }
-      const color = inputField(panel, t('Farbe'), node.appearance?.color || '#ffcc70');
+      const color = inputField(panel, t('ui.color'), node.appearance?.color || '#ffcc70');
       color.maxLength = 7;
       color.addEventListener('input', () => {
         if (!/^#[0-9a-f]{6}$/i.test(color.value)) return;
@@ -650,7 +647,7 @@ var inspector_default = {
           'note-swatch'
         );
         b.style.backgroundColor = hex;
-        b.setAttribute('aria-label', t('Farbe') + ' ' + hex);
+        b.setAttribute('aria-label', t('ui.color') + ' ' + hex);
         swatches.append(b);
       }
       panel.append(swatches);

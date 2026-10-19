@@ -3,16 +3,16 @@
 Python 3.12+, Docker Compose v2 and, for frontend tooling, Node.js 22+.
 
 ```sh
-python -m pip install -r requirements.txt -r requirements-core.txt -r requirements-dev.txt
+python -m pip install -r requirements.txt -r requirements-core.txt -r requirements-dev.txt -r requirements-test.txt
 npm ci
 npm run lint
 npm run format:check
-python -m black --check server.py core plugins plugin_manager.py provider_registry.py result_groups.py node_metadata.py community_runner.py tests examples scripts/build_provider_catalogue.py scripts/verify_frontend.py
-python -m ruff check server.py core plugins plugin_manager.py provider_registry.py result_groups.py node_metadata.py community_runner.py
+python -m black --check core plugins scripts tests server.py
+python -m ruff check core plugins scripts tests server.py
 npm run test:frontend
 ```
 
-Run Python tests in the built Docker image: it includes real CLI tools, ExifTool and Chromium. Use a temporary `DATA_DIR`, mount `tests/` read-only, then `python -m unittest discover -s tests -p 'test_*.py' -v`. The browser smoke script starts its own temporary app. Tests must not use the owner's data directory or real accounts. Missing local dependencies can skip tests; only a complete container run certifies the suite.
+Every push and pull request runs the complete CI workflow. Publication is gated on its quality and runtime jobs. Run Python tests in the built Docker image: it includes real CLI tools, ExifTool and Chromium. Use a temporary `DATA_DIR`, mount `tests/` read-only, then `python -m unittest discover -s tests -p 'test_*.py' -v`. The browser smoke script starts its own temporary app. Tests must not use the owner's data directory or real accounts. Missing local dependencies can skip tests; only a complete container run certifies the suite.
 
 The restricted Synology Node runner mounts `static/app.js` and `tests/`. The active runner imports the actual production ESM bundle through `tests/frontend_contracts.cjs`; copied fixtures and regex-extracted functions are historical material. Edit modules under `static/app/` and their explicit wiring in `static/main.js`, then run `npm run build`, `npm run build:check`, and `npm run test:frontend`. Commit the source modules, bundle and `static/build-manifest.json` together. The Docker build rejects stale sources or bundle hashes. Do not add new source-string assertions.
 

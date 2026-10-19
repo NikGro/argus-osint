@@ -23,6 +23,7 @@ CATALOG = {
 
 
 class SearchProfiles(unittest.TestCase):
+
     def setUp(self):
         patcher = patch("plugins._search_profiles.catalogue", return_value=CATALOG)
         patcher.start()
@@ -47,7 +48,7 @@ class SearchProfiles(unittest.TestCase):
             self.assertNotIn("--top-sites", command)
             folder = Path(command[command.index("--folderoutput") + 1])
             (folder / "result.json").write_text("{}")
-            return "", ""
+            return ("", "")
 
         with (
             patch("plugins.maigret.shutil.which", return_value="maigret"),
@@ -160,7 +161,7 @@ class SearchProfiles(unittest.TestCase):
             self.assertNotIn("search_profiles", action["settings_only"])
 
     def test_default_migration_runs_once_and_preserves_settings(self):
-        from plugin_manager import Manager
+        from core.plugin_manager import Manager
 
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

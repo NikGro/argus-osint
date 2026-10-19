@@ -14,7 +14,7 @@ from core.media import Media
 from core.maps import Maps
 from datetime import datetime, timezone
 from core.database import connect as database_connect
-from plugin_manager import Manager
+from core.plugin_manager import Manager
 from core.graph import (
     TYPES as TYPES,
     NODE_DEFAULTS as NODE_DEFAULTS,
@@ -35,6 +35,8 @@ from core.secrets import is_secret
 from core.reports import facts_html as facts_html, render_report
 from core.settings import SettingsRepository
 from core.files import FileRepository
+from core.datasets import DatasetRepository
+from core.dataset_imports import DatasetImports
 from core.system_logs import SystemLogs
 from core.vpn import VPN as VPNService
 
@@ -79,6 +81,8 @@ class ApplicationResources:
             lambda: self.connect(), self.MANAGER, self.ROOT, self.TAG_PREFERENCES
         )
         self.FILES = FileRepository(lambda: self.connect(), self.DATA / "files")
+        self.DATASETS = DatasetRepository(self.connect, self.FILES, self.now)
+        self.DATASET_IMPORTS = DatasetImports(self.DATASETS)
         self.MEDIA = Media(self.connect, self.FILES)
         self.MAPS = Maps(self.DATA)
         self.SCHEMA = GraphSchema(
@@ -204,6 +208,7 @@ class ApplicationResources:
             self.DATA / "plugin-sessions",
             store_file=lambda data, name: self.FILES.upload(data, name, project_id=pid),
             collect_media=self.MEDIA.collect,
+            datasets=self.DATASETS,
         )
 
     def execute(self, pid, body):
@@ -226,7 +231,7 @@ class ApplicationResources:
         messages = json.loads(
             (
                 self.ROOT / "static" / "locales" / (preferences["language"] + ".json")
-            ).read_text()
+            ).read_text(encoding="utf-8")
         ).get("messages", {})
         return render_report(
             project, preferences, self.MANAGER.all_descriptors(), messages, self.now()

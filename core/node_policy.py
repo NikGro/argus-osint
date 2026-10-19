@@ -1,7 +1,7 @@
 """Typed node normalization injected into graph validation; no plugin imports in the graph core."""
 
-from node_metadata import normalize
-from provider_registry import canonical
+from core.node_metadata import normalize
+from core.provider_registry import canonical
 
 
 def formatted_address(data):

@@ -44,8 +44,8 @@ var providers_default = {
         }),
         search = el('input', {
           type: 'search',
-          placeholder: t('Anbieter suchen \u2026'),
-          'aria-label': t('Anbieter suchen \u2026'),
+          placeholder: t('ui.search_providers'),
+          'aria-label': t('ui.search_providers'),
           autocomplete: 'off'
         }),
         list = el('div', {
@@ -58,8 +58,8 @@ var providers_default = {
         }),
         custom = el('input', {
           type: 'text',
-          placeholder: t('Eigener Anbieter'),
-          'aria-label': t('Eigener Anbieter')
+          placeholder: t('ui.custom_provider'),
+          'aria-label': t('ui.custom_provider')
         });
       menu.append(search, list, hint);
       dropdown.append(menu);
@@ -73,8 +73,8 @@ var providers_default = {
         const isCustom = control.value.startsWith('custom:');
         custom.hidden = !isCustom;
         caption.textContent = isCustom
-          ? t('Andere / Custom')
-          : providerName(control.value) || t('Anbieter ausw\xE4hlen');
+          ? t('ui.other_custom')
+          : providerName(control.value) || t('ui.select_provider');
       }
       function choose(id) {
         control.value = id;
@@ -102,9 +102,9 @@ var providers_default = {
           option.setAttribute('aria-selected', String(control.value === p.id));
           list.append(option);
         }
-        if (!matches.length) list.append(el('p', {}, t('Kein passender Anbieter.')));
+        if (!matches.length) list.append(el('p', {}, t('ui.no_matching_provider')));
         const other = button(
-          t('Andere / Custom'),
+          t('ui.other_custom'),
           () => choose('custom:' + custom.value),
           'provider-option provider-custom'
         );
@@ -112,8 +112,8 @@ var providers_default = {
         list.append(other);
         hint.textContent =
           matches.length > 80
-            ? t('Weitere Anbieter \xFCber die Suche eingrenzen.') + ' (' + matches.length + ')'
-            : matches.length + ' ' + t('Anbieter');
+            ? t('ui.narrow_down_more_providers_using_search') + ' (' + matches.length + ')'
+            : matches.length + ' ' + t('ui.provider');
       }
       custom.addEventListener('input', () => {
         control.value = 'custom:' + custom.value.trim();

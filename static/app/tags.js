@@ -32,15 +32,15 @@ var tags_default = {
           : 'unverified',
         states = {
           unverified: {
-            name: t('Unverifiziert'),
+            name: t('ui.unverified'),
             color: '#e66a78'
           },
           unclear: {
-            name: t('Unklar'),
+            name: t('ui.unclear'),
             color: '#eab65c'
           },
           verified: {
-            name: t('Verifiziert'),
+            name: t('ui.verified'),
             color: '#6fc58c'
           }
         },
@@ -121,10 +121,10 @@ var tags_default = {
         class: 'node-review'
       });
       const verifiable = !['note', 'error', 'marker'].includes(node.type);
-      if (verifiable) section.append(el('h3', {}, t('Verifizierung')));
+      if (verifiable) section.append(el('h3', {}, t('ui.verification')));
       const status = el('select', {
         class: 'verification-select',
-        'aria-label': t('Verifizierung')
+        'aria-label': t('ui.verification')
       });
       for (const [value, label] of [
         ['unverified', 'Unverifiziert'],
@@ -152,9 +152,9 @@ var tags_default = {
       const list = el('div', {
         class: 'node-tag-options'
       });
-      list.append(el('h3', {}, t('Tags')));
+      list.append(el('h3', {}, t('ui.tags')));
       const allTags = preferencesState.appSettings.tags || [];
-      const picker = el('select', { 'aria-label': t('Tag hinzufügen') });
+      const picker = el('select', { 'aria-label': t('ui.add_tag') });
       const badges = el('div', { class: 'selected-tag-badges' });
       list.append(badges, picker);
       function updateTags() {
@@ -166,7 +166,7 @@ var tags_default = {
       }
       function paintTags() {
         badges.replaceChildren();
-        picker.replaceChildren(el('option', { value: '' }, t('Tag hinzufügen …')));
+        picker.replaceChildren(el('option', { value: '' }, t('ui.add_tag_7d178046')));
         for (const tag of allTags) {
           if (!(node.tags || []).includes(tag.id)) {
             picker.append(el('option', { value: tag.id }, tag.name));
@@ -178,8 +178,8 @@ var tags_default = {
           const remove = el('button', {
             type: 'button',
             class: 'tag-remove borderless danger-text',
-            'aria-label': t('Tag entfernen') + ': ' + tag.name,
-            title: t('Tag entfernen')
+            'aria-label': t('ui.remove_tag') + ': ' + tag.name,
+            title: t('ui.remove_tag')
           });
           remove.append(icon('close'));
           remove.addEventListener('click', () => {
@@ -199,9 +199,7 @@ var tags_default = {
       });
       paintTags();
       if (!allTags.length)
-        list.append(
-          el('p', { class: 'source-help' }, t('Globale Tags in den Einstellungen anlegen.'))
-        );
+        list.append(el('p', { class: 'source-help' }, t('ui.create_global_tags_in_settings')));
       section.append(list);
       panel.append(section);
     }

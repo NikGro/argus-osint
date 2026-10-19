@@ -6,7 +6,7 @@ from urllib.parse import urlsplit, unquote
 
 
 def provider_key(value):
-    from provider_registry import identity
+    from core.provider_registry import identity
 
     return identity(value)
 
@@ -69,7 +69,7 @@ def profile_url(value, kind="username"):
 
 
 def make_profile(provider, url, identifier, node, tool, kind, service_key=None):
-    from provider_registry import canonical, label
+    from core.provider_registry import canonical, label
 
     provider = canonical(provider)
     identifier = str(identifier or "").strip()

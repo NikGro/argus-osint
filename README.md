@@ -3,7 +3,7 @@
 <p align="center"><img src="docs/assets/argus-logo.svg" width="96" alt="ARGUS logo" /></p>
 <h1 align="center">ARGUS</h1>
 <p align="center"><strong>Connect information. Preserve findings.</strong></p>
-<p align="center">V26.10.1 Beta 1 · Self-hosted OSINT workbench · Python + React · One container</p>
+<p align="center">V26.10.2 Beta 1 · Self-hosted OSINT workbench · Python + React · One container</p>
 
 ARGUS turns research into a visual graph. Start with a username, email address, phone number or file; connect a tool; explore the resulting profiles, media and evidence without losing the path back to their sources.
 
@@ -18,6 +18,12 @@ ARGUS turns research into a visual graph. Start with a username, email address, 
 | Inline previews, quick actions and autosave | Persistent execution queue, cancellation and partial-result warnings | Project archives, revision reconciliation and local file storage |
 
 Discovery tools return accounts and profiles. Separate deep-research tools enrich a chosen profile. The information returned depends on the upstream service and any configured credentials.
+
+## Databases and imports
+
+Maintain shared databases with typed fields, structured JSON and multiple image/file attachments. Preview and map CSV, TSV, XLSX, ODS, JSON, JSONL, XML and text imports before applying them. Add one record per image or collect attachments in one record.
+
+Connect a Database node and a reference value to Search database for complete-record result groups. DeepFace also supports an image plus a selected database image column. See [database and import documentation](docs/databases.md). A searchable Help tab explains the main workflows inside ARGUS.
 
 ## Media and locations
 

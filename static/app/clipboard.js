@@ -123,8 +123,8 @@ var clipboard_default = {
       event.preventDefault();
       toast(
         selectionState.selected.size
-          ? selectionState.selected.size + t(' Knoten kopiert.')
-          : t('Projekt kopiert.')
+          ? selectionState.selected.size + t('ui.nodes_copied')
+          : t('ui.project_copied')
       );
     }
     async function pasteGraph(event) {
@@ -147,11 +147,11 @@ var clipboard_default = {
       try {
         const doc = payload.document;
         if (!doc || !['nodes', 'edges', 'groups', 'runs'].every((key) => Array.isArray(doc[key])))
-          throw Error(t('Ung\xFCltige Projektdaten in der Zwischenablage.'));
+          throw Error(t('ui.invalid_project_data_in_clipboard'));
         const imported = remapDocument(doc, payload.origin || payload.title);
         if (!workspaceState.project || $('workspace').hidden) {
           const created = await api('/api/projects', {
-            title: (payload.title || t('Eingef\xFCgtes Projekt')) + t(' \xB7 Kopie'),
+            title: (payload.title || t('ui.pasted_project')) + t('ui.copy'),
             document: imported
           });
           await openProject(created.id);
@@ -172,7 +172,7 @@ var clipboard_default = {
           render();
           inspect();
         }
-        toast(imported.nodes.length + t(' Knoten eingef\xFCgt.'));
+        toast(imported.nodes.length + t('ui.nodes_pasted'));
       } catch (error) {
         toast(error.message);
       }

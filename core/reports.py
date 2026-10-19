@@ -41,22 +41,34 @@ REPORT_LABELS = {
 
 
 def facts_html(value, tr=lambda value: value):
-    if isinstance(value, (dict, list)):
-        pairs = value.items() if isinstance(value, dict) else enumerate(value, 1)
-        cells = []
-        for key, item in pairs:
-            if item is None or item == "":
-                continue
-            title = REPORT_LABELS.get(key, str(key).replace("_", " "))
-            cells.append(
-                "<tr><th>"
-                + html.escape(tr(title))
+    """Render nested evidence as flat field paths, never shrinking nested tables."""
+    rows = []
+
+    def visit(item, path, depth=0):
+        if item is None or item == "":
+            return
+        if isinstance(item, (dict, list)) and depth < 32:
+            pairs = item.items() if isinstance(item, dict) else enumerate(item, 1)
+            for key, child in pairs:
+                label = tr(REPORT_LABELS.get(key, str(key).replace("_", " ")))
+                visit(child, path + [label], depth + 1)
+        else:
+            if isinstance(item, (dict, list)):
+                import json
+
+                item = json.dumps(item, ensure_ascii=False)
+            rows.append(
+                '<tr><th scope="row">'
+                + html.escape(" / ".join(path))
                 + "</th><td>"
-                + facts_html(item, tr)
+                + html.escape(str(item))
                 + "</td></tr>"
             )
-        return "<table>" + "".join(cells) + "</table>"
-    return html.escape(str(value))
+
+    if not isinstance(value, (dict, list)):
+        return html.escape(str(value))
+    visit(value, [])
+    return '<table class="facts-table"><tbody>' + "".join(rows) + "</tbody></table>"
 
 
 def render_report(project, preferences, descriptors, messages, generated_at):
@@ -64,7 +76,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
     pack = messages
 
     def tr(key):
-        return pack.get(key, key)
+        return pack.get(key, pack.get("errors." + key, key))
 
     doc = project["document"]
     plugins = {p["id"]: p for p in descriptors}
@@ -88,15 +100,20 @@ def render_report(project, preferences, descriptors, messages, generated_at):
     selected = [n for n in doc["nodes"] if n.get("report") and n["type"] != "actor"]
     esc = html.escape
     parts = [
-        f'<!doctype html><html lang="{esc(language)}"><meta charset="utf-8"><title>{esc(project["title"])} – Report</title><style>body{{font:15px/1.65 system-ui;max-width:960px;margin:40px auto;padding:24px;color:#172334;background:#fff}}table{{width:100%;border-collapse:collapse}}th,td{{text-align:left;vertical-align:top;padding:8px;border-bottom:1px solid #ddd;overflow-wrap:anywhere;white-space:pre-wrap}}th{{width:32%;font-weight:500;color:#66503b}}section{{break-inside:avoid;border-top:1px solid #ccd;padding-top:20px;margin-top:28px}}h1{{font-size:30px;line-height:1.2;letter-spacing:-.02em;overflow-wrap:anywhere}}h2{{font-size:20px;line-height:1.35}}small{{color:#526478}}button{{font:inherit;background:#f4f6f9;color:#172334;border:1px solid #aab5c3;border-radius:7px;padding:8px 14px;cursor:pointer}}button:focus-visible{{outline:2px solid #995200;outline-offset:3px}}@media print{{button{{display:none}}body{{margin:0}}}}</style><button id="print">{esc(tr("Drucken / als PDF speichern"))}</button><script src="/print.js"></script>',
-        f'<h1>{esc(project["title"])}</h1><p>Argus · {esc(tr("Recherchebericht"))} · {esc(generated_at)}</p><p>{esc(doc.get("report_notes", ""))}</p>',
+        f"""<!doctype html><html lang="{esc(language)}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(project['title'])} – Report</title>"""
+        + '<link rel="stylesheet" href="/report.css"><div class="report-actions"><button id="print">'
+        + esc(tr("ui.print_save_as_pdf"))
+        + "</button><span>ARGUS · "
+        + esc(tr("ui.research_report"))
+        + '</span></div><script src="/print.js"></script><main class="report-sheet">',
+        f"<h1>{esc(project['title'])}</h1><p>Argus · {esc(tr('ui.research_report'))} · {esc(generated_at)}</p><p>{esc(doc.get('report_notes', ''))}</p>",
     ]
     if not selected:
         parts.append(
             "<p>"
             + esc(
                 tr(
-                    "Keine Erkenntnisse für den Report ausgewählt. Im Graphen Knoten markieren und „Report“ aktivieren."
+                    "ui.no_findings_selected_for_the_report_select_nodes_in_the_graph_and"
                 )
             )
             + "</p>"
@@ -131,23 +148,23 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             else title
         )
         parts.append(
-            f'<section><small>{esc(node["type"])} · {esc(" / ".join(groups))}</small><h2>{esc(title)}</h2>'
+            f"""<section class="report-node"><small>{esc(node['type'])} · {esc(' / '.join(groups))}</small><h2>{esc(title)}</h2>"""
         )
         if node["type"] == "image" and node["data"].get("file_id"):
             parts.append(
-                f'<img style="max-width:400px;max-height:300px" src="/api/files/{esc(node["data"]["file_id"])}">'
+                f"""<img style="max-width:400px;max-height:300px" src="/api/files/{esc(node['data']['file_id'])}">"""
             )
         if node["type"] in ("file", "video") and node["data"].get("file_id"):
             parts.append(
                 '<p><a href="/api/files/'
                 + esc(node["data"]["file_id"])
                 + '" target="_blank" rel="noopener noreferrer">'
-                + esc(tr("Datei öffnen"))
+                + esc(tr("ui.open_file"))
                 + "</a></p>"
             )
         report_data = copy.deepcopy(node["data"])
         if node["type"] == "profile":
-            from provider_registry import label
+            from core.provider_registry import label
 
             report_data["provider"] = label(report_data.get("provider", ""))
         parts.append(facts_html(report_data, node_tr))
@@ -163,7 +180,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         ]
         parts.append(
             "<p>"
-            + esc(tr("Verifizierung"))
+            + esc(tr("ui.verification"))
             + ": "
             + esc(tr(review))
             + (" · " + esc(", ".join(tag_names)) if tag_names else "")
@@ -171,7 +188,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         )
         parts.append(
             "<h3>"
-            + esc(tr("Quelle / Herkunft"))
+            + esc(tr("ui.source_origin"))
             + "</h3>"
             + facts_html(node.get("evidence", {"origin": "manual"}), tr)
             + "</section>"
@@ -184,7 +201,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         if e["source"] in selected_ids and e["target"] in selected_ids
     ]
     if relations:
-        parts.append("<h2>" + esc(tr("Beziehungen")) + "</h2><ul>")
+        parts.append("<h2>" + esc(tr("ui.relationships")) + "</h2><ul>")
         for edge in relations:
             parts.append(
                 "<li>"
@@ -198,7 +215,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         parts.append("</ul>")
     parts.append(
         "<h2>"
-        + esc(tr("Rechercheverlauf"))
+        + esc(tr("ui.research_history"))
         + "</h2>"
         + facts_html(
             [
@@ -219,6 +236,6 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             ],
             tr,
         )
-        + "</html>"
+        + "</main></html>"
     )
     return "".join(parts).encode()

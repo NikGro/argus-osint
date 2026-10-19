@@ -11,6 +11,7 @@ from core.crop import crop_box
 
 
 class PhotoCrop(unittest.TestCase):
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -72,7 +73,7 @@ class PhotoCrop(unittest.TestCase):
     def test_oversized_input_is_rejected_without_allocating_large_image(self):
         fake = MagicMock()
         fake.__enter__.return_value = fake
-        fake.width, fake.height = 8001, 5000
+        fake.width, fake.height = (8001, 5000)
         with (
             patch.object(image_crop.Image, "open", return_value=fake),
             self.assertRaises(ValueError),
@@ -93,4 +94,4 @@ class PhotoCrop(unittest.TestCase):
             241,
             even=True,
         )
-        self.assertTrue(all(value % 2 == 0 for value in (left, top, width, height)))
+        self.assertTrue(all((value % 2 == 0 for value in (left, top, width, height))))

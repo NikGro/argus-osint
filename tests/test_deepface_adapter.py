@@ -10,6 +10,7 @@ from core.plugin_contract import validate_descriptor
 
 
 class DeepFaceAdapter(unittest.TestCase):
+
     def test_descriptor_and_pair_contract(self):
         validate_descriptor(tool.PLUGIN)
         for inputs in ([], [{"type": "image"}], [{"type": "image"}, {"type": "url"}]):
@@ -40,6 +41,7 @@ class DeepFaceAdapter(unittest.TestCase):
                 {"id": "b", "type": "image", "data": {"file_id": "second"}},
             ]
             from PIL import Image
+
             for name in ("first", "second"):
                 Image.new("RGB", (20, 20), "gray").save(root / name, format="PNG")
             payloads = []

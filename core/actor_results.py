@@ -1,12 +1,20 @@
 """Materialize already-collected actor results into a graph snapshot. No I/O."""
 
+from core.errors import DomainError
 import copy
 from uuid import uuid4
 from core.graph import TYPES, NODE_DEFAULTS, group_node_ids
-from result_groups import nested_outputs, create_tree, measure, place, append_groups
+from core.result_groups import (
+    nested_outputs,
+    create_tree,
+    measure,
+    place,
+    append_groups,
+)
 
 
 class ResultBuilder:
+
     def __init__(self, bounds, now):
         self.bounds = bounds
         self.now = now
@@ -23,290 +31,385 @@ class ResultBuilder:
         schemas,
         display_defaults,
     ):
-        if not isinstance(result.get("outputs"), list) or len(result["outputs"]) > 5000:
-            raise ValueError("Aktion muss höchstens 5000 Ausgabeknoten liefern.")
+        return _Materialization(
+            self,
+            doc,
+            actor,
+            inputs,
+            result,
+            plugin_id,
+            action_name,
+            started,
+            schemas,
+            display_defaults,
+        ).build()
 
-        nested = nested_outputs(result["outputs"])
-        nested_ids = {id(o) for o in nested}
-        # Explicit provider groups apply consistently to all actor outputs.
-        for output in result["outputs"]:
+
+class _Materialization:
+
+    def __init__(
+        self,
+        service,
+        doc,
+        actor,
+        inputs,
+        result,
+        plugin_id,
+        action_name,
+        started,
+        schemas,
+        display_defaults,
+    ):
+        self.service = service
+        self.doc = doc
+        self.actor = actor
+        self.inputs = inputs
+        self.result = result
+        self.plugin_id = plugin_id
+        self.action_name = action_name
+        self.started = started
+        self.schemas = schemas
+        self.display_defaults = display_defaults
+
+    def build(self):
+        self.prepare_units()
+        self.plan_positions()
+        self.create_nodes()
+        self.apply_updates()
+        return self.create_groups()
+
+    def prepare_units(self):
+        if (
+            not isinstance(self.result.get("outputs"), list)
+            or len(self.result["outputs"]) > 5000
+        ):
+            raise DomainError("validation.e0b36ee5da")
+        self.nested = nested_outputs(self.result["outputs"])
+        self.nested_ids = {id(o) for o in self.nested}
+        for self.output in self.result["outputs"]:
             if (
-                id(output) not in nested_ids
-                and output.get("type") != "profile"
-                and not output.get("group")
-                and output.get("source", {}).get("service")
+                id(self.output) not in self.nested_ids
+                and self.output.get("type") != "profile"
+                and (not self.output.get("group"))
+                and self.output.get("source", {}).get("service")
             ):
-                output["group"] = str(output["source"]["service"])
-            if output.get("group"):
-                result["group_outputs"] = True
-        run_id, members = uuid4().hex, []
-        output_types = (TYPES | set(schemas)) - {"actor"}
-        output_groups = {}
-        output_units = {}
-        for output in result["outputs"]:
+                self.output["group"] = str(self.output["source"]["service"])
+            if self.output.get("group"):
+                self.result["group_outputs"] = True
+        self.run_id, self.members = (uuid4().hex, [])
+        self.output_types = (TYPES | set(self.schemas)) - {"actor"}
+        self.output_groups = {}
+        self.output_units = {}
+        for self.output in self.result["outputs"]:
             if (
-                not isinstance(output, dict)
-                or output.get("type") not in output_types
-                or not isinstance(output.get("data"), dict)
+                not isinstance(self.output, dict)
+                or self.output.get("type") not in self.output_types
+                or (not isinstance(self.output.get("data"), dict))
             ):
-                raise ValueError("Ungültiges Aktorergebnis.")
-            if id(output) in nested_ids:
+                raise DomainError("validation.6e3580e33a")
+            if id(self.output) in self.nested_ids:
                 continue
-            key = (
-                ("group", str(output.get("group_id") or output["group"]))
-                if result.get("group_outputs", True) and output.get("group")
-                else ("node", len(output_units))
+            self.key = (
+                ("group", str(self.output.get("group_id") or self.output["group"]))
+                if self.result.get("group_outputs", True) and self.output.get("group")
+                else ("node", len(self.output_units))
             )
-            output_units.setdefault(key, []).append(output)
-        hidden_ids = {
+            self.output_units.setdefault(self.key, []).append(self.output)
+        self.hidden_ids = {
             id
-            for group in doc["groups"]
+            for group in self.doc["groups"]
             if group.get("collapsed")
-            for id in group_node_ids(doc, group)
+            for id in group_node_ids(self.doc, group)
         }
-        occupied = [
-            self.bounds(n)
-            for n in doc["nodes"]
-            if n["type"] != "marker" and n["id"] not in hidden_ids
+        self.occupied = [
+            self.service.bounds(n)
+            for n in self.doc["nodes"]
+            if n["type"] != "marker" and n["id"] not in self.hidden_ids
         ]
-        for group in doc["groups"]:
-            if group.get("parent_id"):
+        for self.group in self.doc["groups"]:
+            if self.group.get("parent_id"):
                 continue
-            group_members = group_node_ids(doc, group)
-            nodes = [n for n in doc["nodes"] if n["id"] in group_members]
-            if not nodes:
+            self.group_members = group_node_ids(self.doc, self.group)
+            self.nodes = [n for n in self.doc["nodes"] if n["id"] in self.group_members]
+            if not self.nodes:
                 continue
-            x = min(n.get("x", 0) for n in nodes) - 20
-            y = min(n.get("y", 0) for n in nodes) - 42
-            occupied.append(
+            self.x = min((n.get("x", 0) for n in self.nodes)) - 20
+            self.y = min((n.get("y", 0) for n in self.nodes)) - 42
+            self.occupied.append(
                 (
-                    x,
-                    y,
+                    self.x,
+                    self.y,
                     (
                         220
-                        if group.get("collapsed")
-                        else max(n.get("x", 0) + self.bounds(n)[2] for n in nodes)
-                        - x
+                        if self.group.get("collapsed")
+                        else max(
+                            (
+                                n.get("x", 0) + self.service.bounds(n)[2]
+                                for n in self.nodes
+                            )
+                        )
+                        - self.x
                         + 20
                     ),
                     (
                         76
-                        if group.get("collapsed")
-                        else max(n.get("y", 0) + self.bounds(n)[3] for n in nodes)
-                        - y
+                        if self.group.get("collapsed")
+                        else max(
+                            (
+                                n.get("y", 0) + self.service.bounds(n)[3]
+                                for n in self.nodes
+                            )
+                        )
+                        - self.y
                         + 20
                     ),
                 )
             )
-        placement = {}
-        next_y = actor.get("y", 0)
-        for unit_outputs in output_units.values():
-            gap = max(
+
+    def plan_positions(self):
+        self.placement = {}
+        self.next_y = self.actor.get("y", 0)
+        for self.unit_outputs in self.output_units.values():
+            self.gap = max(
                 200,
                 min(
                     520,
                     max(
-                        len(str(o.get("relation", "Ergebnis"))) * 7 + 115
-                        for o in unit_outputs
+                        (
+                            len(str(o.get("relation", "Ergebnis"))) * 7 + 115
+                            for o in self.unit_outputs
+                        )
                     ),
                 ),
             )
-            x = actor.get("x", 0) + self.bounds(actor)[2] + gap
-            y = next_y
-            grouped = result.get("group_outputs", True) and bool(
-                unit_outputs[0].get("group")
+            self.x = (
+                self.actor.get("x", 0) + self.service.bounds(self.actor)[2] + self.gap
             )
-            width = max(
+            self.y = self.next_y
+            self.grouped = self.result.get("group_outputs", True) and bool(
+                self.unit_outputs[0].get("group")
+            )
+            self.width = max(
                 250,
                 max(
-                    self.bounds({"type": o["type"], "data": o["data"]})[2]
-                    for o in unit_outputs
+                    (
+                        self.service.bounds({"type": o["type"], "data": o["data"]})[2]
+                        for o in self.unit_outputs
+                    )
                 )
                 + 40,
             )
-            height = (
+            self.height = (
                 62
                 + sum(
-                    self.bounds({"type": o["type"], "data": o["data"]})[3] + 29
-                    for o in unit_outputs
-                )
-                if grouped
-                else max(
-                    self.bounds({"type": o["type"], "data": o["data"]})[3]
-                    for o in unit_outputs
-                )
-            )
-            if not placement and not grouped:
-                y = actor.get("y", 0) + (self.bounds(actor)[3] - height) / 2
-            for _ in range(1100):
-                hits = [
-                    r
-                    for r in occupied
-                    if x < r[0] + r[2] + 25
-                    and x + width > r[0] - 25
-                    and y < r[1] + r[3] + 25
-                    and y + height > r[1] - 25
-                ]
-                if not hits:
-                    break
-                y = max(r[1] + r[3] + 35 for r in hits)
-            occupied.append((x, y, width, height))
-            next_y = y + height + 40
-            offset = 42 if grouped else 0
-            for o in unit_outputs:
-                placement[id(o)] = (x + 20 if grouped else x, y + offset)
-                if grouped:
-                    offset += (
-                        self.bounds({"type": o["type"], "data": o["data"]})[3] + 29
-                    )
-        for tree in create_tree(nested).values():
-            width, height = measure(tree, self.bounds)
-            tree["_bounds"] = self.bounds
-            x = actor.get("x", 0) + self.bounds(actor)[2] + 220
-            y = (
-                next_y
-                if placement
-                else actor.get("y", 0) + (self.bounds(actor)[3] - 76) / 2
-            )
-            for _ in range(1100):
-                hits = [
-                    r
-                    for r in occupied
-                    if x < r[0] + r[2] + 25
-                    and x + 220 > r[0] - 25
-                    and y < r[1] + r[3] + 25
-                    and y + 76 > r[1] - 25
-                ]
-                if not hits:
-                    break
-                y = max(r[1] + r[3] + 35 for r in hits)
-            occupied.append((x, y, 220, 76))
-            place(tree, x, y, placement)
-            next_y = y + 116
-        output_node_ids = {}
-        for idx, output in enumerate(result["outputs"]):
-            if (
-                not isinstance(output, dict)
-                or output.get("type") not in output_types
-                or not isinstance(output.get("data"), dict)
-            ):
-                raise ValueError("Ungültiges Aktorergebnis.")
-            if output["type"] == "profile":
-                d = output["data"]
-                if not str(d.get("provider", "")).strip() or not (
-                    str(d.get("url", "")).strip()
-                    or str(d.get("identifier", "")).strip()
-                ):
-                    raise ValueError(
-                        "Profil benötigt Anbieter und URL oder Identifier."
-                    )
-            nid = uuid4().hex
-            node = {
-                "id": nid,
-                "type": output["type"],
-                "label": str(output.get("label", output["type"]))[:1000],
-                "data": output["data"],
-                "x": placement[id(output)][0],
-                "y": placement[id(output)][1],
-                "evidence": {
-                    "run_id": run_id,
-                    "plugin": plugin_id,
-                    "retrieved_at": self.now(),
-                    "source": output.get("source", {}),
-                },
-                "display": copy.deepcopy(display_defaults.get(output["type"], {})),
-                "verification": "unverified",
-                "tags": output.get("tags", []),
-            }
-            doc["nodes"].append(node)
-            output_node_ids[id(output)] = nid
-            members.append(nid)
-            if (
-                id(output) not in nested_ids
-                and result.get("group_outputs", True)
-                and output.get("group")
-            ):
-                output_groups.setdefault(
                     (
-                        str(output.get("group_id") or output["group"])[:200],
-                        str(output["group"])[:200],
+                        self.service.bounds({"type": o["type"], "data": o["data"]})[3]
+                        + 29
+                        for o in self.unit_outputs
+                    )
+                )
+                if self.grouped
+                else max(
+                    (
+                        self.service.bounds({"type": o["type"], "data": o["data"]})[3]
+                        for o in self.unit_outputs
+                    )
+                )
+            )
+            if not self.placement and (not self.grouped):
+                self.y = (
+                    self.actor.get("y", 0)
+                    + (self.service.bounds(self.actor)[3] - self.height) / 2
+                )
+            for self._ in range(1100):
+                self.hits = [
+                    r
+                    for r in self.occupied
+                    if self.x < r[0] + r[2] + 25
+                    and self.x + self.width > r[0] - 25
+                    and (self.y < r[1] + r[3] + 25)
+                    and (self.y + self.height > r[1] - 25)
+                ]
+                if not self.hits:
+                    break
+                self.y = max((r[1] + r[3] + 35 for r in self.hits))
+            self.occupied.append((self.x, self.y, self.width, self.height))
+            self.next_y = self.y + self.height + 40
+            self.offset = 42 if self.grouped else 0
+            for self.o in self.unit_outputs:
+                self.placement[id(self.o)] = (
+                    self.x + 20 if self.grouped else self.x,
+                    self.y + self.offset,
+                )
+                if self.grouped:
+                    self.offset += (
+                        self.service.bounds(
+                            {"type": self.o["type"], "data": self.o["data"]}
+                        )[3]
+                        + 29
+                    )
+        for self.tree in create_tree(self.nested).values():
+            self.width, self.height = measure(self.tree, self.service.bounds)
+            self.tree["_bounds"] = self.service.bounds
+            self.x = self.actor.get("x", 0) + self.service.bounds(self.actor)[2] + 220
+            self.y = (
+                self.next_y
+                if self.placement
+                else self.actor.get("y", 0)
+                + (self.service.bounds(self.actor)[3] - 76) / 2
+            )
+            for self._ in range(1100):
+                self.hits = [
+                    r
+                    for r in self.occupied
+                    if self.x < r[0] + r[2] + 25
+                    and self.x + 220 > r[0] - 25
+                    and (self.y < r[1] + r[3] + 25)
+                    and (self.y + 76 > r[1] - 25)
+                ]
+                if not self.hits:
+                    break
+                self.y = max((r[1] + r[3] + 35 for r in self.hits))
+            self.occupied.append((self.x, self.y, 220, 76))
+            place(self.tree, self.x, self.y, self.placement)
+            self.next_y = self.y + 116
+
+    def create_nodes(self):
+        self.output_node_ids = {}
+        for self.idx, self.output in enumerate(self.result["outputs"]):
+            if (
+                not isinstance(self.output, dict)
+                or self.output.get("type") not in self.output_types
+                or (not isinstance(self.output.get("data"), dict))
+            ):
+                raise DomainError("validation.6e3580e33a")
+            if self.output["type"] == "profile":
+                self.d = self.output["data"]
+                if not str(self.d.get("provider", "")).strip() or not (
+                    str(self.d.get("url", "")).strip()
+                    or str(self.d.get("identifier", "")).strip()
+                ):
+                    raise DomainError("validation.0dbed61b46")
+            self.nid = uuid4().hex
+            self.node = {
+                "id": self.nid,
+                "type": self.output["type"],
+                "label": str(self.output.get("label", self.output["type"]))[:1000],
+                "data": self.output["data"],
+                "x": self.placement[id(self.output)][0],
+                "y": self.placement[id(self.output)][1],
+                "evidence": {
+                    "run_id": self.run_id,
+                    "plugin": self.plugin_id,
+                    "retrieved_at": self.service.now(),
+                    "source": self.output.get("source", {}),
+                },
+                "display": copy.deepcopy(
+                    self.display_defaults.get(self.output["type"], {})
+                ),
+                "verification": "unverified",
+                "tags": self.output.get("tags", []),
+            }
+            self.doc["nodes"].append(self.node)
+            self.output_node_ids[id(self.output)] = self.nid
+            self.members.append(self.nid)
+            if (
+                id(self.output) not in self.nested_ids
+                and self.result.get("group_outputs", True)
+                and self.output.get("group")
+            ):
+                self.output_groups.setdefault(
+                    (
+                        str(self.output.get("group_id") or self.output["group"])[:200],
+                        str(self.output["group"])[:200],
                     ),
                     [],
-                ).append(nid)
-            doc["edges"].append(
+                ).append(self.nid)
+            self.doc["edges"].append(
                 {
                     "id": uuid4().hex,
-                    "source": actor["id"],
-                    "target": nid,
-                    "label": output.get("relation", "Ergebnis"),
-                    "run_id": run_id,
+                    "source": self.actor["id"],
+                    "target": self.nid,
+                    "label": self.output.get("relation", "Ergebnis"),
+                    "run_id": self.run_id,
                 }
             )
-            if output.get("source_input"):
-                node["evidence"]["source_input"] = output["source_input"]
-                if output["type"] == "location":
-                    for choice in result.get("candidates", []):
-                        if choice["input_id"] == output["source_input"]:
-                            choice["source_input"] = choice["input_id"]
-                            choice["input_id"] = nid
-        for update in result.get("updates", []):
-            target = next((n for n in inputs if n["id"] == update["id"]), None)
-            if target:
-                target["data"] = {
-                    **copy.deepcopy(NODE_DEFAULTS.get(target["type"], {})),
-                    **target["data"],
-                    **update["data"],
+            if self.output.get("source_input"):
+                self.node["evidence"]["source_input"] = self.output["source_input"]
+                if self.output["type"] == "location":
+                    for self.choice in self.result.get("candidates", []):
+                        if self.choice["input_id"] == self.output["source_input"]:
+                            self.choice["source_input"] = self.choice["input_id"]
+                            self.choice["input_id"] = self.nid
+
+    def apply_updates(self):
+        for self.update in self.result.get("updates", []):
+            self.target = next(
+                (n for n in self.inputs if n["id"] == self.update["id"]), None
+            )
+            if self.target:
+                self.target["data"] = {
+                    **copy.deepcopy(NODE_DEFAULTS.get(self.target["type"], {})),
+                    **self.target["data"],
+                    **self.update["data"],
                 }
-                target["evidence"] = {
-                    **target.get("evidence", {}),
-                    **update.get("evidence", {}),
+                self.target["evidence"] = {
+                    **self.target.get("evidence", {}),
+                    **self.update.get("evidence", {}),
                     "last_update": {
-                        "run_id": run_id,
-                        "plugin": plugin_id,
-                        "at": self.now(),
+                        "run_id": self.run_id,
+                        "plugin": self.plugin_id,
+                        "at": self.service.now(),
                     },
                 }
-        nested_members = append_groups(doc, nested, output_node_ids, run_id)
-        if output_groups:
-            for (_, label), group_members in output_groups.items():
-                doc["groups"].append(
+
+    def create_groups(self):
+        self.nested_members = append_groups(
+            self.doc, self.nested, self.output_node_ids, self.run_id
+        )
+        if self.output_groups:
+            for (self._, self.label), self.group_members in self.output_groups.items():
+                self.doc["groups"].append(
                     {
                         "id": uuid4().hex,
-                        "label": label,
-                        "members": group_members,
+                        "label": self.label,
+                        "members": self.group_members,
                         "collapsed": True,
-                        "run_id": run_id,
+                        "run_id": self.run_id,
                     }
                 )
-            remaining = [
+            self.remaining = [
                 nid
-                for nid in members
-                if nid not in nested_members
-                and not any(nid in ids for ids in output_groups.values())
-                and next(n for n in doc["nodes"] if n["id"] == nid)["type"] != "profile"
+                for nid in self.members
+                if nid not in self.nested_members
+                and (not any((nid in ids for ids in self.output_groups.values())))
+                and (
+                    next((n for n in self.doc["nodes"] if n["id"] == nid))["type"]
+                    != "profile"
+                )
             ]
-            if len(remaining) > 1:
-                doc["groups"].append(
+            if len(self.remaining) > 1:
+                self.doc["groups"].append(
                     {
                         "id": uuid4().hex,
                         "label": "Suchprotokoll",
-                        "members": remaining,
+                        "members": self.remaining,
                         "collapsed": False,
-                        "run_id": run_id,
+                        "run_id": self.run_id,
                     }
                 )
         elif (
-            not nested_members
-            and len(members) > 1
-            and result.get("group_outputs", True)
+            not self.nested_members
+            and len(self.members) > 1
+            and self.result.get("group_outputs", True)
         ):
-            doc["groups"].append(
+            self.doc["groups"].append(
                 {
                     "id": uuid4().hex,
-                    "label": action_name + " · " + started[:19],
-                    "members": members,
+                    "label": self.action_name + " · " + self.started[:19],
+                    "members": self.members,
                     "collapsed": False,
-                    "run_id": run_id,
+                    "run_id": self.run_id,
                 }
             )
-        return run_id, members
+        return (self.run_id, self.members)

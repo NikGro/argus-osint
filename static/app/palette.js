@@ -93,7 +93,7 @@ var palette_default = {
         state.categories = [];
         renderPalette();
       });
-      all.append(allBox, document.createTextNode(t('Alle Kategorien')));
+      all.append(allBox, document.createTextNode(t('ui.all_categories')));
       filter.append(all);
       for (const category of categories) {
         const label = el('label', {
@@ -201,7 +201,7 @@ var palette_default = {
         b.title =
           t(category) +
           ' \xB7 ' +
-          t('Eingabe: ') +
+          t('ui.input_d88e602d') +
           action.inputs.map((x) => (nodeLabels[x] ? t(nodeLabels[x]) : x)).join(', ');
         paletteDrag(b, {
           kind: 'actor',
@@ -218,7 +218,7 @@ var palette_default = {
               {
                 class: 'palette-empty'
               },
-              t('Keine passenden Eintr\xE4ge.')
+              t('ui.no_matching_entries')
             )
           );
       const key = inputs
@@ -309,11 +309,10 @@ var palette_default = {
         else if (payload.kind === 'actor') {
           const plugin = pluginsState.catalog.find((p) => p.id === payload.plugin),
             action = plugin?.actions.find((a) => a.id === payload.action);
-          if (!action) throw Error(t('Aktor nicht verf\xFCgbar.'));
+          if (!action) throw Error(t('ui.tool_unavailable'));
           const targetId = event.target.closest('.node')?.dataset.id,
             target = workspaceState.project.document.nodes.find((n) => n.id === targetId);
-          if (target?.type === 'actor')
-            throw Error(t('Aktoren ben\xF6tigen einen Datenknoten als Eingabe.'));
+          if (target?.type === 'actor') throw Error(t('ui.tools_require_a_data_node_as_input'));
           const selected = selectedData();
           const inputs = target
             ? selected.some((node) => node.id === target.id)
@@ -441,6 +440,21 @@ var palette_default = {
         inputs.filter((n) => actionAcceptsNode(action, n)).length > action.max_inputs
       )
         return true;
+      if (action.input_roles) {
+        const remaining = [...action.input_roles]
+          .sort((a, b) => a.length - b.length)
+          .map((role) => [...role]);
+        for (const node of [...inputs].sort(
+          (a, b) =>
+            remaining.filter((role) => role.includes(a.type)).length -
+            remaining.filter((role) => role.includes(b.type)).length
+        )) {
+          const slot = remaining.findIndex((role) => role.includes(node.type));
+          if (slot < 0) return true;
+          remaining.splice(slot, 1);
+        }
+        if (!allowPartial && remaining.length) return true;
+      }
       if (action.same_type && inputs.length && new Set(inputs.map((n) => n.type)).size > 1)
         return true;
       if (

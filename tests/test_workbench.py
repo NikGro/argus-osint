@@ -1,25 +1,19 @@
 import io
 import json
-import os
-from pathlib import Path
-import sys
-import tempfile
 import threading
 import unittest
 import urllib.error
 import urllib.request
 from unittest.mock import patch
-
-TEMP = tempfile.TemporaryDirectory()
-os.environ["DATA_DIR"] = TEMP.name
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import server
+from core.http_server import Handler, ApplicationServer
+from runtime_fixture import app
 from http_fixture import request as authenticated_request, await_project
 from plugins import location, metadata
 from PIL import Image
 
 
 class LocationTests(unittest.TestCase):
+
     def test_aliases_unicode_and_coordinates(self):
         result = location.normalize(
             {
@@ -106,6 +100,7 @@ class LocationTests(unittest.TestCase):
 
 
 class APITests(unittest.TestCase):
+
     def setUp(self):
         self.geocoder = patch.object(location, "request", return_value=None)
         self.geocoder.start()
@@ -115,7 +110,7 @@ class APITests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.httpd = server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        cls.httpd = ApplicationServer(("127.0.0.1", 0), Handler)
         cls.base = "http://127.0.0.1:" + str(cls.httpd.server_address[1])
         cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
         cls.thread.start()
@@ -129,7 +124,7 @@ class APITests(unittest.TestCase):
         payload = (
             raw
             if raw is not None
-            else (json.dumps(body).encode() if body is not None else None)
+            else json.dumps(body).encode() if body is not None else None
         )
         req = authenticated_request(
             self.base + path,
@@ -187,9 +182,9 @@ class APITests(unittest.TestCase):
         )
         self.assertEqual(result["document"]["runs"][0]["status"], "completed")
         self.assertEqual(
-            server.PROJECTS.history.page(p["id"])["runs"][0]["input_snapshot"][0][
-                "data"
-            ]["original_input"],
+            app.PROJECTS.history.page(p["id"])["runs"][0]["input_snapshot"][0]["data"][
+                "original_input"
+            ],
             "Hamburg",
         )
         with self.assertRaises(urllib.error.HTTPError) as error:
@@ -255,27 +250,31 @@ class APITests(unittest.TestCase):
             "extract",
             [{"id": "image", "data": uploaded}],
             {},
-            {"resolve_file": server.resolve_file},
+            {"resolve_file": app.resolve_file},
         )
         self.assertEqual(
             next(
-                o["data"]["value"]
-                for o in result["outputs"]
-                if o["label"].endswith("ImageWidth")
+                (
+                    o["data"]["value"]
+                    for o in result["outputs"]
+                    if o["label"].endswith("ImageWidth")
+                )
             ),
             "4",
         )
-        self.assertTrue(all(o["type"] == "value" for o in result["outputs"]))
+        self.assertTrue(all((o["type"] == "value" for o in result["outputs"])))
         self.assertTrue(
             any(
-                o["label"].endswith("ModifyDate")
-                and o["data"] == {"value": "2026:10:13 10:00:00"}
-                for o in result["outputs"]
+                (
+                    o["label"].endswith("ModifyDate")
+                    and o["data"] == {"value": "2026:10:13 10:00:00"}
+                    for o in result["outputs"]
+                )
             )
         )
-        self.assertTrue(all(set(o["data"]) == {"value"} for o in result["outputs"]))
+        self.assertTrue(all((set(o["data"]) == {"value"} for o in result["outputs"])))
         with self.assertRaises(ValueError):
-            server.resolve_file("../../server.py")
+            app.resolve_file("../../server.py")
 
 
 if __name__ == "__main__":

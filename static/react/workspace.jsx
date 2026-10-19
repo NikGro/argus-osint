@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { memo, useRef, useState, useEffect, useMemo } from 'react';
 import phoneCountries from '../phone-countries.js';
 import locationCountries from '../location-countries.js';
 import { language } from '../i18n.js';
@@ -94,7 +94,7 @@ export function Workspace({ app }) {
               togglePanel('leftCollapsed');
             }}
           >
-            {t('Werkzeugmenü')}
+            {t('ui.tool_menu')}
           </Button>
           <Button
             id="toggleRight"
@@ -106,7 +106,7 @@ export function Workspace({ app }) {
               togglePanel('rightCollapsed');
             }}
           >
-            {t('Knotendetails')}
+            {t('ui.node_details')}
           </Button>
         </section>
         <div
@@ -116,7 +116,7 @@ export function Workspace({ app }) {
           onPointerDown={(event) => resize(event, 'inspector', -1)}
         />
         <aside id="inspector" style={{ width: sizes.rightWidth }} hidden={rightHidden}>
-          <Inspector app={app} />
+          <StableInspector app={app} />
         </aside>
       </div>
       <input
@@ -140,7 +140,7 @@ export function Workspace({ app }) {
         }
       />
       <p id="graphKeyboardHint" className="sr-only">
-        {t('Leertaste zum Verschieben. Strg und Mausrad zum Zoomen.')}
+        {t('ui.space_to_pan_ctrl_wheel_to_zoom')}
       </p>
     </main>
   );
@@ -206,7 +206,7 @@ function Toolbar({ app }) {
   const running = s.executionState.activeActors.size;
   const queued = s.executionState.actorQueue.length;
   return (
-    <div className={'toolbar'} role="toolbar" aria-label={t('Projektwerkzeuge')}>
+    <div className={'toolbar'} role="toolbar" aria-label={t('ui.project_tools')}>
       <div className="tool-group">{btn('back', 'Hauptmenü', 'home', c.home, false, true)}</div>
       <div className="tool-group">
         {btn(
@@ -227,7 +227,7 @@ function Toolbar({ app }) {
         )}
       </div>
       <div className="tool-group">
-        <Dropdown label={t('Gruppe')} icon="group">
+        <Dropdown label={t('ui.group_b4c02265')} icon="group">
           {btn('groupNodes', 'Gruppieren', 'group', c.createGroupFromSelection, !canGroup)}
           {btn(
             'ungroupNodes',
@@ -244,7 +244,7 @@ function Toolbar({ app }) {
             c.setAllGroups(true)
           )}
         </Dropdown>
-        <Dropdown label={t('Bereinigen')} icon="cleanup">
+        <Dropdown label={t('ui.arrange_b6a83ebd')} icon="cleanup">
           {['hierarchy', 'grid', 'radial'].map((mode) =>
             btn(
               'cleanup-' + mode,
@@ -260,7 +260,7 @@ function Toolbar({ app }) {
         </Dropdown>
       </div>
       <div className="tool-group">
-        <Dropdown label={t('Löschen')} icon="trash" danger>
+        <Dropdown label={t('ui.delete')} icon="trash" danger>
           {btn(
             'deleteSelected',
             'Objekt löschen',
@@ -285,12 +285,12 @@ function Toolbar({ app }) {
         {btn('zoomOut', 'Verkleinern', 'search-minus', () => c.zoomStep(-1), false, true)}
         <input
           id="zoomLevel"
-          aria-label={t('Zoom in Prozent')}
+          aria-label={t('ui.zoom_percentage')}
           defaultValue="100%"
           onBlur={(event) => {
             const percent = Number(event.target.value.replace('%', ''));
             if (!Number.isFinite(percent) || percent < 15 || percent > 250)
-              return c.toast(t('Zoom muss zwischen 15 und 250 Prozent liegen.'));
+              return c.toast(t('ui.zoom_must_be_between_15_and_250_percent'));
             const box = document.getElementById('graph').getBoundingClientRect();
             c.zoomAt(box.width / 2, box.height / 2, percent / 100);
           }}
@@ -311,8 +311,8 @@ function Toolbar({ app }) {
       <div className="tool-group execution-group">
         <div className={'execution-status' + (!running && !queued ? ' idle' : '')} role="status">
           <Icon name={running ? 'spinner' : 'clock'} />
-          {running} {t('läuft')} · {queued} {t('In Warteschlange')}
-          {s.executionState.vpnWaiting && <span>{t('Warte auf VPN')}</span>}
+          {running} {t('ui.running_870fa7cc')} · {queued} {t('ui.queued')}
+          {s.executionState.vpnWaiting && <span>{t('ui.waiting_for_vpn')}</span>}
         </div>
         {btn(
           'cancelActor',
@@ -410,19 +410,19 @@ function Palette({ app }) {
           <input
             type="search"
             value={queries[kind]}
-            placeholder={t('Suchen …')}
+            placeholder={t('ui.search_51942c20')}
             onChange={(event) => setQueries({ ...queries, [kind]: event.target.value })}
           />
         )}
         {panels[kind + 'sort'] && (
           <Select
-            label={t('Sortieren')}
+            label={t('ui.sort')}
             id={kind + 'Sort'}
             value={sorts[kind]}
             options={[
               { value: 'az', label: 'A–Z' },
               { value: 'za', label: 'Z–A' },
-              { value: 'category_az', label: t('Nach Kategorie') }
+              { value: 'category_az', label: t('ui.by_category') }
             ]}
             onChange={(value) => setSorts({ ...sorts, [kind]: value })}
           />
@@ -509,7 +509,7 @@ function Palette({ app }) {
         id="paletteSplit"
         role="separator"
         tabIndex={0}
-        aria-label={t('Bereiche vergrößern')}
+        aria-label={t('ui.resize_sections')}
         onPointerDown={(event) => {
           const handle = event.currentTarget,
             y = event.clientY,
@@ -535,6 +535,13 @@ function Palette({ app }) {
   );
 }
 
+// Geometry changes during dragging do not alter inspector fields. Avoid rebuilding
+// large provider/evidence forms for each pointer frame; refresh at release.
+const StableInspector = memo(
+  Inspector,
+  (_previous, next) =>
+    next.app.state.canvasState.drag?.kind === 'nodes' && next.app.state.canvasState.drag.moved
+);
 function Inspector({ app }) {
   const { state: s, commands: c } = app;
   const doc = s.workspaceState.project?.document;
@@ -545,10 +552,10 @@ function Inspector({ app }) {
     const members = doc.nodes.filter((node) => c.groupNodeIds(group).has(node.id));
     return (
       <>
-        <span className="node-kind">{t('Gruppe').toUpperCase()}</span>
-        <h2>{t('Gruppendetails')}</h2>
+        <span className="node-kind">{t('ui.group_b4c02265').toUpperCase()}</span>
+        <h2>{t('ui.group_details')}</h2>
         <Field
-          label={t('Bezeichnung')}
+          label={t('ui.label')}
           value={c.groupTitle(group)}
           onChange={(value) => {
             group.label = value;
@@ -574,7 +581,7 @@ function Inspector({ app }) {
               c.change();
             }}
           >
-            {t('Gruppe in Report aufnehmen')}
+            {t('ui.include_group_in_report')}
           </Check>
         </DetailSection>
         {doc.groups.filter((child) => child.parent_id === group.id).length > 0 && (
@@ -590,12 +597,12 @@ function Inspector({ app }) {
         )}
         <DetailSection className="group-controls">
           <Button className="wide" onClick={() => c.dissolveGroup(group)} icon="ungroup">
-            {t('Gruppe aufheben')}
+            {t('ui.ungroup_a7471297')}
           </Button>
         </DetailSection>
         <DetailSection className="node-delete-section">
           <Button className="danger-filled wide" icon="trash" onClick={() => c.deleteGroup(group)}>
-            {t('Gruppe löschen')}
+            {t('ui.delete_group')}
           </Button>
         </DetailSection>
       </>
@@ -608,9 +615,9 @@ function Inspector({ app }) {
           .filter((edge) => s.selectionState.selectedEdges.has(edge.id))
           .map((edge) => (
             <section key={edge.id}>
-              <h2>{t('Verbindungsdetails')}</h2>
+              <h2>{t('ui.connection_details')}</h2>
               <Field
-                label={t('Bezeichnung')}
+                label={t('ui.label')}
                 value={edge.label}
                 onChange={(value) => {
                   edge.label = value;
@@ -623,7 +630,7 @@ function Inspector({ app }) {
                 className="danger-filled wide"
                 onClick={() => c.deleteEdges([edge.id])}
               >
-                {t('Verbindung löschen')}
+                {t('ui.delete_connection')}
               </Button>
             </section>
           ))}
@@ -633,7 +640,7 @@ function Inspector({ app }) {
     return (
       <>
         <h2>
-          {nodes.length} {t('Knoten ausgewählt')}
+          {nodes.length} {t('ui.nodes_selected_c456770e')}
         </h2>
         <Check
           checked={nodes.every((node) => node.report)}
@@ -642,14 +649,14 @@ function Inspector({ app }) {
             c.change();
           }}
         >
-          {t('In Report aufnehmen')}
+          {t('ui.include_in_report')}
         </Check>
         <Button
           icon="trash"
           className="danger-filled wide"
           onClick={() => c.deleteNodes(nodes.map((node) => node.id))}
         >
-          {t('Knoten löschen')}
+          {t('ui.delete_node')}
         </Button>
       </>
     );
@@ -685,6 +692,9 @@ function NodeDetails({ app, node }) {
   if (['phone', 'email'].includes(node.type)) exclude.push('value');
   if (node.type === 'location') exclude.push('country', 'country_code');
   if (node.type === 'profile') exclude.push('provider');
+  if (node.type === 'database') exclude.push('database_id', 'database_title');
+  if (actor && ['database_search', 'deepface'].includes(node.data.plugin))
+    exclude.push('column_id');
   if (node.type === 'datetime') exclude.push('date', 'time', 'timezone');
   const sourceIds = new Set(
     doc.edges.filter((edge) => edge.target === node.id).map((edge) => edge.source)
@@ -703,7 +713,7 @@ function NodeDetails({ app, node }) {
   return (
     <>
       <span className="node-kind">{c.dataLabel(node.type).toUpperCase()}</span>
-      <h2>{t('Knotendetails')}</h2>
+      <h2>{t('ui.node_details')}</h2>
       {actor && (
         <DetailSection className="tool-run-section">
           <Button
@@ -739,7 +749,7 @@ function NodeDetails({ app, node }) {
       )}
       <DetailSection className={'node-title-section' + (actor ? ' actor-title' : '')}>
         <Field
-          label={t('Titel')}
+          label={t('ui.title')}
           value={c.nodeTitle(node)}
           onChange={(value) => {
             node.label = value;
@@ -750,9 +760,26 @@ function NodeDetails({ app, node }) {
           }}
         />
       </DetailSection>
+      {node.type === 'database' && (
+        <DatabaseReference
+          app={app}
+          node={node}
+          onChange={(value) => commit('database_id', value)}
+        />
+      )}
+      {actor &&
+        ['database_search', 'deepface'].includes(node.data.plugin) &&
+        doc.nodes.some((item) => sourceIds.has(item.id) && item.type === 'database') && (
+          <DatabaseColumn
+            app={app}
+            node={node}
+            source={doc.nodes.find((item) => sourceIds.has(item.id) && item.type === 'database')}
+            onChange={(value) => commit('column_id', value)}
+          />
+        )}
       {node.type === 'email' && (
         <Field
-          label={t('E-Mail')}
+          label={t('ui.email')}
           value={node.data.value || ''}
           schema={{ type: 'email' }}
           onChange={(value) => commit('value', value)}
@@ -762,14 +789,16 @@ function NodeDetails({ app, node }) {
       {node.type === 'location' && (
         <div className="country-input">
           <Field
-            label={t('Land')}
+            label={t('ui.country')}
             value={node.data.country_code || ''}
             schema={{
               enum: ['', ...locationCountries],
               labels: Object.fromEntries(
                 ['', ...locationCountries].map((code) => [
                   code,
-                  code ? new Intl.DisplayNames([language], { type: 'region' }).of(code) : t('Any')
+                  code
+                    ? new Intl.DisplayNames([language], { type: 'region' }).of(code)
+                    : t('ui.any')
                 ])
               )
             }}
@@ -781,23 +810,23 @@ function NodeDetails({ app, node }) {
               c.change(node.id);
             }}
           />
-          <Field label={t('Code')} value={node.data.country_code || ''} disabled />
+          <Field label={t('ui.code')} value={node.data.country_code || ''} disabled />
         </div>
       )}
       {node.type === 'datetime' && <DateTimeFields node={node} commit={commit} />}
       {node.type === 'profile' && (
         <>
           <Field
-            label={t('Anbieter')}
+            label={t('ui.provider')}
             value={
               s.pluginsState.providerIndex.has(c.providerSearchKey(node.data.provider))
                 ? c.providerName(node.data.provider)
-                : t('Andere / Eigene')
+                : t('ui.other_custom_fbc668fd')
             }
             schema={{
               enum: [
                 ...s.pluginsState.providerCatalogue.map((item) => item.name),
-                t('Andere / Eigene')
+                t('ui.other_custom_fbc668fd')
               ]
             }}
             onChange={(value) =>
@@ -811,7 +840,7 @@ function NodeDetails({ app, node }) {
           {(!s.pluginsState.providerIndex.has(c.providerSearchKey(node.data.provider)) ||
             String(node.data.provider).startsWith('custom:')) && (
             <Field
-              label={t('Eigener Anbieter')}
+              label={t('ui.custom_provider')}
               value={String(node.data.provider || '').replace(/^custom:/, '')}
               onChange={(value) => commit('provider', 'custom:' + value)}
             />
@@ -840,7 +869,7 @@ function NodeDetails({ app, node }) {
       )}
       {action?.research_profiles && (
         <section className="tool-search-profiles">
-          <h3>{t('Suchprofile für diese Suche')}</h3>
+          <h3>{t('ui.search_profiles_for_this_search')}</h3>
           {Object.entries(action.research_profiles)
             .filter(([provider]) => action.default_params['use_' + provider] !== false)
             .map(([provider, catalog]) => (
@@ -867,7 +896,7 @@ function NodeDetails({ app, node }) {
       {['note', 'marker'].includes(node.type) && (
         <section>
           <ColorField
-            label={t('Farbe')}
+            label={t('ui.color')}
             value={node.appearance?.color || '#ffcc70'}
             onChange={(color) => {
               if (/^#[0-9a-f]{6}$/i.test(color)) {
@@ -896,7 +925,7 @@ function NodeDetails({ app, node }) {
       )}
       {(displayOptions[node.type] || []).length > 0 && (
         <section className="node-display-section">
-          <h3>{t('Quick Actions & Glances')}</h3>
+          <h3>{t('ui.quick_actions_glances')}</h3>
           {c.resourceActions(node).map((item) => (
             <Button
               app={app}
@@ -936,14 +965,14 @@ function NodeDetails({ app, node }) {
           {!['error', 'note'].includes(node.type) && (
             <section className="verification-section">
               <Field
-                label={t('Verifizierung')}
+                label={t('ui.verification')}
                 value={node.verification || 'unverified'}
                 schema={{
                   enum: ['unverified', 'unclear', 'verified'],
                   labels: {
-                    unverified: t('Unverifiziert'),
-                    unclear: t('Unklar'),
-                    verified: t('Verifiziert')
+                    unverified: t('ui.unverified'),
+                    unclear: t('ui.unclear'),
+                    verified: t('ui.verified')
                   }
                 }}
                 onChange={(value) => {
@@ -954,7 +983,7 @@ function NodeDetails({ app, node }) {
             </section>
           )}
           <section className="node-tags-section">
-            <h3>{t('Tags')}</h3>
+            <h3>{t('ui.tags')}</h3>
             <div className="tag-badges">
               {(node.tags || []).map((id) => {
                 const tag = s.preferencesState.appSettings.tags?.find((item) => item.id === id);
@@ -971,7 +1000,7 @@ function NodeDetails({ app, node }) {
                           c.change(node.id);
                         }}
                       >
-                        {t('Entfernen')}
+                        {t('ui.remove')}
                       </Button>
                     </span>
                   )
@@ -979,8 +1008,8 @@ function NodeDetails({ app, node }) {
               })}
             </div>
             <Select
-              label={t('Tag hinzufügen')}
-              placeholder={t('Tag hinzufügen …')}
+              label={t('ui.add_tag')}
+              placeholder={t('ui.add_tag_7d178046')}
               value=""
               options={availableTags.map((tag) => ({ value: tag.id, label: tag.name }))}
               onChange={(id) => {
@@ -1001,13 +1030,10 @@ function NodeDetails({ app, node }) {
             c.change(node.id);
           }}
         >
-          {t('In Report aufnehmen')}
+          {t('ui.include_in_report')}
         </Check>
       </DetailSection>
-      <details className="provenance">
-        <summary>{t('Quelle / Herkunft')}</summary>
-        <Facts value={node.evidence} />
-      </details>
+      <Provenance value={node.evidence} />
       {doc.runs
         .filter((run) => run.actor_id === node.id)
         .slice(-5)
@@ -1028,10 +1054,94 @@ function NodeDetails({ app, node }) {
           className="danger-filled wide node-delete"
           onClick={() => c.deleteNodes([node.id])}
         >
-          {t('Knoten löschen')}
+          {t('ui.delete_node')}
         </Button>
       </DetailSection>
     </>
+  );
+}
+
+function Provenance({ value }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details
+      className="provenance"
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary>{t('ui.source_origin')}</summary>
+      {open && <Facts value={value} />}
+    </details>
+  );
+}
+
+function DatabaseReference({ app, node, onChange }) {
+  const [items, setItems] = useState([]),
+    [error, setError] = useState('');
+  useEffect(() => {
+    let alive = true;
+    app.commands
+      .api('/api/databases')
+      .then((rows) => {
+        if (alive) setItems(rows);
+      })
+      .catch((e) => {
+        if (alive) setError(e.message);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [app]);
+  return (
+    <DetailSection>
+      <label>{t('ui.database')}</label>
+      <Select
+        label={t('ui.choose_database')}
+        value={node.data.database_id}
+        options={items.map((item) => ({ value: item.id, label: item.title }))}
+        onChange={(id) => {
+          const selected = items.find((item) => item.id === id);
+          node.data.database_title = selected?.title || '';
+          if (!node.evidence?.label_custom) node.label = selected?.title || node.label;
+          onChange(id);
+        }}
+      />
+      {error && <p role="alert">{error}</p>}
+      {!items.length && !error && <p>{t('ui.create_or_import_databases_from_the_main_menu')}</p>}
+    </DetailSection>
+  );
+}
+
+function DatabaseColumn({ app, node, source, onChange }) {
+  const [fields, setFields] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    if (source.data.database_id)
+      app.commands
+        .api('/api/databases/' + source.data.database_id + '/schema')
+        .then((database) => {
+          if (alive) setFields(database.fields);
+        })
+        .catch(() => {
+          if (alive) setFields([]);
+        });
+    return () => {
+      alive = false;
+    };
+  }, [app, source.data.database_id]);
+  const available = fields.filter(
+    (field) => node.data.plugin !== 'deepface' || field.type === 'image'
+  );
+  return (
+    <DetailSection>
+      <label>{t('ui.reference_column')}</label>
+      <Select
+        label={t('ui.reference_column')}
+        value={node.data.params?.column_id || ''}
+        options={available.map((field) => ({ value: field.id, label: field.name }))}
+        onChange={onChange}
+      />
+    </DetailSection>
   );
 }
 
@@ -1055,10 +1165,10 @@ function PhoneField({ app, node, commit }) {
   }
   return (
     <div className="react-field">
-      <label>{t('Telefonnummer')}</label>
+      <label>{t('ui.phone_number')}</label>
       <div className="phone-input">
         <Select
-          label={t('Ländervorwahl')}
+          label={t('ui.country_calling_code')}
           value={region}
           displayValue={phoneCountries[region]?.code || '+'}
           options={[
@@ -1074,7 +1184,7 @@ function PhoneField({ app, node, commit }) {
         />
         <input
           type="tel"
-          aria-label={t('Telefonnummer')}
+          aria-label={t('ui.phone_number')}
           value={number}
           onChange={(event) => update(event.target.value)}
         />
@@ -1121,19 +1231,19 @@ function DateTimeFields({ node, commit }) {
   return (
     <>
       <Field
-        label={t('Datum')}
+        label={t('ui.date')}
         value={node.data.date || ''}
         schema={{ type: 'date' }}
         onChange={(value) => commit('date', value)}
       />
       <Field
-        label={t('Zeit')}
+        label={t('ui.time')}
         value={node.data.time || ''}
         schema={{ type: 'time' }}
         onChange={(value) => commit('time', value)}
       />
       <Field
-        label={t('Zeitzone')}
+        label={t('ui.time_zone')}
         value={node.data.timezone || 'UTC'}
         schema={{ enum: zones, labels: zoneLabels }}
         onChange={(value) => commit('timezone', value)}

@@ -1,0 +1,79 @@
+name: ARGUS checks and release
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: pip install -r requirements-dev.txt
+      - run: npm ci
+      - run: ruff check core plugins scripts tests server.py
+      - run: black --check core plugins scripts tests server.py
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run build:check
+      - run: npm run test:frontend
+  runtime:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          tags: argus:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Prepare test-only browser dependencies
+        run: |
+          printf 'FROM argus:ci\nUSER root\nCOPY requirements-test.txt /tmp/requirements-test.txt\nRUN pip install --no-cache-dir -r /tmp/requirements-test.txt\nUSER workbench\n' > Dockerfile.ci
+          docker build -f Dockerfile.ci -t argus-tests:ci .
+      - name: Complete offline Python and real Chromium suite
+        run: |
+          mkdir -p artifacts
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+            --entrypoint python -e DATA_DIR=/tmp/argus-test-data \
+            -v "$PWD/tests:/app/tests:ro" argus-tests:ci \
+            -m unittest discover -s /app/tests -v 2>&1 | tee artifacts/python-tests.log
+      - name: Verify privileged bootstrap and zero-capability worker
+        run: |
+          docker run --rm --network none --user root --cap-drop ALL \
+            --cap-add SETPCAP --cap-add SETUID --cap-add SETGID \
+            --cap-add SYS_ADMIN --cap-add NET_ADMIN --cap-add CHOWN --cap-add KILL \
+            --security-opt no-new-privileges \
+            --security-opt apparmor=unconfined \
+            --security-opt "seccomp=$PWD/deploy/seccomp-argus.json" \
+            --entrypoint python -v "$PWD/tests:/app/tests:ro" argus-tests:ci \
+            /app/tests/worker_runtime_probe.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: runtime-validation
+          path: artifacts/
+  release:
+    needs: [quality, runtime]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish ARGUS v26.10.2-beta.1'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Publish validated beta
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create v26.10.2-beta.1 --target "$GITHUB_SHA" --prerelease --title "ARGUS 26.10.2 Beta 1" --notes-file RELEASE_NOTES.md

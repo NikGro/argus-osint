@@ -25,6 +25,7 @@ def profile(ident="fixture"):
 
 
 class Profiles(unittest.TestCase):
+
     def test_standalone_profiles_and_hook_rejection(self):
         compiled = prepare(profile())
         self.assertIn("PrivateKey", compiled["compiled"])
@@ -70,6 +71,7 @@ class Profiles(unittest.TestCase):
 
 
 class GatewayState(unittest.TestCase):
+
     def test_failed_profiles_are_skipped_and_active_lease_defers_rotation(self):
         with tempfile.TemporaryDirectory() as directory:
             network = Mock()
@@ -133,6 +135,7 @@ class GatewayState(unittest.TestCase):
 
 
 class ApplicationVPN(unittest.TestCase):
+
     def test_saved_vpn_setting_blocks_startup_without_enabled_gateway(self):
         with tempfile.TemporaryDirectory() as directory:
             gateway = Mock()

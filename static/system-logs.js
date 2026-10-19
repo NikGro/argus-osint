@@ -3,22 +3,22 @@ import { t } from './i18n.js';
 export function systemLogs(container, { api, el, iconActionButton, toast }) {
   clearTimeout(container.logTimer);
   container.replaceChildren();
-  container.append(el('h2', {}, t('Systemlogs')));
+  container.append(el('h2', {}, t('ui.system_logs')));
   const search = el('input', {
     type: 'search',
-    placeholder: t('Systemlogs durchsuchen'),
-    'aria-label': t('Systemlogs durchsuchen')
+    placeholder: t('ui.search_system_logs'),
+    'aria-label': t('ui.search_system_logs')
   });
   const limit = el('input', {
     type: 'number',
     min: 0,
     step: 1,
     value: 0,
-    'aria-label': t('Exportzeilen (0 = alle)')
+    'aria-label': t('ui.export_lines_0_all')
   });
   const output = el('pre', { class: 'system-log-lines', tabindex: 0 });
   const status = el('p', { role: 'status' });
-  const more = iconActionButton(t('Weitere laden'), () => load(true), 'plus');
+  const more = iconActionButton(t('ui.load_more'), () => load(true), 'plus');
   let offset = 0,
     generation = 0,
     timer,
@@ -64,7 +64,7 @@ export function systemLogs(container, { api, el, iconActionButton, toast }) {
       else if (follow.checked) output.scrollTop = output.scrollHeight;
       else output.scrollTop = oldTop;
       offset = (append ? offset : 0) + (data.lines || []).length;
-      status.textContent = t('Logzeilen: {count}', { count: data.total || 0 });
+      status.textContent = t('ui.log_lines_count', { count: data.total || 0 });
       more.hidden = offset >= (data.total || 0);
     } catch (error) {
       toast(error.message);
@@ -77,7 +77,7 @@ export function systemLogs(container, { api, el, iconActionButton, toast }) {
     timer = setTimeout(() => load(), 200);
   });
   const exportButton = iconActionButton(
-    t('Exportieren'),
+    t('ui.export'),
     () => {
       if (!limit.checkValidity()) {
         limit.reportValidity();
@@ -96,7 +96,7 @@ export function systemLogs(container, { api, el, iconActionButton, toast }) {
     'download'
   );
   const clear = iconActionButton(
-    t('Systemlogs leeren'),
+    t('ui.clear_system_logs'),
     async () => {
       try {
         await api('/api/system-logs/clear', {});
@@ -109,11 +109,11 @@ export function systemLogs(container, { api, el, iconActionButton, toast }) {
     'danger-filled'
   );
   const controls = el('div', { class: 'system-log-controls' });
-  const exportLabel = el('label', {}, t('Exportzeilen (0 = alle)'));
+  const exportLabel = el('label', {}, t('ui.export_lines_0_all'));
   exportLabel.append(limit);
   controls.append(
     search,
-    iconActionButton(t('Aktualisieren'), () => load(), 'refresh'),
+    iconActionButton(t('ui.refresh'), () => load(), 'refresh'),
     exportLabel,
     exportButton,
     clear

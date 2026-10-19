@@ -1,0 +1,37 @@
+# Optional host-loaded policy: apparmor_parser -r deploy/apparmor-argus
+# Compose: ARGUS_APPARMOR_PROFILE=argus docker compose up -d
+# Profiles are host-kernel objects; the image must not gain MAC_ADMIN to load one.
+#include <tunables/global>
+profile argus flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  file,
+  network inet,
+  network inet6,
+  network unix,
+  network netlink,
+  capability sys_admin,
+  capability net_admin,
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  capability chown,
+  capability kill,
+  signal (send,receive) peer=argus,
+  signal (receive) peer=unconfined,
+  ptrace (read) peer=argus,
+  mount fstype=tmpfs -> /work/,
+  mount fstype=tmpfs -> /tmp/,
+  mount fstype=proc -> /proc/,
+  mount options=(rw,bind) /tmp/argus-worker-*/empty/ -> /data/,
+  mount options=(rw,rprivate) -> /,
+  # iproute2 uses nsfs bind mounts for integrated VPN network namespaces.
+  mount options=(rw,bind) /proc/*/ns/net -> /run/netns/*,
+  mount options=(rw,bind) /run/netns/ -> /run/netns/,
+  mount options=(rw,rshared) -> /run/netns/,
+  umount /proc/,
+  umount /run/netns/*,
+  deny /proc/sys/kernel/** wklx,
+  deny /sys/firmware/** rwklx,
+  deny /sys/kernel/security/** rwklx,
+  deny network packet,
+}

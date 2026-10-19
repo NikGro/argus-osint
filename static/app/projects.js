@@ -58,7 +58,7 @@ var projects_default = {
           Boolean(p.archived_at) === (libraryState.homeMode === 'archive') &&
           searchText(p.title).includes(query)
       );
-      $('projectCount').textContent = visible.length + t(' Projekte');
+      $('projectCount').textContent = visible.length + t('ui.projects_ef54f9a8');
       $('projectList').replaceChildren();
       for (const p of visible) {
         const tile = el('article', {
@@ -80,7 +80,7 @@ var projects_default = {
             {
               class: 'project-kind'
             },
-            p.archived_at ? t('Archiviert') : t('Aktives Projekt')
+            p.archived_at ? t('ui.archived') : t('ui.active_project')
           )
         );
         const actions = el('div', {
@@ -88,15 +88,15 @@ var projects_default = {
         });
         if (p.archived_at) {
           actions.append(
-            button(t('Wiederherstellen'), () => setArchived(p, false)),
-            button(t('L\xF6schen'), () => deleteProject(p), 'danger-filled')
+            button(t('ui.restore'), () => setArchived(p, false)),
+            button(t('ui.delete'), () => deleteProject(p), 'danger-filled')
           );
         } else
           actions.append(
-            button(t('\xD6ffnen'), () => openProject(p.id), 'primary'),
-            button(t('Archivieren'), () => setArchived(p, true), 'archive-action')
+            button(t('ui.open_bc385a30'), () => openProject(p.id), 'primary'),
+            button(t('ui.archive_a54c8deb'), () => setArchived(p, true), 'archive-action')
           );
-        const rename = button(t('Titel bearbeiten'), async () => {
+        const rename = button(t('ui.edit_title'), async () => {
           const result = await parameterModal(
             {
               title: 'Projekttitel bearbeiten',
@@ -112,7 +112,7 @@ var projects_default = {
           libraryState.projectIndex = await api('/api/projects');
           renderProjects();
         });
-        buttonContent(rename, t('Titel bearbeiten'), 'edit', true);
+        buttonContent(rename, t('ui.edit_title'), 'edit', true);
         actions.insertBefore(rename, actions.children[1] || null);
         tile.append(actions);
         $('projectList').append(tile);
@@ -125,10 +125,10 @@ var projects_default = {
               class: 'empty-state'
             },
             query
-              ? t('Keine passenden Projekte gefunden.')
+              ? t('ui.no_matching_projects_found')
               : libraryState.homeMode === 'archive'
-                ? t('Das Archiv ist leer.')
-                : t('Noch keine Projekte vorhanden.')
+                ? t('ui.the_archive_is_empty')
+                : t('ui.no_projects_yet')
           )
         );
     }
@@ -139,13 +139,13 @@ var projects_default = {
       });
       libraryState.projectIndex = await api('/api/projects');
       renderProjects();
-      toast(archived ? t('Projekt archiviert.') : t('Projekt wiederhergestellt.'));
+      toast(archived ? t('ui.project_archived') : t('ui.project_restored'));
     }
     async function deleteProject(p) {
       if (
         !(await askConfirm(
-          t('Projekt l\xF6schen'),
-          '\u201E' + p.title + t('\u201C endg\xFCltig aus dem Archiv l\xF6schen?')
+          t('ui.delete_project'),
+          '\u201E' + p.title + t('ui.permanently_from_the_archive')
         ))
       )
         return;
@@ -154,7 +154,7 @@ var projects_default = {
       });
       libraryState.projectIndex = await api('/api/projects');
       renderProjects();
-      toast(t('Projekt gel\xF6scht.'));
+      toast(t('ui.project_deleted'));
     }
     async function home() {
       if (persistenceState.dirty) await save();

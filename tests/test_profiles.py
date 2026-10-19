@@ -3,23 +3,14 @@ from unittest.mock import patch
 import subprocess
 from pathlib import Path
 import tempfile
-import os
 import json
 import shutil
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-
-TEMP = tempfile.TemporaryDirectory()
-os.environ["DATA_DIR"] = TEMP.name
-
 from plugins import profiles
-import server
+from runtime_fixture import app
 
-CSV = """username,name,url_main,url_user,exists,http_status,response_time_s
-example,GitHub,https://github.com,https://github.com/example,Claimed,200,0.1
-example,Missing,https://missing.example,https://missing.example/example,Available,404,0.1
-example,Blocked,https://blocked.example,https://blocked.example/example,Unknown,403,0.1
-"""
+CSV = "username,name,url_main,url_user,exists,http_status,response_time_s\nexample,GitHub,https://github.com,https://github.com/example,Claimed,200,0.1\nexample,Missing,https://missing.example,https://missing.example/example,Available,404,0.1\nexample,Blocked,https://blocked.example,https://blocked.example/example,Unknown,403,0.1\n"
 NODE = {
     "id": "input",
     "type": "username",
@@ -29,6 +20,7 @@ NODE = {
 
 
 class ProfileTests(unittest.TestCase):
+
     def test_found_and_inconclusive_are_distinct(self):
         outputs, warnings = profiles.parse_csv(CSV, NODE, 100)
         self.assertEqual([o["type"] for o in outputs], ["url"])
@@ -51,7 +43,7 @@ class ProfileTests(unittest.TestCase):
         outputs, warnings = profiles.parse_csv(csv, NODE, 1)
         self.assertEqual(len([o for o in outputs if o["type"] == "url"]), 1)
         self.assertEqual(outputs[-1]["source"]["counts"]["found"], 2)
-        self.assertTrue(any("begrenzt" in warning for warning in warnings))
+        self.assertTrue(any(("begrenzt" in warning for warning in warnings)))
 
     def test_invalid_username_never_runs_subprocess(self):
         with (
@@ -64,6 +56,7 @@ class ProfileTests(unittest.TestCase):
             process.assert_not_called()
 
     def test_cli_arguments_and_csv(self):
+
         def fake_run(args, **kwargs):
             directory = args[args.index("--folderoutput") + 1]
             (Path(directory) / "example.csv").write_text(CSV)
@@ -110,32 +103,34 @@ class ProfileTests(unittest.TestCase):
         pid = "profile-test"
         import json
 
-        with server.connect() as db:
+        with app.connect() as db:
             db.execute(
                 "INSERT OR REPLACE INTO projects VALUES (?,?,?,?,?)",
-                (pid, "Profiles", json.dumps(doc), 1, server.now()),
+                (pid, "Profiles", json.dumps(doc), 1, app.now()),
             )
         with (
             patch.object(profiles, "search", return_value=CSV),
             patch.object(
-                server.PLUGINS["username"],
+                app.PLUGINS["username"],
                 "run",
                 side_effect=lambda a, i, p, c: profiles.run(
                     "search", i, {**p, "max_results": 300, "run_timeout": 180}, c
                 ),
             ),
         ):
-            result = server.execute(pid, {"revision": 1, "actor_id": "actor"})
+            result = app.execute(pid, {"revision": 1, "actor_id": "actor"})
         self.assertEqual(len(result["document"]["groups"]), 1)
         self.assertEqual(result["document"]["groups"][0]["label"], "GitHub")
         self.assertIn(
-            "Claimed", server.PROJECTS.history.page(result["id"])["runs"][0]["log"]
+            "Claimed", app.PROJECTS.history.page(result["id"])["runs"][0]["log"]
         )
         self.assertEqual(result["document"]["runs"][0]["status"], "completed")
 
     @unittest.skipUnless(shutil.which("sherlock"), "Sherlock-CLI nicht installiert")
     def test_real_cli_against_controlled_local_websites(self):
+
         class Fixture(BaseHTTPRequestHandler):
+
             def do_HEAD(self):
                 self.send_response(200 if self.path.startswith("/found/") else 404)
                 self.end_headers()

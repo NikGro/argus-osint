@@ -43,7 +43,7 @@ const ArgusSelect = (() => {
           ? wrapper.previousElementSibling.textContent
           : '');
       if (label) button.setAttribute('aria-label', label);
-      const value = select.selectedOptions?.[0]?.textContent || tr('Bitte auswählen');
+      const value = select.selectedOptions?.[0]?.textContent || tr('ui.please_select');
       if (text.textContent !== value) text.textContent = value;
       button.disabled = select.disabled;
     };
@@ -65,8 +65,8 @@ const ArgusSelect = (() => {
       popup.setAttribute('popover', 'manual');
       const search = document.createElement('input');
       search.type = 'search';
-      search.placeholder = tr('Suchen …');
-      search.setAttribute('aria-label', tr('Optionen durchsuchen'));
+      search.placeholder = tr('ui.search_51942c20');
+      search.setAttribute('aria-label', tr('ui.search_options'));
       search.autocomplete = 'off';
       const list = document.createElement('div');
       list.className = 'select-options';
@@ -119,12 +119,12 @@ const ArgusSelect = (() => {
         }
         if (!matches.length) {
           const empty = document.createElement('p');
-          empty.textContent = tr('Keine passenden Optionen.');
+          empty.textContent = tr('ui.no_matching_options');
           list.append(empty);
         }
         count.textContent =
           matches.length > 120
-            ? tr('Weitere Optionen über die Suche eingrenzen.') + ' (' + matches.length + ')'
+            ? tr('ui.narrow_down_more_options_using_search') + ' (' + matches.length + ')'
             : '';
       }
       search.addEventListener('input', paint);

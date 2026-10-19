@@ -2,22 +2,8 @@
 
 import logging
 import os
-from core import application as _application
-from core.application import create_app, get_default_application
+from core.application import create_app
 from core.http_server import ApplicationServer, Handler
-
-# Retain the former public server name with bounded admission and application ownership.
-ThreadingHTTPServer = ApplicationServer
-
-
-def __getattr__(name):
-    # Compatibility for plugins/tests using the former service facade.
-    if name.startswith("__"):
-        raise AttributeError(name)
-    app = get_default_application()
-    if hasattr(app, name):
-        return getattr(app, name)
-    return getattr(_application, name)
 
 
 def main():

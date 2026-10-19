@@ -42,7 +42,7 @@ var fields_default = {
             el(
               'summary',
               {},
-              Array.isArray(value) ? value.length + t(' Eintr\xE4ge') : t('Details anzeigen')
+              Array.isArray(value) ? value.length + t('ui.entries') : t('ui.show_details')
             )
           );
           facts(detail, value);
@@ -63,7 +63,7 @@ var fields_default = {
         if (control.value.trim() === '') return null;
         const n = Number(control.value);
         if (!Number.isFinite(n))
-          throw Error(t('Bitte eine g\xFCltige Zahl f\xFCr ') + fieldName(key) + t(' eingeben.'));
+          throw Error(t('ui.enter_a_valid_number_for') + fieldName(key) + t('ui.message'));
         return n;
       }
       return control.value;
@@ -247,7 +247,7 @@ var fields_default = {
               {
                 value: ''
               },
-              t('Nicht angegeben')
+              t('ui.not_specified')
             )
           );
           for (const option of [...location_countries_default]
@@ -340,7 +340,7 @@ var fields_default = {
         }
         if (key === 'phone_region') {
           const control2 = countryRegionSelect(value);
-          parent.append(el('label', {}, t('L\xE4ndervorwahl')), control2);
+          parent.append(el('label', {}, t('ui.country_calling_code')), control2);
           readers.push({
             control: control2,
             path: fieldPath,

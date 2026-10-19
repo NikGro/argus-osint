@@ -76,7 +76,7 @@ def deduplicate(outputs):
         value = str(item["data"].get("value", item["data"].get("text", ""))).strip()
         source = item.get("source", {})
         if kind == "profile":
-            from provider_registry import canonical, identity, label, resolve
+            from core.provider_registry import canonical, identity, label, resolve
 
             d = item["data"]
             d["provider"] = canonical(d["provider"])

@@ -5,6 +5,9 @@ import { Button, Field, Icon, Modal } from './ui/index.jsx';
 import { Workspace } from './workspace.jsx';
 import { Plugins } from './plugins.jsx';
 import { Settings, LogViewer } from './settings.jsx';
+import { Databases } from './databases.jsx';
+import { Help } from './help.jsx';
+import { Report } from './report.jsx';
 import { t, language, setLanguage } from '../i18n.js';
 import { pollJob } from '../jobs-client.js';
 import { VERSION } from '../version.js';
@@ -25,7 +28,7 @@ class ErrorBoundary extends React.Component {
       <main className="intro">
         <h1>ARGUS</h1>
         <p role="alert">{this.state.error.message}</p>
-        <Button onClick={() => location.reload()}>{t('Neu laden')}</Button>
+        <Button onClick={() => location.reload()}>{t('ui.reload')}</Button>
       </main>
     ) : (
       this.props.children
@@ -156,16 +159,16 @@ function Application() {
     s.pluginsState.pendingPluginDirty.size;
   const connected = s.shellState.backendOnline;
   const status = error
-    ? t('Speichern fehlgeschlagen')
+    ? t('ui.save_failed')
     : saving
-      ? t('Speichert …')
+      ? t('ui.saving')
       : pending
-        ? t('Noch zu speichern')
+        ? t('ui.pending_save')
         : !connected
-          ? t('Backend nicht erreichbar')
-          : ['workspace', 'settingsView', 'pluginsView'].includes(ui.view)
-            ? t('Gespeichert')
-            : t('Verbunden');
+          ? t('ui.backend_unavailable')
+          : ['workspace', 'settingsView', 'pluginsView', 'databasesView'].includes(ui.view)
+            ? t('ui.saved')
+            : t('ui.connected');
   return (
     <>
       <header>
@@ -185,8 +188,8 @@ function Application() {
             className="icon-text"
             onClick={async () => {
               const title = await c.askText(
-                t('Projekttitel bearbeiten'),
-                t('Projekttitel'),
+                t('ui.edit_project_title'),
+                t('ui.project_title'),
                 s.workspaceState.project.title
               );
               if (title?.trim()) {
@@ -196,7 +199,7 @@ function Application() {
               }
             }}
           >
-            {t('Projekttitel bearbeiten')}
+            {t('ui.edit_project_title')}
           </Button>
         </div>
         <nav hidden={ui.view === 'workspace'}>
@@ -207,7 +210,31 @@ function Application() {
             className={ui.view === 'home' ? 'active' : ''}
             onClick={c.home}
           >
-            {t('Projekte')}
+            {t('ui.projects')}
+          </Button>
+          <Button
+            app={app}
+            id="databasesTab"
+            icon="database"
+            className={ui.view === 'databasesView' ? 'active' : ''}
+            onClick={async () => {
+              await c.leaveWorkspace();
+              c.show('databasesView');
+            }}
+          >
+            {t('ui.databases')}
+          </Button>
+          <Button
+            app={app}
+            id="helpTab"
+            icon="help"
+            className={ui.view === 'helpView' ? 'active' : ''}
+            onClick={async () => {
+              await c.leaveWorkspace();
+              c.show('helpView');
+            }}
+          >
+            {t('ui.help')}
           </Button>
           <Button
             app={app}
@@ -216,7 +243,7 @@ function Application() {
             className={ui.view === 'pluginsView' ? 'active' : ''}
             onClick={c.pluginsHome}
           >
-            {t('Plugins')}
+            {t('ui.plugins')}
           </Button>
         </nav>
         {ui.view !== 'workspace' && (
@@ -228,13 +255,13 @@ function Application() {
             only
             onClick={c.settingsHome}
           >
-            {t('Einstellungen')}
+            {t('ui.settings')}
           </Button>
         )}
         <span id="status" role="status" title={error || status}>
           <span id="statusText">
             <span className="status-measure" aria-hidden="true">
-              {ui.view === 'workspace' ? t('Gespeichert') : status}
+              {ui.view === 'workspace' ? t('ui.saved') : status}
             </span>
             <span className="status-current">{status}</span>
           </span>
@@ -252,7 +279,7 @@ function Application() {
       </header>
       {!ui.ready && (
         <p className="loading-state" role="status">
-          {t('Lädt …')}
+          {t('ui.loading')}
         </p>
       )}
       <StableHome app={app} revision={ui.view === 'home' ? revision : -1} />
@@ -266,16 +293,9 @@ function Application() {
       <main id="logsView" hidden={ui.view !== 'logsView'}>
         {ui.view === 'logsView' && s.workspaceState.project && <LogViewer app={app} project />}
       </main>
-      <main id="reportView" hidden={ui.view !== 'reportView'}>
-        <Button onClick={() => c.show('workspace')}>{t('Zurück')}</Button>
-        {ui.view === 'reportView' && s.workspaceState.project && (
-          <iframe
-            id="reportFrame"
-            title={t('Report')}
-            src={'/api/projects/' + s.workspaceState.project.id + '/report'}
-          />
-        )}
-      </main>
+      {ui.view === 'databasesView' && <Databases app={app} />}
+      {ui.view === 'helpView' && <Help />}
+      {ui.view === 'reportView' && s.workspaceState.project && <Report app={app} />}
       <Modal app={app} />
       {ui.message && (
         <div id="toast" role="status">
@@ -297,24 +317,28 @@ function Home({ app }) {
     <main id="home" hidden={app.ui.view !== 'home'}>
       <div className="intro">
         <h1>
-          {t('Informationen verbinden.')}
+          {t('ui.connect_information')}
           <br />
-          {t('Erkenntnisse bewahren.')}
+          {t('ui.preserve_findings')}
         </h1>
-        <p>{t('Ein Graph für Daten, Rechercheaktionen und nachvollziehbare Ergebnisse.')}</p>
+        <p>{t('ui.a_graph_for_data_research_actions_and_traceable_results')}</p>
         <Button
           app={app}
           id="newProject"
           className="primary"
           icon="plus"
           onClick={async () => {
-            const title = await c.askText(t('Projekt erstellen'), t('Projekttitel'), '');
+            const title = await c.askText(
+              t('ui.create_project_b5b443d7'),
+              t('ui.project_title'),
+              ''
+            );
             if (!title?.trim()) return;
             const project = await c.api('/api/projects', { title: title.trim() });
             await c.openProject(project.id);
           }}
         >
-          {t('Projekt erstellen')}
+          {t('ui.create_project_b5b443d7')}
         </Button>
       </div>
       <section className="home-tools">
@@ -327,7 +351,7 @@ function Home({ app }) {
               app.redraw();
             }}
           >
-            {t('Aktive Projekte')}
+            {t('ui.active_projects')}
           </Button>
           <Button
             icon="archive"
@@ -337,12 +361,12 @@ function Home({ app }) {
               app.redraw();
             }}
           >
-            {t('Archiv')}
+            {t('ui.archive')}
           </Button>
         </div>
         <input
           type="search"
-          placeholder={t('Projekte suchen …')}
+          placeholder={t('ui.search_projects')}
           value={library.homeQueries[library.homeMode]}
           onChange={(event) => {
             library.homeQueries[library.homeMode] = event.target.value;
@@ -350,7 +374,7 @@ function Home({ app }) {
           }}
         />
         <span>
-          {visible.length} {t('Projekte')}
+          {visible.length} {t('ui.projects')}
         </span>
       </section>
       <div id="projectList" className="tiles">
@@ -380,8 +404,8 @@ function Home({ app }) {
                 only
                 onClick={async () => {
                   const title = await c.askText(
-                    t('Projekttitel bearbeiten'),
-                    t('Projekttitel'),
+                    t('ui.edit_project_title'),
+                    t('ui.project_title'),
                     project.title
                   );
                   if (title?.trim()) {
@@ -394,7 +418,7 @@ function Home({ app }) {
                   }
                 }}
               >
-                {t('Titel bearbeiten')}
+                {t('ui.edit_title')}
               </Button>
               <Button
                 app={app}
@@ -412,9 +436,7 @@ function Home({ app }) {
             </div>
           </article>
         ))}
-        {!visible.length && (
-          <p className="empty-state">{t('Keine passenden Projekte gefunden.')}</p>
-        )}
+        {!visible.length && <p className="empty-state">{t('ui.no_matching_projects_found')}</p>}
       </div>
     </main>
   );

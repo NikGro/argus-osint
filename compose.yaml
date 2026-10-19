@@ -3,9 +3,12 @@ services:
     build: .
     user: "0:0"
     cap_drop: [ALL]
-    cap_add: [SYS_ADMIN, NET_ADMIN, NET_RAW, SETUID, SETGID, CHOWN, KILL]
+    cap_add: [SYS_ADMIN, NET_ADMIN, SETPCAP, SETUID, SETGID, CHOWN, KILL]
     devices: [/dev/net/tun:/dev/net/tun]
-    security_opt: [no-new-privileges:true, seccomp:unconfined, apparmor:unconfined]
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=./deploy/seccomp-argus.json
+      - apparmor=${ARGUS_APPARMOR_PROFILE:-unconfined}
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8080}:8080"
     volumes:

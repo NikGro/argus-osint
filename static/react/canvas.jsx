@@ -206,7 +206,7 @@ export function Canvas({ app }) {
       id="graph"
       tabIndex={0}
       role="application"
-      aria-label={t('Graph-Arbeitsfläche')}
+      aria-label={t('ui.graph_workspace')}
       onPointerDown={(event) => {
         if (!event.target.closest('video,textarea,input')) c.canvasPointerDown(event.nativeEvent);
       }}
@@ -294,7 +294,7 @@ function Edge({ app, edge, route, label, highlighted }) {
   }
   const edit = () =>
     app.safely(async () => {
-      const next = await c.askText(t('Verbindung bearbeiten'), t('Bezeichnung'), edge.label || '');
+      const next = await c.askText(t('ui.edit_connection'), t('ui.label'), edge.label || '');
       if (next !== null) {
         edge.label = next;
         c.change();
@@ -346,7 +346,7 @@ function Edge({ app, edge, route, label, highlighted }) {
         data-edge-hit={edge.id}
         tabIndex={0}
         role="button"
-        aria-label={t('Verbindung auswählen')}
+        aria-label={t('ui.select_connection')}
         onPointerDown={select}
         onKeyDown={(event) => {
           if (event.key === 'Enter') select(event);
@@ -383,7 +383,7 @@ function Edge({ app, edge, route, label, highlighted }) {
           className="edge-edit"
           role="button"
           tabIndex={0}
-          aria-label={t('Verbindung bearbeiten')}
+          aria-label={t('ui.edit_connection')}
           onClick={edit}
           onKeyDown={(event) => {
             if (event.key === 'Enter') edit();
@@ -408,7 +408,7 @@ function Edge({ app, edge, route, label, highlighted }) {
           className="edge-delete"
           role="button"
           tabIndex={0}
-          aria-label={t('Verbindung löschen')}
+          aria-label={t('ui.delete_connection')}
           onClick={() => c.deleteEdges(c.edgeBundleIds(edge.id))}
           onKeyDown={(event) => {
             if (event.key === 'Enter') c.deleteEdges(c.edgeBundleIds(edge.id));
@@ -478,7 +478,7 @@ function Group({ app, group, bounds: b }) {
       </g>
       {group.collapsed && (
         <text x="12" y="55" fill="#95a9c1" fontSize="11">
-          {c.groupNodeIds(group).size} {t('Knoten')}
+          {c.groupNodeIds(group).size} {t('ui.nodes')}
         </text>
       )}
     </g>
@@ -614,7 +614,7 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
             className="note-resize"
             role="button"
             tabIndex={0}
-            aria-label={t('Notizgröße ändern')}
+            aria-label={t('ui.resize_note')}
             onPointerDown={(event) => {
               event.stopPropagation();
               event.preventDefault();
@@ -663,9 +663,11 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
           <text x="12" y="40" fill="#e4ecf7" fontSize="13">
             {c.fitNodeText(c.nodeTitle(node), b.w - 24, 13)}
           </text>
-          <text x="12" y="60" fill="#95a9c1" fontSize="10">
-            {c.short(node.type === 'error' ? diagnostic(node.data.message) : c.summary(node), 42)}
-          </text>
+          {node.type !== 'location' && (
+            <text x="12" y="60" fill="#95a9c1" fontSize="10">
+              {c.short(node.type === 'error' ? diagnostic(node.data.message) : c.summary(node), 42)}
+            </text>
+          )}
           {node.type === 'location' &&
             c
               .locationDisplayLines(node.data, b.w)
@@ -694,7 +696,7 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
           {node.type === 'location' && node.display?.map && c.mapsUrl(node, true) && (
             <foreignObject
               x="12"
-              y={Math.max(76, 64 + c.locationDisplayLines(node.data, b.w).length * 16)}
+              y={76 + (Math.min(5, c.locationDisplayLines(node.data, b.w).length) - 1) * 16}
               width={b.w - 24}
               height="148"
             >

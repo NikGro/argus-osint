@@ -36,7 +36,7 @@ class Media:
             try:
                 with Image.open(io.BytesIO(response["body"])) as picture:
                     picture.verify()
-            except Exception:
+            except (OSError, ValueError, SyntaxError, Image.DecompressionBombError):
                 raise AppError("invalid_image", 422) from None
             stored = self.files.upload(
                 response["body"],

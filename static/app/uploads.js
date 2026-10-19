@@ -17,13 +17,13 @@ var uploads_default = {
       const data = await response.json();
       if (!response.ok) throw Error(data.error?.detail || data.error?.code || 'Upload failed');
       if (type === 'file' && data.is_image) {
-        const choice = await modalChoice(t('Foto erkannt'), file.name, [
+        const choice = await modalChoice(t('ui.photo_detected'), file.name, [
           {
-            label: t('Bild-Node verwenden'),
+            label: t('ui.use_image_node'),
             value: 'image'
           },
           {
-            label: t('Datei-Node verwenden'),
+            label: t('ui.use_file_node'),
             value: 'file'
           }
         ]);
@@ -31,12 +31,10 @@ var uploads_default = {
         type = choice;
       }
       if (type === 'file' && data.is_video) type = 'video';
-      if (type === 'video' && !data.is_video) throw Error(t('Keine unterstützte Videodatei.'));
+      if (type === 'video' && !data.is_video) throw Error(t('ui.unsupported_video_file'));
       if (type === 'image' && !data.is_image) type = 'file';
       if (workspaceState.project?.id !== pid)
-        throw Error(
-          t('Bitte das urspr\xFCngliche Projekt \xF6ffnen, um die Datei hinzuzuf\xFCgen.')
-        );
+        throw Error(t('ui.open_the_original_project_to_add_the_file'));
       newNode(
         type,
         file.name,
