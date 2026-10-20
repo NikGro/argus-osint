@@ -2,6 +2,7 @@
 
 import base64
 import json
+import logging
 import math
 from pathlib import Path
 import time
@@ -49,8 +50,16 @@ class Maps:
                         self.previews.pop(next(iter(self.previews)))
                     self.previews[key] = (time.monotonic(), html)
                     return html
-            except Exception:
-                pass
+            except (AppError, OSError, ValueError, KeyError, TypeError) as error:
+                logging.getLogger("argus.maps").warning(
+                    json.dumps(
+                        {
+                            "event": "map_preview_fallback",
+                            "provider": "google",
+                            "error_type": type(error).__name__,
+                        }
+                    )
+                )
         # A preferred Google preview can be unavailable without the namespace
         # broker. Use the built-in server-side map, never a client-side VPN bypass.
         try:

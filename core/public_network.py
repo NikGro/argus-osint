@@ -7,6 +7,7 @@ import ssl
 import time
 from urllib.parse import urlsplit, urljoin
 from core.errors import AppError
+from core.build_info import user_agent
 
 MAX_BODY = 16 * 1024 * 1024
 
@@ -97,7 +98,8 @@ def request(
             }
             clean["Host"] = parsed.netloc
             clean["Connection"] = "close"
-            clean.setdefault("User-Agent", "Argus/1.0.0-alpha.3 public research")
+            if not any(key.lower() == "user-agent" for key in clean):
+                clean["User-Agent"] = user_agent("public research")
             conn.request(method, target, body=body, headers=clean)
             response = conn.getresponse()
             if (

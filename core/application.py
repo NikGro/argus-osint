@@ -39,12 +39,13 @@ from core.datasets import DatasetRepository
 from core.dataset_imports import DatasetImports
 from core.system_logs import SystemLogs
 from core.vpn import VPN as VPNService
+from core.build_info import VERSION
 
 
 class ApplicationResources:
     def __init__(self, data_directory=None, *, start_workers=True):
         self.ROOT = Path(__file__).resolve().parents[1]
-        self.APP_VERSION = (self.ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        self.APP_VERSION = VERSION
         self.DATA = Path(
             data_directory
             if data_directory is not None

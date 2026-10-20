@@ -21,7 +21,7 @@ base = "https://github.com/sundowndev/phoneinfoga/releases/download/" + VERSION 
 def fetch(name, limit):
     with urllib.request.urlopen(
         urllib.request.Request(
-            base + name, headers={"User-Agent": "ArgusDockerBuild/0.6"}
+            base + name, headers={"User-Agent": "ARGUS-DockerBuild"}
         ),
         timeout=60,
     ) as response:

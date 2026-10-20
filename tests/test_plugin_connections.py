@@ -3,6 +3,7 @@
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -62,7 +63,12 @@ class CredentialContracts(unittest.TestCase):
             SecretStore(self.root).decrypt_text(token),
             '{"cookies":{"sessionid":"private"}}',
         )
-        self.assertEqual((self.root / ".credentials.key").stat().st_mode & 511, 384)
+
+    @unittest.skipUnless(
+        os.name == "posix", "POSIX key permissions require a POSIX filesystem"
+    )
+    def test_key_file_is_owner_read_write_only(self):
+        self.assertEqual((self.root / ".credentials.key").stat().st_mode & 0o777, 0o600)
 
     def test_plugin_api_masks_but_execution_receives_credentials(self):
         manager = Manager(self.root / "db.sqlite3", self.root, app.PLUGINS)

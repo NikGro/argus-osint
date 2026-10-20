@@ -36,6 +36,7 @@ def run(payload, self_test=False):
     import utils
     import flaresolverr_service as service
     from dtos import V1RequestBase
+    from selenium.common.exceptions import WebDriverException
 
     # Upstream's startup normally caches User-Agent. Its borrowed-driver path otherwise quits that driver.
     original_agent = utils.get_user_agent
@@ -74,7 +75,9 @@ def run(payload, self_test=False):
                 try:
                     self.set_window_size(720, 480)
                     screenshots.append(self.get_screenshot_as_base64())
-                except Exception:
+                except WebDriverException:
+                    # Optional screenshot failure must still allow driver cleanup.
+                    # The caller receives no image and can use its map fallback.
                     pass
             return super().quit(*args, **kwargs)
 

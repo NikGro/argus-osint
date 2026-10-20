@@ -342,7 +342,7 @@ class Handler(BaseHTTPRequestHandler):
                 query.get("provider", ["osm"])[0],
                 self.app.settings().get("language", "en"),
             )
-        except Exception:
+        except (AppError, OSError, ValueError, KeyError, TypeError):
             preview = self.app.MAPS.unavailable(
                 self.app.settings().get("language", "en")
             )

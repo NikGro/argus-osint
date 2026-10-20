@@ -1,6 +1,7 @@
 """Persistent plugin catalogue and explicit community installs, independent of projects."""
 
 from core.errors import DomainError
+from core.build_info import user_agent
 import copy
 import hashlib
 import json
@@ -430,7 +431,7 @@ class Manager:
         req = urllib.request.Request(
             url,
             headers={
-                "User-Agent": "ArgusPluginManager/1.0",
+                "User-Agent": user_agent("plugin manager"),
                 "Accept": "application/json",
             },
         )
@@ -476,7 +477,8 @@ class Manager:
                 )
             )
             if (
-                manifest.get("schema_version") != 1
+                not isinstance(manifest, dict)
+                or manifest.get("schema_version") != 1
                 or not isinstance(manifest.get("plugins"), list)
                 or len(manifest["plugins"]) > 100
             ):
@@ -484,7 +486,8 @@ class Manager:
             seen = set()
             for item in manifest["plugins"]:
                 if (
-                    not re.fullmatch("[a-z][a-z0-9_-]{0,63}", item.get("id", ""))
+                    not isinstance(item, dict)
+                    or not re.fullmatch("[a-z][a-z0-9_-]{0,63}", item.get("id", ""))
                     or item["id"] in seen
                 ):
                     raise DomainError("validation.4b02988d2e")
@@ -503,7 +506,7 @@ class Manager:
                     raise DomainError("validation.ee22e2cd86")
             manifest["commit"] = commit
             error = None
-        except Exception as exc:
+        except (OSError, ValueError, KeyError, TypeError) as exc:
             manifest = repo["manifest"]
             error = str(exc)
         with self.connect() as conn:

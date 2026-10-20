@@ -262,7 +262,7 @@ class FileRepository:
 
                 with Image.open(path) as image:
                     mime = Image.MIME.get(image.format, mime)
-            except Exception:
+            except (ImportError, OSError, ValueError):
                 pass
         return (
             path.read_bytes(),

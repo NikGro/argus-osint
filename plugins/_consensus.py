@@ -1,6 +1,7 @@
 """Consensus discovery adapter: confirmed identities only; incomplete checks remain warnings."""
 
 import json
+import subprocess
 from pathlib import Path
 import tempfile
 from core.errors import AppError
@@ -89,7 +90,7 @@ def run(kind, inputs, params, context):
                 )
         except AppError:
             raise
-        except Exception:
+        except (OSError, ValueError, subprocess.SubprocessError):
             if not checkpoint.exists():
                 raise
             warnings.append(

@@ -46,7 +46,9 @@ def extract_one(payload):
             request = urllib.request.Request(
                 public_url(url),
                 headers={
-                    "User-Agent": "Argus/0.17 (public profile research)",
+                    "User-Agent": payload.get(
+                        "user_agent", "ARGUS (public profile research)"
+                    ),
                     "Accept": "text/html,application/json",
                     **dict(headers),
                 },

@@ -122,6 +122,13 @@ class NewPluginTests(unittest.TestCase):
             node["appearance"], {"width": 900, "height": 120, "color": "#ffcc70"}
         )
 
+    @unittest.skipUnless(
+        all(
+            importlib.util.find_spec(name) is not None
+            for name in ("holehe", "httpx", "trio", "resource")
+        ),
+        "Requires Holehe, httpx, trio and the Linux resource module",
+    )
     def test_holehe_collector_runs_provider_functions_and_retains_provider_errors(self):
         import trio
 
