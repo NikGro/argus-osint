@@ -37,6 +37,19 @@ def main():
         ],
         check=True,
     )
+    # Namespace support alone is insufficient: some host kernels cannot load
+    # seccomp filters. Check the complete privilege transition in a disposable
+    # child before publishing the broker socket or starting application services.
+    subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from core.worker_security import harden_worker; harden_worker(20000)",
+        ],
+        cwd=ROOT,
+        check=True,
+        timeout=15,
+    )
     from core.egress import Proxy, Handler
     from core.worker_broker import serve
 

@@ -53,9 +53,13 @@ import os
 def run(action, inputs, params, context):
     status=dict(line.split(':',1) for line in open('/proc/self/status') if ':' in line)
     assert os.getuid()==21001
+    assert os.getresuid()==(21001,)*3
+    assert os.getresgid()==(21001,)*3
+    assert os.getgroups()==[]
     for key in ('CapBnd','CapEff','CapPrm','CapInh','CapAmb'):
         assert int(status[key].strip(),16)==0,key
     assert status['Seccomp'].strip()=='2'
+    assert status['NoNewPrivs'].strip()=='1'
     try:
         assert not os.listdir('/data')
     except PermissionError:
