@@ -1,3 +1,10 @@
+> [!CAUTION]
+> **🚨 SECURITY WARNING – KNOWN MAJOR SECURITY CONCERNS**
+>
+> ARGUS currently has **open, unresolved security issues** that still need to be fixed (see issues [#1](../../issues/1), [#2](../../issues/2), [#3](../../issues/3), [#4](../../issues/4) and [#5](../../issues/5)).
+>
+> **Do not expose ARGUS to the internet or to untrusted networks.** Run it only in a trusted, isolated environment, keep the default localhost binding, and do not process sensitive data until these issues are resolved.
+
 **Vibe-coded beta:** ARGUS is built through iterative, AI-assisted development. Review the code, validate findings and test your deployment before relying on it.
 
 <p align="center"><img src="docs/assets/argus-logo.svg" width="96" alt="ARGUS logo" /></p>
