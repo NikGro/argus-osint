@@ -1,5 +1,7 @@
 # DeepFace plugin
 
+Set **Total timeout (seconds)** to **0** to disable the deadline, including for a database search and each image comparison within it. The default remains 300 seconds; positive values range from 10 to 900 seconds. Manual cancellation, comparison-count limits, output limits and image-size safeguards remain active. This setting also applies to direct two-image verification.
+
 Connect exactly two uploaded or successfully cached image nodes to **Bilder mit DeepFace vergleichen**. The plugin processes local files; the application caches supported remote image inputs before execution. Run the tool explicitly to perform a comparison.
 
 The detail view exposes model, detector, distance metric, normalization, alignment, detection enforcement, face-area expansion, optional custom threshold, anti-spoofing and timeout. **Bilder über 40 MP als verkleinerte Arbeitskopie verarbeiten** is off by default. If disabled and an input exceeds 40 MP, a dialog asks whether to enable the working copy before inference. When enabled, oversized input is decoded/resized into an EXIF-oriented RGB working copy of at most 40 million pixels. The original uploaded file is never overwritten. Image decoder limits still apply to invalid or exceptionally large files.

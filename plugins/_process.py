@@ -60,7 +60,7 @@ def bounded_run(
                     cancellation = CANCEL_EVENT.get()
                     if cancellation is not None and cancellation.is_set():
                         raise AppError("actor_cancelled", 409)
-                    if time.monotonic() - start > timeout:
+                    if timeout is not None and time.monotonic() - start > timeout:
                         raise ValueError("Zeitlimit erreicht; Suche unvollständig.")
                     if (
                         os.fstat(out.fileno()).st_size + os.fstat(err.fileno()).st_size

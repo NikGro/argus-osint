@@ -10,16 +10,20 @@ from core.errors import AppError
 from core.execution_context import CANCEL_EVENT
 
 SOCKET = "/run/argus/worker.sock"
+CONNECT_TIMEOUT = 5
+TRANSFER_TIMEOUT = 30
+POLL_INTERVAL = 0.5
 
 
 def invoke(kind, payload, timeout=90, code=None, files=None):
     if not Path(SOCKET).exists():
         raise AppError("isolation_unavailable", 503)
     ticket = secrets.token_hex(16)
+    timeout = min(600, max(1, timeout))
     message = {
         "kind": kind,
         "payload": payload,
-        "timeout": min(600, max(1, timeout)),
+        "timeout": timeout,
         "ticket": ticket,
     }
     if code is not None:
@@ -33,10 +37,23 @@ def invoke(kind, payload, timeout=90, code=None, files=None):
     if len(data) > 24 * 1024 * 1024:
         raise AppError("request_too_large", 413)
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
-        client.settimeout(0.5)
-        client.connect(SOCKET)
-        client.sendall(data)
-        client.shutdown(socket.SHUT_WR)
+        try:
+            client.settimeout(CONNECT_TIMEOUT)
+            client.connect(SOCKET)
+            client.settimeout(TRANSFER_TIMEOUT)
+            client.sendall(data)
+            client.shutdown(socket.SHUT_WR)
+        except OSError as error:
+            cancel(ticket)
+            error_code = (
+                "external_timeout"
+                if isinstance(error, TimeoutError)
+                else "isolated_execution_failed"
+            )
+            raise AppError(
+                error_code, 504 if isinstance(error, TimeoutError) else 503
+            ) from None
+        client.settimeout(POLL_INTERVAL)
         chunks = []
         size = 0
         deadline = time.monotonic() + timeout + 15
@@ -52,6 +69,9 @@ def invoke(kind, payload, timeout=90, code=None, files=None):
                 chunk = client.recv(65536)
             except socket.timeout:
                 continue
+            except OSError:
+                cancel(ticket)
+                raise AppError("isolated_execution_failed", 503) from None
             if not chunk:
                 break
             chunks.append(chunk)
