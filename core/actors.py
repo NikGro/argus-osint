@@ -1,15 +1,25 @@
-"""Serialized actor orchestration, plugin boundary validation and result persistence."""
+"""Serialized tool orchestration, plugin boundary validation and result persistence."""
 
-from core.errors import DomainError
-from core.tool_contracts import validate_result, result_state
 import copy
-from core.partial_results import include_warning_node
 from uuid import uuid4
-from core.errors import AppError
-from core.execution_context import CANCEL_EVENT
-from core.secrets import scrub_text, is_secret
+
 from core.actor_results import ResultBuilder
+from core.errors import AppError, DomainError
+from core.execution_context import CANCEL_EVENT
 from core.graph import LOCATION_DEFAULTS, merge_documents
+from core.partial_results import include_warning_node
+from core.provider_registry import identity as provider_identity
+from core.secrets import is_secret, scrub_text
+from core.tool_contracts import result_state, validate_result
+
+MAX_NODES = 5000
+MAX_LOG_CHARACTERS = 4 * 1024 * 1024
+MAX_DIAGNOSTIC_CHARACTERS = 12000
+SAVE_ATTEMPTS = 3
+
+
+def _find(items, predicate):
+    return next((item for item in items if predicate(item)), None)
 
 
 class ActorService:
@@ -29,13 +39,14 @@ class ActorService:
         collect_media=None,
         datasets=None,
     ):
-        self.manager, self.load, self.save, self.bounds = (manager, load, save, bounds)
-        self.settings, self.resolve_file, self.now, self.lock = (
-            settings,
-            resolve_file,
-            now,
-            lock,
-        )
+        self.manager = manager
+        self.load = load
+        self.save = save
+        self.bounds = bounds
+        self.settings = settings
+        self.resolve_file = resolve_file
+        self.now = now
+        self.lock = lock
         self.credential_dir = credential_dir
         self.store_file = store_file
         self.collect_media = collect_media
@@ -53,34 +64,27 @@ class ActorService:
         if body.get("revision") != project["revision"]:
             raise AppError("revision_conflict", 409)
         doc = project["document"]
-        run = next(
-            (
-                r
-                for r in doc["runs"]
-                if r["id"] == body.get("run_id") and r.get("plugin") == "location"
-            ),
-            None,
+        run = _find(
+            doc["runs"],
+            lambda r: r["id"] == body.get("run_id") and r.get("plugin") == "location",
         )
         if not run:
             raise DomainError("validation.ff2b86db9b")
         if run.get("status") == "cancelled":
             raise DomainError("validation.3f28a20440")
-        choice = next(
-            (
-                c
-                for c in run.get("candidates", [])
-                if c["input_id"] == body.get("input_id") and (not c.get("chosen"))
-            ),
-            None,
+        choice = _find(
+            run.get("candidates", []),
+            lambda c: c["input_id"] == body.get("input_id") and not c.get("chosen"),
         )
         if not choice:
             raise DomainError("validation.52e598b6af")
         index = body.get("index")
         if type(index) is not int or not 0 <= index < len(choice["options"]):
             raise DomainError("validation.ddf44838a8")
-        node = next((n for n in doc["nodes"] if n["id"] == choice["input_id"]), None)
+        node = _find(doc["nodes"], lambda n: n["id"] == choice["input_id"])
         if not node:
             raise DomainError("validation.c7dcc9ce84")
+
         node["data"] = {
             **copy.deepcopy(LOCATION_DEFAULTS),
             **node["data"],
@@ -101,11 +105,9 @@ class ActorService:
             node["label"] = formatted_address(node["data"]) or node.get("label", "Ort")
         choice["chosen"] = True
         choice["selected_index"] = index
-        if all((c.get("chosen") for c in run["candidates"])):
+        if all(c.get("chosen") for c in run["candidates"]):
             run["status"] = "completed"
-            actor = next((n for n in doc["nodes"] if n["id"] == run["actor_id"]), None)
-            if actor:
-                actor["data"]["status"] = "completed"
+            self._set_actor_status(doc, run["actor_id"], "completed")
         return self.save(pid, project["title"], doc, project["revision"])
 
     def cancel_run(self, pid, body):
@@ -113,7 +115,7 @@ class ActorService:
         if body.get("revision") != project["revision"]:
             raise AppError("revision_conflict", 409)
         doc = project["document"]
-        run = next((r for r in doc["runs"] if r["id"] == body.get("run_id")), None)
+        run = _find(doc["runs"], lambda r: r["id"] == body.get("run_id"))
         if not run:
             raise DomainError("validation.ff2b86db9b")
         if run.get("status") not in ("needs_selection", "needs_input"):
@@ -123,18 +125,29 @@ class ActorService:
         for choice in run.get("candidates", []):
             choice["cancelled"] = True
         run["input_request"] = None
-        actor = next((n for n in doc["nodes"] if n["id"] == run["actor_id"]), None)
-        if actor:
-            actor["data"]["status"] = "cancelled"
+        self._set_actor_status(doc, run["actor_id"], "cancelled")
         return self.save(pid, project["title"], doc, project["revision"])
+
+    @staticmethod
+    def _set_actor_status(doc, actor_id, status):
+        actor = _find(doc["nodes"], lambda n: n["id"] == actor_id)
+        if actor:
+            actor["data"]["status"] = status
 
 
 class _Execution:
+    """One tool run: prepare -> collect (or record_failure) -> persist.
+
+    Attributes set in one phase and read in a later one are the shared run
+    state. Everything else stays local to its method.
+    """
 
     def __init__(self, service, pid, body):
         self.service = service
         self.pid = pid
         self.body = body
+        # Values that must never appear in persisted logs, warnings or errors.
+        self.protected = {}
 
     def execute(self):
         self.prepare()
@@ -144,108 +157,98 @@ class _Execution:
             self.record_failure(error)
         return self.persist()
 
+    # -- phase 1: validate the request against the current project ---------
+
     def prepare(self):
         self.project = self.service.load(self.pid)
         if self.project.get("archived_at"):
             raise AppError("archived_project", 409)
         if self.body.get("revision") != self.project["revision"]:
             raise AppError("revision_conflict", 409)
-        if not isinstance(self.body.get("transient", {}), dict):
+        transient = self.body.get("transient", {})
+        if not isinstance(transient, dict):
             raise DomainError("validation.5cc81a92c3")
+
         self.doc = self.project["document"]
-        self.actor = next(
-            (
-                n
-                for n in self.doc["nodes"]
-                if n["id"] == self.body.get("actor_id") and n["type"] == "actor"
-            ),
-            None,
+        self.actor = _find(
+            self.doc["nodes"],
+            lambda n: n["id"] == self.body.get("actor_id") and n["type"] == "actor",
         )
         if not self.actor:
             raise DomainError("validation.f3e0a9f5e8")
         self.module = self.service.manager.module(self.actor["data"].get("plugin"))
         self.action = (
-            next(
-                (
-                    a
-                    for a in self.module.PLUGIN["actions"]
-                    if a["id"] == self.actor["data"].get("action")
-                ),
-                None,
+            _find(
+                self.module.PLUGIN["actions"],
+                lambda a: a["id"] == self.actor["data"].get("action"),
             )
             if self.module
             else None
         )
         if not self.action:
             raise DomainError("validation.b680d5ba95")
-        self.input_ids = {
+
+        input_ids = {
             e["source"] for e in self.doc["edges"] if e["target"] == self.actor["id"]
         }
         self.inputs = [
             n
             for n in self.doc["nodes"]
-            if n["id"] in self.input_ids and n["type"] != "actor"
+            if n["id"] in input_ids and n["type"] != "actor"
         ]
-        if not self.inputs or any(
-            (
-                "*" not in self.action["inputs"]
-                and n["type"] not in self.action["inputs"]
-                for n in self.inputs
-            )
-        ):
-            raise DomainError("validation.00639cc7ad")
-        from core.provider_registry import identity
+        self._validate_inputs()
 
-        self.identity = identity
-        self.supported = set(self.action.get("providers", []))
-        self.specialized = {
-            provider
-            for plugin in self.service.manager.installed()
-            for candidate in plugin.get("actions", [])
-            for provider in candidate.get("providers", [])
-        }
-        if self.action.get("input_roles"):
-            self.roles = self.action["input_roles"]
-            self.remaining = list(self.inputs)
-            for self.role in sorted(self.roles, key=len):
-                self.match = next(
-                    (n for n in self.remaining if n["type"] in self.role), None
-                )
-                if self.match is None:
-                    raise AppError("validation_failed", 400)
-                self.remaining.remove(self.match)
-            if self.remaining:
-                raise AppError("validation_failed", 400)
-        if (
-            self.action.get("max_inputs")
-            and len(self.inputs) > self.action["max_inputs"]
-        ):
-            raise DomainError("validation.79c4b95cf5")
-        if any(
-            (
-                n["type"] == "profile"
-                and (
-                    self.supported
-                    and self.identity(n["data"].get("provider", ""))
-                    not in self.supported
-                    or (
-                        self.action.get("generic_profile")
-                        and self.identity(n["data"].get("provider", ""))
-                        in self.specialized
-                    )
-                )
-                for n in self.inputs
-            )
-        ):
-            raise DomainError("validation.8f3a1f1728")
         self.started = self.service.now()
         self.original = copy.deepcopy(self.doc)
         self.input_snapshot = copy.deepcopy(self.inputs)
-        self.effective = {}
-        self.protected = {
-            key + "_token": value
-            for key, value in self.body.get("transient", {}).items()
-        }
+        self.protected = {key + "_token": value for key, value in transient.items()}
+
+    def _validate_inputs(self):
+        accepted = self.action["inputs"]
+        if not self.inputs or any(
+            "*" not in accepted and n["type"] not in accepted for n in self.inputs
+        ):
+            raise DomainError("validation.00639cc7ad")
+
+        roles = self.action.get("input_roles")
+        if roles:
+            # Assign the most specific roles first; every input needs one role.
+            remaining = list(self.inputs)
+            for role in sorted(roles, key=len):
+                match = _find(remaining, lambda n: n["type"] in role)
+                if match is None:
+                    raise AppError("validation_failed", 400)
+                remaining.remove(match)
+            if remaining:
+                raise AppError("validation_failed", 400)
+
+        max_inputs = self.action.get("max_inputs")
+        if max_inputs and len(self.inputs) > max_inputs:
+            raise DomainError("validation.79c4b95cf5")
+
+        if any(
+            n["type"] == "profile" and not self._accepts_profile(n) for n in self.inputs
+        ):
+            raise DomainError("validation.8f3a1f1728")
+
+    def _accepts_profile(self, node):
+        provider = provider_identity(node["data"].get("provider", ""))
+        supported = set(self.action.get("providers", []))
+        if supported and provider not in supported:
+            return False
+        if self.action.get("generic_profile"):
+            # Generic research yields to an installed platform-specific tool.
+            specialized = {
+                candidate_provider
+                for plugin in self.service.manager.installed()
+                for candidate in plugin.get("actions", [])
+                for candidate_provider in candidate.get("providers", [])
+            }
+            if provider in specialized:
+                return False
+        return True
+
+    # -- phase 2: run the plugin and materialize its results ---------------
 
     def collect(self):
         if self.service.collect_media:
@@ -253,163 +256,134 @@ class _Execution:
         if self.action.get("execution") == "browser":
             if self.body.get("browser_error"):
                 raise ValueError(str(self.body["browser_error"])[:1000])
-            self.result = {"outputs": self.body.get("outputs"), "warnings": []}
+            result = {"outputs": self.body.get("outputs"), "warnings": []}
         else:
-            self.effective = self.service.manager.action_params(
-                self.module.PLUGIN["id"], self.action["id"]
-            )
-            self.overrides = {
-                k: v
-                for k, v in self.actor["data"].get("params", {}).items()
-                if k not in self.action.get("settings_only", [])
-                and (
-                    not (
-                        "source_order" in self.action.get("default_params", {})
-                        and (k in {"source", "source_order"} or k.startswith("use_"))
-                    )
-                )
-                and (
-                    k
-                    not in self.service.manager.secret_fields(self.module.PLUGIN["id"])
-                )
-            }
-            self.protected.update({**self.effective, **self.overrides})
-            self.protected.update(
-                {
-                    key + "_token": self.effective.get(key, "")
-                    for key in self.service.manager.secret_fields(
-                        self.module.PLUGIN["id"]
-                    )
-                }
-            )
-            self.result = self.module.run(
-                self.action["id"],
-                self.inputs,
-                {**self.effective, **self.overrides},
-                {
-                    "resolve_file": self.service.resolve_file,
-                    "datasets": self.service.datasets,
-                    "settings": self.service.settings(),
-                    "schemas": self.service.manager.node_defaults(),
-                    "node_count": len(self.doc["nodes"]),
-                    "credential_dir": self.service.credential_dir,
-                    "store_file": self.service.store_file,
-                    "transient": self.body.get("transient", {}),
-                },
-            )
-        self.result = validate_result(self.result)
-        self.result = {
-            **self.result,
-            "warnings": [
-                scrub_text(value, self.protected)
-                for value in self.result.get("warnings", [])
-            ],
-            "log": scrub_text(
-                str(self.result.get("log", ""))[: 4 * 1024 * 1024], self.protected
-            ),
-            "error": (
-                scrub_text(self.result["error"], self.protected)
-                if self.result.get("error") is not None
-                else None
-            ),
-        }
+            result = self._run_plugin()
+
+        result = self._redact(validate_result(result))
         self.result = include_warning_node(
-            self.result,
+            result,
             self.inputs,
             self.module.PLUGIN["name"],
-            capacity=5000 - len(self.doc["nodes"]),
+            capacity=MAX_NODES - len(self.doc["nodes"]),
         )
-        self.cancellation = CANCEL_EVENT.get()
-        if self.cancellation is not None and self.cancellation.is_set():
+        cancellation = CANCEL_EVENT.get()
+        if cancellation is not None and cancellation.is_set():
             raise AppError("actor_cancelled", 409)
-        self.run_id, self.members = ResultBuilder(
-            self.service.bounds, self.service.now
-        ).apply(
+
+        self.run_id, self.members = self._build_results(self.result)
+        self.doc["runs"].append(self._run_record())
+        if self.module.PLUGIN["id"] == "merge" and not self.result.get("input_request"):
+            self.actor["data"]["params"] = {}
+        self.actor["data"]["status"] = result_state(self.result)
+
+    def _run_plugin(self):
+        plugin_id = self.module.PLUGIN["id"]
+        secret_fields = self.service.manager.secret_fields(plugin_id)
+        effective = self.service.manager.action_params(plugin_id, self.action["id"])
+        # Installation-wide source switches/order, settings-only values and
+        # secrets cannot be overridden by (possibly stale) node parameters.
+        uses_source_order = "source_order" in self.action.get("default_params", {})
+        overrides = {
+            key: value
+            for key, value in self.actor["data"].get("params", {}).items()
+            if key not in self.action.get("settings_only", [])
+            and not (
+                uses_source_order
+                and (key in {"source", "source_order"} or key.startswith("use_"))
+            )
+            and key not in secret_fields
+        }
+        self.protected.update({**effective, **overrides})
+        self.protected.update(
+            {key + "_token": effective.get(key, "") for key in secret_fields}
+        )
+        return self.module.run(
+            self.action["id"],
+            self.inputs,
+            {**effective, **overrides},
+            {
+                "resolve_file": self.service.resolve_file,
+                "datasets": self.service.datasets,
+                "settings": self.service.settings(),
+                "schemas": self.service.manager.node_defaults(),
+                "node_count": len(self.doc["nodes"]),
+                "credential_dir": self.service.credential_dir,
+                "store_file": self.service.store_file,
+                "transient": self.body.get("transient", {}),
+            },
+        )
+
+    def _redact(self, result):
+        error = result.get("error")
+        return {
+            **result,
+            "warnings": [
+                scrub_text(value, self.protected)
+                for value in result.get("warnings", [])
+            ],
+            "log": scrub_text(
+                str(result.get("log", ""))[:MAX_LOG_CHARACTERS], self.protected
+            ),
+            "error": scrub_text(error, self.protected) if error is not None else None,
+        }
+
+    def _build_results(self, result):
+        return ResultBuilder(self.service.bounds, self.service.now).apply(
             self.doc,
             self.actor,
             self.inputs,
-            self.result,
+            result,
             self.module.PLUGIN["id"],
             self.action["name"],
             self.started,
             self.service.manager.node_defaults(),
             self.service.settings()["node_display_defaults"],
         )
-        self.doc["runs"].append(
-            {
-                "id": self.run_id,
-                "actor_id": self.actor["id"],
-                "plugin": self.module.PLUGIN["id"],
-                "action": self.action["id"],
-                "inputs": [n["id"] for n in self.inputs],
-                "input_snapshot": self.input_snapshot,
-                "params": {
-                    k: v
-                    for k, v in self.actor["data"].get("params", {}).items()
-                    if not is_secret(
-                        k, self.service.manager.secret_fields(self.module.PLUGIN["id"])
-                    )
-                },
-                "started_at": self.started,
-                "finished_at": self.service.now(),
-                "status": result_state(self.result),
-                "candidates": self.result.get("candidates", []),
-                "input_request": self.result.get("input_request"),
-                "updated_inputs": [u["id"] for u in self.result.get("updates", [])],
-                "outputs": self.members,
-                "error": (
-                    self.result.get("error") if self.result.get("failed") else None
-                ),
-                "warnings": self.result.get("warnings", []),
-                "log": str(self.result.get("log", ""))[: 4 * 1024 * 1024],
-            }
-        )
-        if self.module.PLUGIN["id"] == "merge" and (
-            not self.result.get("input_request")
-        ):
-            self.actor["data"]["params"] = {}
-        self.actor["data"]["status"] = result_state(self.result)
+
+    def _run_record(self):
+        result = self.result
+        secret_fields = self.service.manager.secret_fields(self.module.PLUGIN["id"])
+        return {
+            "id": self.run_id,
+            "actor_id": self.actor["id"],
+            "plugin": self.module.PLUGIN["id"],
+            "action": self.action["id"],
+            "inputs": [n["id"] for n in self.inputs],
+            "input_snapshot": self.input_snapshot,
+            "params": {
+                key: value
+                for key, value in self.actor["data"].get("params", {}).items()
+                if not is_secret(key, secret_fields)
+            },
+            "started_at": self.started,
+            "finished_at": self.service.now(),
+            "status": result_state(result),
+            "candidates": result.get("candidates", []),
+            "input_request": result.get("input_request"),
+            "updated_inputs": [u["id"] for u in result.get("updates", [])],
+            "outputs": self.members,
+            "error": result.get("error") if result.get("failed") else None,
+            "warnings": result.get("warnings", []),
+            "log": str(result.get("log", ""))[:MAX_LOG_CHARACTERS],
+        }
+
+    # -- phase 2 (failure): keep a connected error node instead ------------
 
     def record_failure(self, error):
-        self.exc = error
-        self.doc = self.original
-        self.actor = next((n for n in self.doc["nodes"] if n["id"] == self.actor["id"]))
-        self.cancelled = (
-            isinstance(self.exc, AppError) and self.exc.code == "actor_cancelled"
-        )
-        self.actor["data"]["status"] = "cancelled" if self.cancelled else "failed"
-        self.diagnostic = scrub_text(self.exc, self.protected)[:12000]
-        self.run_id, self.members = (uuid4().hex, [])
-        if not self.cancelled and len(self.doc["nodes"]) < 5000:
-            self.run_id, self.members = ResultBuilder(
-                self.service.bounds, self.service.now
-            ).apply(
-                self.doc,
-                self.actor,
-                self.inputs,
-                {
-                    "outputs": [
-                        {
-                            "type": "error",
-                            "label": self.action["name"] + " fehlgeschlagen",
-                            "data": {
-                                "title": "Tool-Ausführung fehlgeschlagen",
-                                "message": self.diagnostic,
-                            },
-                            "source_input": self.inputs[0]["id"],
-                            "relation": "Ausführungsfehler",
-                            "source": {
-                                "tool": self.module.PLUGIN["name"],
-                                "failed": True,
-                            },
-                        }
-                    ]
-                },
-                self.module.PLUGIN["id"],
-                self.action["name"],
-                self.started,
-                self.service.manager.node_defaults(),
-                self.service.settings()["node_display_defaults"],
+        # Work on a copy so the merge in persist() still sees the untouched
+        # base document and keeps the error node next to concurrent edits.
+        self.doc = copy.deepcopy(self.original)
+        self.actor = _find(self.doc["nodes"], lambda n: n["id"] == self.actor["id"])
+        cancelled = isinstance(error, AppError) and error.code == "actor_cancelled"
+        status = "cancelled" if cancelled else "failed"
+        self.actor["data"]["status"] = status
+        diagnostic = scrub_text(error, self.protected)[:MAX_DIAGNOSTIC_CHARACTERS]
+
+        self.run_id, self.members = uuid4().hex, []
+        if not cancelled and len(self.doc["nodes"]) < MAX_NODES:
+            self.run_id, self.members = self._build_results(
+                {"outputs": [self._error_output(diagnostic)]}
             )
         self.doc["runs"].append(
             {
@@ -419,31 +393,43 @@ class _Execution:
                 "action": self.action["id"],
                 "started_at": self.started,
                 "finished_at": self.service.now(),
-                "status": "cancelled" if self.cancelled else "failed",
-                "error": self.diagnostic,
+                "status": status,
+                "error": diagnostic,
                 "inputs": [n["id"] for n in self.inputs],
                 "outputs": self.members,
             }
         )
 
+    def _error_output(self, diagnostic):
+        return {
+            "type": "error",
+            "label": self.action["name"] + " fehlgeschlagen",
+            "data": {
+                "title": "Tool-Ausführung fehlgeschlagen",
+                "message": diagnostic,
+            },
+            "source_input": self.inputs[0]["id"],
+            "relation": "Ausführungsfehler",
+            "source": {"tool": self.module.PLUGIN["name"], "failed": True},
+        }
+
+    # -- phase 3: save, merging with edits made while the tool ran ---------
+
     def persist(self):
-        for self.attempt in range(3):
-            self.latest = self.service.load(self.pid)
-            self.merged = (
-                merge_documents(self.original, self.latest["document"], self.doc)
-                if self.latest["revision"] != self.project["revision"]
+        for attempt in range(1, SAVE_ATTEMPTS + 1):
+            latest = self.service.load(self.pid)
+            document = (
+                merge_documents(self.original, latest["document"], self.doc)
+                if latest["revision"] != self.project["revision"]
                 else self.doc
             )
             try:
                 return self.service.save(
-                    self.pid, self.latest["title"], self.merged, self.latest["revision"]
+                    self.pid, latest["title"], document, latest["revision"]
                 )
-            except (RuntimeError, AppError) as _caught_2:
-                self.error = _caught_2
-                if (
-                    isinstance(self.error, AppError)
-                    and self.error.code != "revision_conflict"
-                ):
+            except AppError as error:
+                if error.code != "revision_conflict" or attempt == SAVE_ATTEMPTS:
                     raise
-                if self.attempt == 2:
+            except RuntimeError:
+                if attempt == SAVE_ATTEMPTS:
                     raise
