@@ -13,7 +13,7 @@ function feature(module,name,state,ports={}){
 }
 test('Shipped application composes real modules without window commands',async()=>{
  const m=await production(),app=m.createApplication();
- assert.equal(typeof app.features.actors.run,'function');assert.equal(typeof app.features.canvasRenderer.render,'function');assert.equal(globalThis.run,undefined);
+ assert.equal(typeof app.features.actors.run,'function');assert.equal(typeof app.features.canvasRenderer.measureEdgeText,'function');assert.equal(globalThis.run,undefined);
 });
 test('Domain stores are independent across editor instances',async()=>{
  const m=await production(),a=m.createState(),b=m.createState();

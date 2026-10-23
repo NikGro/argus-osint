@@ -177,22 +177,6 @@ var clipboard_default = {
         toast(error.message);
       }
     }
-    function graphClipboardText() {
-      const selection = clipboardSelectionIds(),
-        doc = clipboardDocument(workspaceState.project.document, selection);
-      return JSON.stringify(
-        {
-          format: 'argus-clipboard',
-          version: 1,
-          kind: selection.size ? 'selection' : 'project',
-          title: workspaceState.project.title,
-          origin: workspaceState.project.id,
-          document: doc
-        },
-        null,
-        2
-      );
-    }
     function clipboardSelectionIds() {
       const ids = new Set(selectionState.selected);
       for (const id of selectionState.selectedGroups.size
@@ -211,7 +195,6 @@ var clipboard_default = {
       textEditing,
       copyGraph,
       pasteGraph,
-      graphClipboardText,
       clipboardSelectionIds
     };
   }

@@ -254,13 +254,6 @@ var groups_default = {
       change(null, 'all-groups');
       render();
     }
-    function moveGroup(group, dx, dy) {
-      for (const node of workspaceState.project.document.nodes)
-        if (group.members.includes(node.id)) {
-          node.x += dx;
-          node.y += dy;
-        }
-    }
     function groupTitle(group) {
       return group.label_key
         ? pluginText(
@@ -487,7 +480,6 @@ var groups_default = {
       graphGroupModel,
       toggleGroup,
       setAllGroups,
-      moveGroup,
       groupTitle,
       groupAncestors,
       groupDescendantIds,

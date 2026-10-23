@@ -1,7 +1,6 @@
 /** UI-independent command registry. React supplies view callbacks; domains keep their stores. */
 import * as features from '../main.js';
 import { flushSync } from 'react-dom';
-import UI from '../ui.js';
 import { t } from '../i18n.js';
 
 export function createController() {
@@ -37,7 +36,6 @@ export function createController() {
     renderPalette: redraw,
     renderProjects: redraw,
     renderInstalled: redraw,
-    saveButtons: redraw,
     updateStatus: redraw,
     async checkBackend() {
       try {
@@ -52,7 +50,6 @@ export function createController() {
       state.shellState.backendCheckAt = new Date();
       redraw();
     },
-    historyButtons: redraw,
     updateDeleteButtons: redraw,
     applyGraphHighlights: redraw,
     panelVisibility: redraw,
@@ -103,6 +100,7 @@ export function createController() {
     parameterModal: (request, values = {}) => dialog({ ...request, values, mode: 'fields' }),
     askText: (title, label, value = '') => dialog({ title, mode: 'text', label, value }),
     askConfirm: (title, message) => dialog({ title, message, mode: 'confirm' }),
+    notice: (request) => dialog({ ...request, mode: 'notice' }),
     async pluginsHome() {
       await methods.leaveWorkspace();
       await methods.refreshCatalog();
@@ -168,10 +166,11 @@ export function createController() {
       redraw();
     }
   };
+  for (const name of features.viewCommands)
+    if (typeof overrides[name] !== 'function') throw Error('Missing view command: ' + name);
   const domains = features.createApplication(state, overrides);
   Object.assign(methods, domains.commands);
   Object.assign(methods, overrides);
-  UI.configure({ notice: (request) => dialog({ ...request, mode: 'notice' }) });
   return {
     state,
     ui,

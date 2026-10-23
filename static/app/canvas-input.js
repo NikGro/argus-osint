@@ -1,5 +1,13 @@
 import ArgusRouting from '../graph-routing.js';
 import { t } from '../i18n.js';
+
+/** Transient SVG overlays (selection frame, connection preview) live outside React state. */
+function svg(tag, attributes) {
+  const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, String(value));
+  return node;
+}
+
 var canvas_input_default = {
   name: 'canvas-input',
   dependencies: [
@@ -13,7 +21,6 @@ var canvas_input_default = {
     'portPosition',
     'render',
     'renderViewport',
-    'svg',
     'uid'
   ],
   create({
@@ -31,7 +38,6 @@ var canvas_input_default = {
     portPosition,
     render,
     renderViewport,
-    svg,
     uid
   }) {
     function startGroupDrag(group, event) {
@@ -379,65 +385,6 @@ var canvas_input_default = {
         event.preventDefault();
       }
     }
-    function nodePorts(g, node, bounds) {
-      const count = Math.min(32, bounds.inputCount || 1);
-      for (const side of [
-        ...Array.from({ length: count }, (_, i) => `left:${i}:${count}`),
-        'right'
-      ]) {
-        const pos = portPosition(
-            {
-              x: 0,
-              y: 0,
-              w: bounds.w,
-              h: bounds.h
-            },
-            side
-          ),
-          dock = svg('g', {
-            class: 'dock',
-            'data-port': side,
-            role: 'button',
-            tabindex: 0,
-            'aria-label':
-              t(side.startsWith('left') ? 'Eingang' : 'Ausgang') +
-              (side.startsWith('left') ? ' ' + (Number(side.split(':')[1]) + 1) : '')
-          });
-        dock.append(
-          svg('circle', {
-            class: 'dock-hit',
-            cx: pos.x,
-            cy: pos.y,
-            r: 13
-          }),
-          svg('circle', {
-            cx: pos.x,
-            cy: pos.y,
-            r: 5
-          })
-        );
-        dock.addEventListener('pointerdown', (e) => {
-          if (e.button > 0) return;
-          e.preventDefault();
-          e.stopPropagation();
-          canvasState.connecting = {
-            source: node.id,
-            port: side,
-            pointer: e.pointerId,
-            target: null,
-            targetPort: null
-          };
-          canvasState.drag = null;
-          $('graph').setPointerCapture(e.pointerId);
-          g.classList.add('connection-source');
-          updateConnection(e);
-        });
-        dock.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape') cancelConnection();
-        });
-        g.append(dock);
-      }
-    }
     function nearestConnectionTarget(point, source, nodes, visibleIds, scale) {
       let best = null,
         distance = Infinity;
@@ -578,7 +525,6 @@ var canvas_input_default = {
       canvasPointerUp,
       touchMetrics,
       touchGestureEvent,
-      nodePorts,
       nearestConnectionTarget,
       updateConnection,
       finishConnection,

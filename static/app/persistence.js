@@ -1,14 +1,12 @@
 var persistence_default = {
   name: 'persistence',
-  dependencies: ['$', 'api', 'recordHistory', 'saveIndicator', 'toast', 'updateStatus'],
+  dependencies: ['api', 'recordHistory', 'toast', 'updateStatus'],
   create({
     persistenceState,
     workspaceState,
     canvasState,
-    $,
     api,
     recordHistory,
-    saveIndicator,
     toast,
     updateStatus
   }) {
@@ -25,32 +23,6 @@ var persistence_default = {
       }
       return canonical;
     }
-    function saveButtons() {
-      updateStatus();
-      saveIndicator(
-        $('save'),
-        persistenceState.savePromise
-          ? 'saving'
-          : persistenceState.saveError
-            ? 'error'
-            : persistenceState.dirty
-              ? 'pending'
-              : 'saved',
-        persistenceState.saveError
-      );
-      for (const item of document.querySelectorAll('[data-node-save]'))
-        saveIndicator(
-          item,
-          persistenceState.savePromise && persistenceState.dirtyNodes.has(item.dataset.nodeSave)
-            ? 'saving'
-            : persistenceState.saveError
-              ? 'error'
-              : persistenceState.dirtyNodes.has(item.dataset.nodeSave)
-                ? 'pending'
-                : 'saved',
-          persistenceState.saveError
-        );
-    }
     function change(nodeId, scope) {
       if (workspaceState.project?.archived_at) {
         workspaceState.project.document = structuredClone(workspaceState.lastServerSnapshot);
@@ -62,7 +34,7 @@ var persistence_default = {
       persistenceState.changeVersion++;
       persistenceState.dirty = true;
       if (nodeId) persistenceState.dirtyNodes.add(nodeId);
-      saveButtons();
+      updateStatus();
       clearTimeout(persistenceState.autosaveTimer);
       if (workspaceState.project)
         persistenceState.autosaveTimer = setTimeout(
@@ -88,7 +60,6 @@ var persistence_default = {
         current.revision = response.revision;
         if (titleUnchanged) {
           current.title = response.title;
-          $('projectTitle').textContent = current.title;
         }
         workspaceState.lastServerSnapshot = structuredClone(response.server_document);
         workspaceState.lastServerTitle = response.server_title;
@@ -106,7 +77,6 @@ var persistence_default = {
       clearTimeout(persistenceState.autosaveTimer);
       const current = workspaceState.project,
         version = persistenceState.changeVersion;
-      current.title = $('projectTitle').textContent;
       const sent = structuredClone(current.document);
       const payload = {
         base: structuredClone(workspaceState.lastServerSnapshot || sent),
@@ -125,7 +95,6 @@ var persistence_default = {
             current.document = keepNodeReferences(current.document, saved.document);
             current.revision = saved.revision;
             current.title = saved.title;
-            $('projectTitle').textContent = current.title;
             workspaceState.lastServerSnapshot = structuredClone(saved.document);
             workspaceState.lastServerTitle = saved.title;
             persistenceState.dirty = false;
@@ -140,17 +109,17 @@ var persistence_default = {
         })
         .finally(() => {
           persistenceState.savePromise = null;
-          saveButtons();
+          updateStatus();
           if (persistenceState.dirty)
             persistenceState.autosaveTimer = setTimeout(
               () => save().catch((error) => toast(error.message)),
               persistenceState.saveError ? 5e3 : 300
             );
         });
-      saveButtons();
+      updateStatus();
       return persistenceState.savePromise;
     }
-    return { saveButtons, change, save, reconcileWorkspace };
+    return { change, save, reconcileWorkspace };
   }
 };
 export { persistence_default };

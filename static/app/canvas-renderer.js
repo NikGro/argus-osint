@@ -1,23 +1,15 @@
 import layout_spec_default from '../layout-spec.json';
-import { icon } from '../icons.js';
 import { t } from '../i18n.js';
 import { language } from '../i18n.js';
 var canvas_renderer_default = {
   name: 'canvas-renderer',
   dependencies: [
-    '$',
     'formatLocation',
     'graphGroupModel',
-    'groupNodeIds',
-    'inspect',
     'locationDisplayLines',
     'nodeBadgeHeight',
-    'noteInk',
     'pluginText',
-
-    'resourceActions',
-    'svg',
-    'updateMapOverlays'
+    'resourceActions'
   ],
   create({
     workspaceState,
@@ -25,26 +17,13 @@ var canvas_renderer_default = {
     pluginsState,
     executionState,
     selectionState,
-    $,
     formatLocation,
     graphGroupModel,
-    groupNodeIds,
-    inspect,
     locationDisplayLines,
     nodeBadgeHeight,
-    noteInk,
     pluginText,
-
-    resourceActions,
-    svg,
-    updateMapOverlays
+    resourceActions
   }) {
-    function renderViewport() {
-      /* View adapter supplied by React. */
-    }
-    function render() {
-      /* View adapter supplied by React. */
-    }
     function nodeRect(node) {
       const size = layout_spec_default[node.type] || layout_spec_default.base;
       let w = size.width,
@@ -95,23 +74,6 @@ var canvas_renderer_default = {
               )
             : 1
       };
-    }
-    function nodeIcon(g, node) {
-      const n = icon(
-        node.type === 'actor' ? actorIcon(node.data.plugin, node.data.action) : dataIcon(node.type)
-      );
-      n.setAttribute('x', 11);
-      n.setAttribute('y', node.type === 'note' ? 12 : 10);
-      n.setAttribute('width', 16);
-      n.setAttribute('height', 16);
-      n.style.color =
-        node.type === 'note'
-          ? noteInk(node.appearance?.color || '#ffcc70')
-          : node.type === 'actor'
-            ? 'var(--actor-accent)'
-            : '#ff9d45';
-      g.append(n);
-      if (node.type === 'note') g.querySelector('text').setAttribute('x', 34);
     }
     function dataIcon(type) {
       if (pluginsState.dataTypes.get(type)?.node.icon)
@@ -230,87 +192,15 @@ var canvas_renderer_default = {
         .filter((e) => model.connection(e)?.key === visual.key)
         .map((e) => e.id);
     }
-    function selectEdge(id, add = false) {
-      const ids = edgeBundleIds(id),
-        remove = add && ids.every((id2) => selectionState.selectedEdges.has(id2));
-      if (!add) selectionState.selectedEdges.clear();
-      for (const edge of ids)
-        if (remove) selectionState.selectedEdges.delete(edge);
-        else selectionState.selectedEdges.add(edge);
-      selectionState.selected.clear();
-      selectionState.selectedGroup = null;
-      selectionState.selectedGroups.clear();
-      render();
-      inspect();
-    }
-    function applyGraphHighlights(providedModel = null) {
-      if (!workspaceState.project) return;
-      const connected = /* @__PURE__ */ new Set(),
-        model = providedModel || graphGroupModel(),
-        bundles = /* @__PURE__ */ new Map(),
-        byId = new Map(workspaceState.project.document.edges.map((e) => [e.id, e]));
-      for (const edge of workspaceState.project.document.edges) {
-        const visual = model.connection(edge);
-        if (!visual) continue;
-        if (!bundles.has(visual.key)) bundles.set(visual.key, []);
-        bundles.get(visual.key).push(edge);
-        if (selectionState.selectedEdges.has(edge.id)) {
-          connected.add(edge.source);
-          connected.add(edge.target);
-        }
-      }
-      for (const path of $('scene').querySelectorAll('[data-edge-path]')) {
-        const edge = byId.get(path.dataset.edgePath),
-          visual = edge && model.connection(edge),
-          bundle = visual ? bundles.get(visual.key) || [] : [];
-        path.classList.toggle(
-          'highlighted',
-          bundle.some(
-            (e) =>
-              selectionState.selected.has(e.source) ||
-              selectionState.selected.has(e.target) ||
-              selectionState.selectedEdges.has(e.id)
-          )
-        );
-        path.classList.toggle(
-          'selected-edge',
-          bundle.some((e) => selectionState.selectedEdges.has(e.id))
-        );
-        if (path.dataset.hasArrow === 'true')
-          path.style.markerEnd =
-            'url(#' + (path.classList.contains('highlighted') ? 'arrow-highlight' : 'arrow') + ')';
-      }
-      for (const label of $('scene').querySelectorAll('[data-edge-label]'))
-        label.classList.toggle(
-          'edge-selected',
-          selectionState.selectedEdges.has(label.dataset.edgeLabel)
-        );
-      for (const node of $('scene').querySelectorAll('.node'))
-        node.classList.toggle('edge-connected', connected.has(node.dataset.id));
-      for (const group of $('scene').querySelectorAll('.group')) {
-        const item = workspaceState.project.document.groups.find(
-          (g) => g.id === group.dataset.group
-        );
-        group.classList.toggle(
-          'edge-connected',
-          Boolean(connected.size && item && [...groupNodeIds(item)].some((id) => connected.has(id)))
-        );
-      }
-    }
     return {
-      render,
-      renderViewport,
       nodeRect,
-      nodeIcon,
       dataIcon,
       actorIcon,
       summary,
       short,
       measureEdgeText,
       fitNodeText,
-      edgeBundleIds,
-      selectEdge,
-      applyGraphHighlights
+      edgeBundleIds
     };
   }
 };

@@ -16,16 +16,11 @@ import actorsFeature from './app/actors.js';
 import historyFeature from './app/history.js';
 import clipboardFeature from './app/clipboard.js';
 import catalogueFeature from './app/catalogue.js';
-import pluginSourcesFeature from './app/plugin-sources.js';
-import pluginSettingsFeature from './app/plugin-settings.js';
-import pluginLibraryFeature from './app/plugin-library.js';
-import settingsFeature from './app/settings.js';
 import resourcesFeature from './app/resources.js';
 import locationFieldsFeature from './app/location-fields.js';
 import uploadsFeature from './app/uploads.js';
 import providersFeature from './app/providers.js';
 import tagsFeature from './app/tags.js';
-import logsFeature from './app/logs.js';
 import { createState } from './app/state.js';
 
 /** The only composition path: React renders; these modules own domain behavior.
@@ -55,16 +50,29 @@ const registry = [
   historyFeature,
   clipboardFeature,
   catalogueFeature,
-  pluginSourcesFeature,
-  pluginSettingsFeature,
-  pluginLibraryFeature,
-  settingsFeature,
   resourcesFeature,
   locationFieldsFeature,
   uploadsFeature,
   providersFeature,
-  tagsFeature,
-  logsFeature
+  tagsFeature
+];
+/** Commands the React view supplies to the domain features. Features call them through
+ * their declared dependencies but never implement rendering, dialogs or navigation. */
+export const viewCommands = [
+  'askText',
+  'inspect',
+  'inspectGroup',
+  'modalChoice',
+  'notice',
+  'openPluginSettings',
+  'panelVisibility',
+  'parameterModal',
+  'render',
+  'renderPalette',
+  'renderViewport',
+  'show',
+  'toast',
+  'updateStatus'
 ];
 export function createApplication(state = createState(), overrides = {}) {
   const owners = new Map(),
@@ -113,15 +121,10 @@ export {
   historyFeature,
   clipboardFeature,
   catalogueFeature,
-  pluginSourcesFeature,
-  pluginSettingsFeature,
-  pluginLibraryFeature,
-  settingsFeature,
   resourcesFeature,
   locationFieldsFeature,
   uploadsFeature,
   providersFeature,
-  tagsFeature,
-  logsFeature
+  tagsFeature
 };
 export { default as routing } from './graph-routing.js';
