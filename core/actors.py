@@ -371,7 +371,9 @@ class _Execution:
     # -- phase 2 (failure): keep a connected error node instead ------------
 
     def record_failure(self, error):
-        self.doc = self.original
+        # Work on a copy so the merge in persist() still sees the untouched
+        # base document and keeps the error node next to concurrent edits.
+        self.doc = copy.deepcopy(self.original)
         self.actor = _find(self.doc["nodes"], lambda n: n["id"] == self.actor["id"])
         cancelled = isinstance(error, AppError) and error.code == "actor_cancelled"
         status = "cancelled" if cancelled else "failed"
