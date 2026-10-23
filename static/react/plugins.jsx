@@ -484,7 +484,10 @@ function Library({ app }) {
                   plugin.origin === 'community' &&
                   !(await c.askConfirm(
                     t('ui.install_community_plugin'),
-                    t('ui.this_repository_s_python_code_runs_in_the_argus_container_install')
+                    t('ui.community_plugin_install_warning', {
+                      repository: plugin.repo_url || plugin.id,
+                      commit: String(plugin.commit || '').slice(0, 12) || '–'
+                    })
                   ))
                 )
                   return;
@@ -530,6 +533,13 @@ function Library({ app }) {
         onSubmit={(event) => {
           event.preventDefault();
           app.safely(async () => {
+            if (
+              !(await c.askConfirm(
+                t('ui.add_community_repository'),
+                t('ui.community_repository_warning')
+              ))
+            )
+              return;
             await c.api('/api/repositories/add', { url });
             setURL('');
             await load();
