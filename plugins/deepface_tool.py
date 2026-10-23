@@ -72,7 +72,7 @@ SCHEMA.update(
         },
         "run_timeout": {
             "secret": False,
-            "min": 10,
+            "min": 0,
             "max": 900,
             "step": 10,
             "control": "range",
@@ -124,7 +124,7 @@ def validated(params):
     for key, low, high in [
         ("expand_percentage", 0, 100),
         ("threshold", 0, 100),
-        ("run_timeout", 10, 900),
+        ("run_timeout", 0, 900),
     ]:
         number = values[key]
         if (
@@ -136,6 +136,9 @@ def validated(params):
             raise ValueError("Ungültiger Zahlenwert: " + key)
     if int(values["expand_percentage"]) != values["expand_percentage"]:
         raise ValueError("Bildausschnitt-Erweiterung muss ganzzahlig sein.")
+    if values["run_timeout"] != 0 and values["run_timeout"] < 10:
+        key = "run_timeout"
+        raise ValueError("Ungültiger Zahlenwert: " + key)
     return values
 
 
@@ -143,7 +146,7 @@ def run(action, inputs, params, context):
     if action == "verify" and any(n.get("type") == "database" for n in inputs):
         from plugins._database_faces import search
 
-        return search(inputs, params, context, run)
+        return search(inputs, validated(params), context, run)
     if (
         action != "verify"
         or len(inputs) != 2
@@ -187,7 +190,7 @@ def run(action, inputs, params, context):
                 "-I",
                 str(Path(__file__).with_name("_deepface_runner.py")),
             ],
-            int(values["run_timeout"]),
+            int(values["run_timeout"]) if values["run_timeout"] else None,
             {"paths": paths, "params": values, "artifact_dir": folder},
             extra_env={
                 "DEEPFACE_HOME": str(cache),

@@ -839,6 +839,7 @@
     "errors.invalid_request": "Die Anfrage ist ungültig.",
     "errors.invalid_title": "Bitte einen gültigen Projekttitel eingeben.",
     "errors.isolation_unavailable": "Diese Funktion benötigt den isolierten Worker. Er ist in dieser Installation nicht verfügbar.",
+    "errors.isolated_execution_failed": "Die isolierte Ausführung ist fehlgeschlagen oder wurde unterbrochen.",
     "errors.job_not_found": "Der Auftrag wurde nicht gefunden.",
     "errors.location_required": "Bitte einen Ort oder Koordinaten eingeben.",
     "errors.login_rate_limited": "Zu viele Anmeldeversuche. Bitte später erneut versuchen.",

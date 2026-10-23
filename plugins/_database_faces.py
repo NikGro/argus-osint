@@ -28,6 +28,7 @@ def search(inputs, params, context, verify):
     failed = 0
     matches = 0
     start = time.monotonic()
+    timeout = params.get("run_timeout", 300)
     capacity = min(4800, 5000 - context.get("node_count", 0) - 1)
     if capacity < 1:
         return {
@@ -44,8 +45,8 @@ def search(inputs, params, context, verify):
         for item in images:
             if not isinstance(item, dict) or not item.get("file_id"):
                 continue
-            if compared >= limit or time.monotonic() - start > params.get(
-                "run_timeout", 300
+            if compared >= limit or (
+                timeout != 0 and time.monotonic() - start > timeout
             ):
                 exhausted = True
                 break
@@ -61,15 +62,15 @@ def search(inputs, params, context, verify):
             try:
                 # Store overlays only for matching rows; rejected candidates must
                 # not leave unreferenced artifacts in the project directory.
-                remaining = max(
-                    10, int(params.get("run_timeout", 300) - (time.monotonic() - start))
+                remaining = (
+                    max(10, int(timeout - (time.monotonic() - start))) if timeout else 0
                 )
                 result = verify(
                     "verify",
                     [reference, candidate],
                     {
                         **params,
-                        "run_timeout": min(params.get("run_timeout", 300), remaining),
+                        "run_timeout": min(timeout, remaining) if timeout else 0,
                     },
                     {**context, "store_file": buffer_file},
                 )

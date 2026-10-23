@@ -68,6 +68,8 @@ def main():
     socket = Path("/run/argus-egress.sock")
     socket.unlink(missing_ok=True)
     proxy = Proxy(str(socket), Handler)
+    # Workers have distinct per-job UIDs. Proxy.verify_request checks SO_PEERCRED
+    # before parsing HTTP; world-connect permission is not anonymous proxy access.
     socket.chmod(0o666)
     threading.Thread(target=proxy.serve_forever, daemon=True).start()
     threading.Thread(target=serve, daemon=True).start()
