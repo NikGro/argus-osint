@@ -1,4 +1,4 @@
-# 26.10.2 Beta 1 validation
+# 26.10.3 Beta 1 validation
 
 The CI run attached to the release commit and its runtime-validation artifact are the authoritative full-suite results. All research inputs are synthetic or mocked; no real-person research or face recognition is run.
 

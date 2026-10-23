@@ -1,38 +1,32 @@
-# ARGUS 26.10.2 Beta 1
+# ARGUS 26.10.3 Beta 1
 
-This beta combines database workflows with a maintainability and worker-security review. Existing graphs and uploaded files remain compatible. Retain the complete data volume, including encryption keys, when updating.
+This beta hardens the worker boundary, makes the interface consistently German or English, and leaves React as the only user interface layer. Existing graphs, databases and uploaded files remain compatible. Retain the complete data volume, including encryption keys, when updating.
 
-## Databases and investigation workflows
+## Security and runtime
 
-- Create shared databases with editable typed fields, JSON values, image/file attachments and paged records.
-- Preview CSV, TSV, XLSX, ODS, JSON, JSONL, XML and text imports; select sheets and map or skip source columns before an atomic commit. Create a database or extend an existing one. Image batches can become separate rows or one attachment collection.
-- Connect a Database node and a reference value to Search database. Exact, contains and prefix matching return complete matching records as groups with database, row and field provenance.
-- DeepFace accepts a reference image plus a database image column, alongside two-image comparison. Column selection, comparison limits, partial-result warnings and matching-record groups are supported. Automated validation uses mocked inference only.
-- A searchable Help tab documents core workflows. Report previews use softer screen colors while retaining white A4 print output. Nested evidence uses flat field paths to avoid progressively compressed tables.
-- Profile dragging avoids inspector rebuilding during movement. Profile/map badge spacing, zoom control sizing and the English group-collapse label are corrected.
+- The isolated worker proxy accepts public HTTP(S) destinations on ports 80 and 443 only, checks Unix peer credentials against the reserved worker identities and logs rejections without URL paths or secrets. Broker connect, upload and polling have separate time limits; transport failures cancel the job instead of surfacing raw socket errors.
+- Before starting services, the privileged supervisor verifies the complete worker identity, capability and seccomp transition in a disposable probe. Each worker re-checks its kernel state before running untrusted code. Failures abort startup; there is still no unrestricted fallback.
+- Community plugins stay opt-in. Adding a repository and installing a plugin each ask for confirmation, naming the repository and pinned commit and stating that ARGUS does not review community code. `SECURITY.md` describes private vulnerability reporting and the intended private, self-hosted deployment.
+- Manual cancellation is no longer swallowed by provider aggregation, deep research or Instagram collection. Narrower error recovery keeps programming defects from looking like ordinary fallback results.
+- Request headers and identifiers derive their version from `VERSION`.
 
-## Worker security
+## Interface
 
-- Drop and verify the entire capability bounding set before changing worker UID; clear and verify all remaining capability sets and enforce no-new-privileges.
-- Require an inherited libseccomp filter. After bootstrap, deny namespace/mount manipulation, tracing, BPF/perf, keyrings, io_uring and raw/kernel sockets. Any failed hardening step aborts execution.
-- Replace the standalone Compose unconfined seccomp setting with an adapted, pinned Moby allowlist. Remove NET_RAW and document every retained capability.
-- Supply an optional host-loaded AppArmor policy with explicit target-host validation requirements.
-- Preserve SSRF destination pinning, origin/CSRF protection, plugin integrity checks, secret redaction, VPN fail-closed behavior and the prohibition on unisolated worker fallback.
+- React is the only view layer. About 5,500 lines of retired imperative UI code and unused modules were removed; domain modules no longer read or write application markup.
+- German and English no longer mix: generated tool labels, warnings, errors, run states, group titles and reports are translated, and plugin text falls back to its own language. Locale contract tests guard against regressions.
+- The plugin library has an **Add community repository** button with a confirmation, spaced cards and a repository list.
+- Help is an icon button next to Settings. The interface appears only after the language pack has loaded, so no raw translation keys flash during startup.
+- Node details use one spacing unit between a label and its control and two units before the next label; the database column for Search database and DeepFace follows the same layout. DeepFace shows a translated "Maximum comparisons" label.
+- Multi-selection details separate the count, **Include all in report** and **Delete nodes** into their own sections.
+- DeepFace accepts a total timeout of 0 to disable the deadline for long database comparisons; the default remains 300 seconds.
 
-## Architecture and development
+## Fixes and maintenance
 
-- Split Instagram collection, generic enrichment, actor execution and result materialization into named per-run phases.
-- Dispatch HTTP requests through a method/path table, retaining the common security guard and streamed upload handling.
-- Move application modules into core; reduce server.py to an entry point and remove its compatibility facade.
-- Remove inactive imperative canvas renderers and UI bindings. React and production-bundle tests share one domain composition.
-- Introduce stable first-party UI translation identifiers and validation codes; retain aliases for saved graphs and third-party metadata.
-- Rename iteration tests by responsibility, archive historical specifications and document architecture decisions. Narrow expected I/O catches while retaining explicit plugin/job/transport failure boundaries.
-- Run Ruff, Black, ESLint, Prettier, build consistency, frontend contracts, Python tests and real Chromium workflows on every push and pull request. Publication requires successful CI, with separate test-only dependencies.
+- A tool failure is no longer lost when the project is saved while the tool runs; the error node, failed run and tool status are kept.
+- Reports translate type labels, group titles, relationships, run history and generated error text.
+- Tool execution and result materialization were refactored for readability without behaviour changes (verified against the previous implementation with randomized synthetic results).
+- CI runs `ruff check .`; tests that need ExifTool or Holehe skip explicitly outside the container image, while the image gate requires them.
 
-## Deployment notes and limits
+## Deployment note
 
-The application runs as UID 10001. The supervisor, VPN controller and namespace broker retain documented elevated setup permissions. The managed Synology configuration is external to this repository and currently reports worker isolation unavailable. Community/browser execution stays blocked there rather than falling back to application identity. This release cannot grant missing host capabilities.
-
-AppArmor must be loaded and validated by the host administrator; it is not automatically enabled or claimed as universally verified. VPN interruption/rotation needs verification with the actual provider. Upstream availability, authentication, first-use model downloads and third-party licenses continue to apply.
-
-See [validation](docs/validation.md), [architecture](ARCHITECTURE.md), [security policy setup](deploy/README.md), [database imports](docs/databases.md) and [credits](THIRD_PARTY.md).
+Hosts whose kernel lacks seccomp (for example Synology DSM) cannot run the integrated VPN and isolated workers. ARGUS then starts unprivileged, as before, and reports `worker_isolation: false`.

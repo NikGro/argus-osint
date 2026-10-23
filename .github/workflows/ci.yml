@@ -75,7 +75,7 @@ jobs:
           path: artifacts/
   release:
     needs: [quality, runtime]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish ARGUS v26.10.2-beta.1'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish ARGUS v26.10.3-beta.1'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -84,4 +84,4 @@ jobs:
       - name: Publish validated beta
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create v26.10.2-beta.1 --target "$GITHUB_SHA" --prerelease --title "ARGUS 26.10.2 Beta 1" --notes-file RELEASE_NOTES.md
+        run: gh release create v26.10.3-beta.1 --target "$GITHUB_SHA" --prerelease --title "ARGUS 26.10.3 Beta 1" --notes-file RELEASE_NOTES.md

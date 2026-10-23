@@ -10,7 +10,7 @@
 <p align="center"><img src="docs/assets/argus-logo.svg" width="96" alt="ARGUS logo" /></p>
 <h1 align="center">ARGUS</h1>
 <p align="center"><strong>Connect information. Preserve findings.</strong></p>
-<p align="center">V26.10.2 Beta 1 · Self-hosted OSINT workbench · Python + React · One container</p>
+<p align="center">V26.10.3 Beta 1 · Self-hosted OSINT workbench · Python + React · One container</p>
 
 ARGUS turns research into a visual graph. Start with a username, email address, phone number or file; connect a tool; explore the resulting profiles, media and evidence without losing the path back to their sources.
 

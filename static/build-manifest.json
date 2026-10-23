@@ -70,7 +70,7 @@
     "static/scheduler-LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
     "static/style.css": "088d138458da051723e65cfb814c79c9feeb464ce5c9b8ed6869ebb8a5b9aa45",
     "static/transform-worker.js": "f28cd7af8fadb2454e288a62e90dbd4e566ce39488585d4be2b99f1d1a3a1917",
-    "static/version.js": "a3c2065b343eac0261262c192b6077d8c9b6e3b4388bb9ad88319e7a127d883c"
+    "static/version.js": "bc4b2ce209db974246a78b637e1b188b84c85c4aa98a45fb19d30b020f73f107"
   },
-  "bundle_sha256": "e4f41917e3d82d0270e4329ad36f7517009f9dddbf46278ca090905ec867e18d"
+  "bundle_sha256": "76011522e08d95a479a97f173660837d8ff10c02de19ccb4cadf2b570055fb60"
 }
