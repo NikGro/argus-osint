@@ -1,4 +1,4 @@
-Pillow==12.3.0
+Pillow==13.0.0
 sherlock-project==0.16.2
 
 holehe==1.61
