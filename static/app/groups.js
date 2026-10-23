@@ -254,20 +254,13 @@ var groups_default = {
       change(null, 'all-groups');
       render();
     }
-    function moveGroup(group, dx, dy) {
-      for (const node of workspaceState.project.document.nodes)
-        if (group.members.includes(node.id)) {
-          node.x += dx;
-          node.y += dy;
-        }
-    }
     function groupTitle(group) {
-      return group.label_key
-        ? pluginText(
-            pluginsState.catalog.find((p) => p.id === group.plugin),
-            group.label_key
-          )
-        : group.label;
+      const plugin = pluginsState.catalog.find((p) => p.id === group.plugin);
+      if (group.label_key) return pluginText(plugin, group.label_key);
+      // Tool runs name their groups ("Suchprotokoll", "<tool> · <time>"); translate those
+      // until the user renames the group.
+      if (group.run_id && !group.label_custom) return pluginText(plugin, group.label);
+      return group.label;
     }
     function groupAncestors(id) {
       const byId = new Map(workspaceState.project.document.groups.map((g) => [g.id, g])),
@@ -487,7 +480,6 @@ var groups_default = {
       graphGroupModel,
       toggleGroup,
       setAllGroups,
-      moveGroup,
       groupTitle,
       groupAncestors,
       groupDescendantIds,

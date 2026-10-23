@@ -2,11 +2,13 @@
   "de": {
     "DeepFace": "DeepFace",
     "Bilder mit DeepFace vergleichen": "Bilder mit DeepFace vergleichen",
-    "Bildanalyse": "Bildanalyse"
+    "Bildanalyse": "Bildanalyse",
+    "Zwei Bilder vergleichen; Scores und Bilder mit Erkennungs-Overlays ausgeben.": "Zwei Bilder vergleichen; Scores und Bilder mit Erkennungs-Overlays ausgeben."
   },
   "en": {
     "DeepFace": "DeepFace",
     "Bilder mit DeepFace vergleichen": "Compare images with DeepFace",
-    "Bildanalyse": "Image analysis"
+    "Bildanalyse": "Image analysis",
+    "Zwei Bilder vergleichen; Scores und Bilder mit Erkennungs-Overlays ausgeben.": "Compare two images; output scores and images with detection overlays."
   }
 }

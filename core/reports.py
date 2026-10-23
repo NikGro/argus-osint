@@ -2,6 +2,7 @@
 
 import copy
 import html
+import re
 
 REPORT_LABELS = {
     "first_name": "Vorname",
@@ -37,6 +38,20 @@ REPORT_LABELS = {
     "origin": "Herkunft",
     "source": "Quelle",
     "plugin": "Plugin",
+    "action": "Aktion",
+    "status": "Status",
+    "started_at": "Gestartet am",
+    "finished_at": "Beendet am",
+    "warnings": "Warnungen",
+    "error": "Fehler",
+    "run_id": "Ausführungs-ID",
+    "source_input": "Eingabe-Node",
+    "last_update": "Letzte Aktualisierung",
+    "at": "Zeitpunkt",
+    "tool": "Tool",
+    "sources": "Quellen",
+    "failed": "Fehlgeschlagen",
+    "masked": "Maskiert",
 }
 
 
@@ -71,12 +86,54 @@ def facts_html(value, tr=lambda value: value):
     return '<table class="facts-table"><tbody>' + "".join(rows) + "</tbody></table>"
 
 
+class Translator:
+    """Server-side counterpart of static/i18n.js for generated labels and diagnostics."""
+
+    def __init__(self, messages):
+        self.pack = messages
+        self.sources = sorted(
+            (k for k, v in messages.items() if len(k) >= 10 and isinstance(v, str)),
+            key=len,
+            reverse=True,
+        )
+
+    def __call__(self, key):
+        key = str(key)
+        if key in self.pack:
+            return self.pack[key]
+        if "errors." + key in self.pack:
+            return self.pack["errors." + key]
+        return self.composed(key)
+
+    def composed(self, text):
+        numbered = re.match(r"^(.+?) (\d+)$", text)
+        if numbered and numbered.group(1) in self.pack:
+            return self.pack[numbered.group(1)] + " " + numbered.group(2)
+        head, body, tail = "", text, ""
+        for source in self.sources:
+            if len(source) > len(body):
+                continue
+            if not head and body.startswith(source):
+                head, body = self.pack[source], body[len(source) :]
+            elif not tail and body.endswith(source):
+                tail, body = self.pack[source], body[: -len(source)]
+            if head and tail:
+                break
+        return head + body + tail
+
+    def diagnostic(self, text):
+        text = str(text or "")
+        if "errors." + text in self.pack:
+            return self.pack["errors." + text]
+        for source in self.sources:
+            if source in text and self.pack[source] != source:
+                text = text.replace(source, self.pack[source])
+        return text
+
+
 def render_report(project, preferences, descriptors, messages, generated_at):
     language = preferences["language"]
-    pack = messages
-
-    def tr(key):
-        return pack.get(key, pack.get("errors." + key, key))
+    tr = Translator(messages)
 
     doc = project["document"]
     plugins = {p["id"]: p for p in descriptors}
@@ -118,6 +175,65 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             )
             + "</p>"
         )
+
+    def plugin_tr(plugin, key):
+        return (plugin or {}).get("translations", {}).get(language, {}).get(key) or tr(
+            key
+        )
+
+    def group_title(group):
+        if group.get("label_key"):
+            return plugin_tr(plugins.get(group.get("plugin")), group["label_key"])
+        if group.get("run_id") and not group.get("label_custom"):
+            return plugin_tr(plugins.get(group.get("plugin")), group["label"])
+        return group["label"]
+
+    def node_title(node):
+        plugin = plugins.get(
+            node.get("evidence", {}).get("plugin")
+        ) or data_plugins.get(node["type"], {})
+        title = node.get("evidence", {}).get("label_key") or node["label"]
+        if node.get("evidence", {}).get("label_custom"):
+            return node["label"]
+        if node.get("evidence", {}).get("run_id") or node.get("evidence", {}).get(
+            "label_key"
+        ):
+            return plugin_tr(plugin, title)
+        return title
+
+    def type_label(node_type):
+        plugin = data_plugins.get(node_type)
+        spec = next(
+            (n for n in (plugin or {}).get("nodes", []) if n.get("type") == node_type),
+            None,
+        )
+        return plugin_tr(plugin, spec["name"]) if spec else tr(node_type)
+
+    def action_label(run):
+        plugin = plugins.get(run.get("plugin"))
+        action = next(
+            (
+                a
+                for a in (plugin or {}).get("actions", [])
+                if a.get("id") == run.get("action")
+            ),
+            None,
+        )
+        if action:
+            return plugin_tr(plugin, action["name"])
+        return run.get("action", "")
+
+    def evidence_view(evidence):
+        evidence = copy.deepcopy(evidence)
+        plugin = plugins.get(evidence.get("plugin"))
+        if plugin:
+            evidence["plugin"] = plugin_tr(
+                plugin, plugin.get("name", evidence["plugin"])
+            )
+        if evidence.get("origin"):
+            evidence["origin"] = tr(evidence["origin"])
+        return evidence
+
     for node in selected:
         group_ids = set()
         stack = list(owners.get(node["id"], []))
@@ -130,7 +246,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             if parent:
                 stack.append(parent)
         groups = [
-            group_by_id[ident]["label"]
+            group_title(group_by_id[ident])
             for ident in sorted(group_ids, key=lambda id: depths.get(id, 0))
         ]
         plugin = plugins.get(
@@ -140,15 +256,9 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         def node_tr(key):
             return plugin.get("translations", {}).get(language, {}).get(key, tr(key))
 
-        title = node.get("evidence", {}).get("label_key") or node["label"]
-        title = (
-            node_tr(title)
-            if node.get("evidence", {}).get("run_id")
-            or node.get("evidence", {}).get("label_key")
-            else title
-        )
+        title = node_title(node)
         parts.append(
-            f"""<section class="report-node"><small>{esc(node['type'])} · {esc(' / '.join(groups))}</small><h2>{esc(title)}</h2>"""
+            f"""<section class="report-node"><small>{esc(type_label(node['type']))} · {esc(' / '.join(groups))}</small><h2>{esc(title)}</h2>"""
         )
         if node["type"] == "image" and node["data"].get("file_id"):
             parts.append(
@@ -167,6 +277,11 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             from core.provider_registry import label
 
             report_data["provider"] = label(report_data.get("provider", ""))
+        if node["type"] == "error":
+            # Failure and partial-result nodes carry generated text, not findings.
+            for key in ("title", "message"):
+                if report_data.get(key):
+                    report_data[key] = tr.diagnostic(report_data[key])
         parts.append(facts_html(report_data, node_tr))
         review = {
             "unverified": "Unverifiziert",
@@ -190,7 +305,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             "<h3>"
             + esc(tr("ui.source_origin"))
             + "</h3>"
-            + facts_html(node.get("evidence", {"origin": "manual"}), tr)
+            + facts_html(evidence_view(node.get("evidence", {"origin": "manual"})), tr)
             + "</section>"
         )
     selected_ids = {n["id"] for n in selected}
@@ -205,11 +320,11 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         for edge in relations:
             parts.append(
                 "<li>"
-                + esc(by_id[edge["source"]]["label"])
+                + esc(node_title(by_id[edge["source"]]))
                 + " → "
-                + esc(edge.get("label", ""))
+                + esc(tr(edge.get("label", "")) if edge.get("label") else "")
                 + " → "
-                + esc(by_id[edge["target"]]["label"])
+                + esc(node_title(by_id[edge["target"]]))
                 + "</li>"
             )
         parts.append("</ul>")
@@ -220,17 +335,31 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         + facts_html(
             [
                 {
-                    k: run[k]
-                    for k in (
-                        "plugin",
-                        "action",
-                        "started_at",
-                        "finished_at",
-                        "status",
-                        "warnings",
-                        "error",
+                    k: value
+                    for k, value in (
+                        (
+                            "plugin",
+                            plugin_tr(
+                                plugins.get(run.get("plugin")),
+                                plugins.get(run.get("plugin"), {}).get(
+                                    "name", run.get("plugin", "")
+                                ),
+                            ),
+                        ),
+                        ("action", action_label(run)),
+                        ("started_at", run.get("started_at")),
+                        ("finished_at", run.get("finished_at")),
+                        ("status", tr(run["status"]) if run.get("status") else None),
+                        (
+                            "warnings",
+                            [tr.diagnostic(w) for w in run.get("warnings") or []],
+                        ),
+                        (
+                            "error",
+                            tr.diagnostic(run["error"]) if run.get("error") else None,
+                        ),
                     )
-                    if k in run
+                    if value
                 }
                 for run in doc["runs"]
             ],

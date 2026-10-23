@@ -321,7 +321,7 @@ export function Databases({ app }) {
                                 disabled={busy}
                                 onClick={() => setEditor(row)}
                               >
-                                {t('Bearbeiten')}
+                                {t('ui.edit')}
                               </Button>
                               <Button
                                 only

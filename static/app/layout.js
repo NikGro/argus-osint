@@ -243,10 +243,9 @@ var layout_default = {
           node.y += pos.y - unit.y;
         }
       }
-      if ($('cleanupMenu')) $('cleanupMenu').open = false;
       change();
       render();
-      $('fit').click();
+      centerProject();
     }
     function fitViewport(rects, width, height, padding = 40) {
       if (!rects.length)
@@ -328,15 +327,6 @@ var layout_default = {
         excluded = groupDescendantIds(group.id);
       for (const id of ancestors) excluded.add(id);
       makeRoomAround(groupBounds(group), groupNodeIds(group), excluded);
-    }
-    function makeRoomForNode(node) {
-      const excluded = /* @__PURE__ */ new Set();
-      for (const group of workspaceState.project.document.groups)
-        if (group.members.includes(node.id)) {
-          excluded.add(group.id);
-          for (const id of groupAncestors(group.id)) excluded.add(id);
-        }
-      makeRoomAround(nodeRect(node), /* @__PURE__ */ new Set([node.id]), excluded);
     }
     function makeRoomAround(bounds, owned, excluded) {
       const units = [];
@@ -429,7 +419,6 @@ var layout_default = {
       centerProject,
       freeNodeSpot,
       makeRoomForGroup,
-      makeRoomForNode,
       makeRoomAround,
       arrangeGroupContents
     };

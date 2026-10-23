@@ -46,11 +46,10 @@ var catalogue_default = {
       if (localized !== undefined) return localized;
       const common = t(key);
       if (common !== key) return common;
-      return (
-        plugin?.translations?.en?.[key] ??
-        plugin?.translations?.[plugin.default_language || 'de']?.[key] ??
-        diagnostic(common)
-      );
+      // Untranslated text stays in the plugin's own language when that is the active
+      // language; English is only the fallback for other interface languages.
+      if (language === (plugin?.default_language || 'de')) return diagnostic(common);
+      return plugin?.translations?.en?.[key] ?? diagnostic(common);
     }
     function nodePlugin(type) {
       return pluginsState.dataTypes.get(type)?.plugin;

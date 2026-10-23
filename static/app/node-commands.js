@@ -145,33 +145,6 @@ var node_commands_default = {
       inspect();
       return actor;
     }
-    function updateDeleteButtons() {
-      if ($('ungroupNodes'))
-        $('ungroupNodes').disabled =
-          persistenceState.busy ||
-          !(selectionState.selectedGroups.size || selectionState.selectedGroup);
-      if ($('detachNodes'))
-        $('detachNodes').disabled =
-          persistenceState.busy ||
-          !workspaceState.project?.document.groups.some((g) =>
-            g.members.some((id) => selectionState.selected.has(id))
-          );
-      if ($('expandAllGroups'))
-        $('expandAllGroups').disabled = !workspaceState.project?.document.groups.some(
-          (g) => g.collapsed
-        );
-      if ($('collapseAllGroups'))
-        $('collapseAllGroups').disabled = !workspaceState.project?.document.groups.some(
-          (g) => !g.collapsed
-        );
-      const hasSelection =
-        selectionState.selected.size ||
-        selectionState.selectedGroups.size ||
-        selectionState.selectedGroup ||
-        selectionState.selectedEdges.size;
-      for (const id of ['deleteSelected', 'deleteDescendants'])
-        if ($(id)) $(id).disabled = persistenceState.busy || !hasSelection;
-    }
     function deleteSelectionWithChildren() {
       if (!workspaceState.project || persistenceState.busy) return;
       const ids = new Set(selectionState.selected);
@@ -290,7 +263,6 @@ var node_commands_default = {
       newNode,
       addData,
       addActor,
-      updateDeleteButtons,
       deleteSelectionWithChildren,
       deleteGroup,
       deleteSelection,

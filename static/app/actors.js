@@ -2,7 +2,6 @@ import { t } from '../i18n.js';
 import { diagnostic } from '../i18n.js';
 import { transformExample } from './labels.js';
 import { pollJob } from '../jobs-client.js';
-import ui_default from '../ui.js';
 var actors_default = {
   name: 'actors',
   dependencies: [
@@ -12,6 +11,7 @@ var actors_default = {
     'inspect',
     'reconcileWorkspace',
     'modalChoice',
+    'notice',
     'openPluginSettings',
     'parameterModal',
     'render',
@@ -29,6 +29,7 @@ var actors_default = {
     inspect,
     reconcileWorkspace,
     modalChoice,
+    notice,
     openPluginSettings,
     parameterModal,
     render,
@@ -114,35 +115,6 @@ var actors_default = {
       } catch {
         return [];
       }
-    }
-    function startJobMonitor() {
-      for (const id of pendingJobIds())
-        pollJob(id)
-          .then(async (job) => {
-            localStorage.setItem(
-              'argus.jobs',
-              JSON.stringify(pendingJobIds().filter((item) => item !== id))
-            );
-            if (workspaceState.project?.id === job.project_id) {
-              await reconcileWorkspace(workspaceState.lastServerSnapshot);
-              render();
-              inspect();
-            }
-          })
-          .catch((error) => toast(error.message));
-      syncActorJobs().catch(() => {});
-      const monitor = async () => {
-        try {
-          if (!document.hidden) await syncActorJobs();
-        } catch {
-          /* Retry later. */
-        }
-        setTimeout(
-          monitor,
-          executionState.queueRunning || executionState.actorQueue.length ? 2000 : 15000
-        );
-      };
-      setTimeout(monitor, 15000);
     }
     async function performActorJob(job) {
       let transient = {};
@@ -333,7 +305,7 @@ var actors_default = {
       )
         return true;
       const pid = workspaceState.project.id,
-        result = await ui_default.notice({
+        result = await notice({
           title: t('ui.instagram_without_login'),
           message: t('ui.without_instagram_credentials_some_results_may_be_unavailable_con'),
           checkboxText: t('ui.do_not_show_again_for_this_project'),
@@ -367,7 +339,6 @@ var actors_default = {
     return {
       syncActorJobs,
       cancelCurrentActor,
-      startJobMonitor,
       transform,
       run,
       performActorJob,

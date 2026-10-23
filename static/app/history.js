@@ -1,12 +1,11 @@
 var history_default = {
   name: 'history',
-  dependencies: ['$', 'change', 'inspect', 'render'],
+  dependencies: ['change', 'inspect', 'render'],
   create({
     workspaceState,
     persistenceState,
     historyState,
     selectionState,
-    $,
     change,
     inspect,
     render
@@ -18,12 +17,6 @@ var history_default = {
             document: structuredClone(workspaceState.project.document)
           }
         : null;
-    }
-    function historyButtons() {
-      if ($('undo'))
-        $('undo').disabled = persistenceState.busy || historyState.undoStack.length === 0;
-      if ($('redo'))
-        $('redo').disabled = persistenceState.busy || historyState.redoStack.length === 0;
     }
     function recordHistory(scope) {
       if (!workspaceState.project || historyState.historyMuted) return;
@@ -45,7 +38,6 @@ var history_default = {
         historyState.lastHistoryScope = scope;
         historyState.lastHistoryAt = at;
       } else if (!historyState.lastSnapshot) historyState.lastSnapshot = snapshot;
-      historyButtons();
     }
     function applyHistory(direction) {
       if (!workspaceState.project || persistenceState.busy) return;
@@ -57,7 +49,6 @@ var history_default = {
       historyState.historyMuted = true;
       workspaceState.project.title = restored.title;
       workspaceState.project.document = structuredClone(restored.document);
-      $('projectTitle').textContent = workspaceState.project.title;
       selectionState.selected.clear();
       selectionState.selectedEdges.clear();
       selectionState.selectedGroup = null;
@@ -69,9 +60,8 @@ var history_default = {
       historyState.historyMuted = false;
       render();
       inspect();
-      historyButtons();
     }
-    return { projectSnapshot, historyButtons, recordHistory, applyHistory };
+    return { projectSnapshot, recordHistory, applyHistory };
   }
 };
 export { history_default };
