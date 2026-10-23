@@ -81,7 +81,6 @@ class InstagramCollector:
         self.client.read_timeout = self.request_timeout
         self.client.delay_range = [0.5, 1.0]
         self.client.logger.disabled = True
-        logging.disable(logging.CRITICAL)
         self.profile_url = (
             "https://www.instagram.com/" + self.payload["username"] + "/"
             if self.payload.get("username")
@@ -1014,6 +1013,9 @@ def run(payload):
 
 
 if __name__ == "__main__":
+    # Process-wide silence belongs to the isolated subprocess only; in-process
+    # callers (tests) must keep their logging configuration.
+    logging.disable(logging.CRITICAL)
     payload = json.load(sys.stdin)
     try:
         with contextlib.redirect_stdout(sys.stderr):

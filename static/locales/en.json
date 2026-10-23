@@ -841,6 +841,7 @@
     "errors.invalid_request": "The request is invalid.",
     "errors.invalid_title": "Enter a valid project title.",
     "errors.isolation_unavailable": "This feature requires the isolated worker, which is unavailable in this installation.",
+    "errors.isolated_execution_failed": "Isolated execution failed or was interrupted.",
     "errors.job_not_found": "The job was not found.",
     "errors.location_required": "Enter a location or coordinates.",
     "errors.login_rate_limited": "Too many sign-in attempts. Try again later.",

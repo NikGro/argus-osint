@@ -137,7 +137,8 @@ def validated(params):
     if int(values["expand_percentage"]) != values["expand_percentage"]:
         raise ValueError("Bildausschnitt-Erweiterung muss ganzzahlig sein.")
     if values["run_timeout"] != 0 and values["run_timeout"] < 10:
-        raise ValueError("Ungültiger Zahlenwert: run_timeout")
+        key = "run_timeout"
+        raise ValueError("Ungültiger Zahlenwert: " + key)
     return values
 
 
