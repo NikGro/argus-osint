@@ -191,3 +191,25 @@ def install_seccomp():
 def harden_worker(uid):
     drop_identity(uid)
     install_seccomp()
+    verify_worker_state(uid)
+
+
+def verify_worker_state(uid):
+    """Check the kernel's final state before starting threads or untrusted code."""
+    status = dict(
+        line.split(":", 1)
+        for line in Path("/proc/self/status").read_text().splitlines()
+        if ":" in line
+    )
+    if (
+        os.getresuid() != (uid, uid, uid)
+        or os.getresgid() != (uid, uid, uid)
+        or os.getgroups()
+        or any(
+            int(status[key].strip(), 16) != 0
+            for key in ("CapBnd", "CapEff", "CapPrm", "CapInh", "CapAmb")
+        )
+        or status["NoNewPrivs"].strip() != "1"
+        or status["Seccomp"].strip() != "2"
+    ):
+        raise RuntimeError("Worker privilege boundary verification failed")
