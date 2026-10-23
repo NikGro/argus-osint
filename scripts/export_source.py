@@ -43,6 +43,7 @@ ROOT_FILES = {
     "ARCHITECTURE.md",
     "CONTRIBUTING.md",
     "THIRD_PARTY.md",
+    "SECURITY.md",
     "pyproject.toml",
     "package.json",
     "package-lock.json",

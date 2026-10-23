@@ -202,7 +202,7 @@
   "Installiert": "ui.installed",
   "Installieren": "ui.install",
   "Community-Plugin installieren": "ui.install_community_plugin",
-  "Der Python-Code dieses Repositories wird im Argus-Container ausgeführt. Nur vertrauenswürdige Repositories installieren.": "ui.this_repository_s_python_code_runs_in_the_argus_container_install",
+  "Der Python-Code dieses Repositories wird im Argus-Container ausgeführt. Nur vertrauenswürdige Repositories installieren.": "ui.community_plugin_install_warning",
   " Plugins": "ui.plugins_77bb9ce6",
   "Aktualisieren": "ui.refresh",
   "Entfernen": "ui.remove",

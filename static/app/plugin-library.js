@@ -59,7 +59,10 @@ var plugin_library_default = {
             if (plugin.origin === 'community') {
               const accepted = await askConfirm(
                 t('ui.install_community_plugin'),
-                t('ui.this_repository_s_python_code_runs_in_the_argus_container_install')
+                t('ui.community_plugin_install_warning', {
+                  repository: plugin.repo_url || plugin.id,
+                  commit: String(plugin.commit || '').slice(0, 12) || '–'
+                })
               );
               if (!accepted) return;
             }
