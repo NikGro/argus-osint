@@ -11,24 +11,34 @@ function sources() {
   }
   return orderedSources;
 }
+/** Generated labels combine known phrases: "Bild 2", "<tool> fehlgeschlagen",
+ * "Holehe · Suchprotokoll". Translate a numbered phrase, or one known prefix and one
+ * known suffix (at least 10 characters each), and keep the rest as written. */
+function composed(text) {
+  const numbered = /^(.+?) (\d+)$/.exec(text);
+  const base = numbered && (messages[numbered[1]] ?? fallbackMessages[numbered[1]]);
+  if (base !== undefined && base !== null) return base + ' ' + numbered[2];
+  let head = '',
+    body = text,
+    tail = '';
+  for (const source of sources()) {
+    if (source.length < 10 || source.length > body.length) continue;
+    if (!head && body.startsWith(source)) {
+      head = messages[source];
+      body = body.slice(source.length);
+    } else if (!tail && body.endsWith(source)) {
+      tail = messages[source];
+      body = body.slice(0, -source.length);
+    }
+    if (head && tail) break;
+  }
+  return head + body + tail;
+}
 export function t(key, params = {}) {
   if (key === undefined || key === null) return '';
   key = Object.hasOwn(messageKeys, key) ? messageKeys[key] : key;
   let value = messages[key] ?? fallbackMessages[key];
-  if (value === undefined) {
-    value = String(key);
-    for (const source of sources()) {
-      if (source.length < 10) continue;
-      if (value.startsWith(source)) {
-        value = messages[source] + value.slice(source.length);
-        break;
-      }
-      if (value.endsWith(source)) {
-        value = value.slice(0, -source.length) + messages[source];
-        break;
-      }
-    }
-  }
+  if (value === undefined) value = composed(String(key));
   for (const [name, text] of Object.entries(params))
     value = value.replaceAll('{' + name + '}', String(text));
   return value;

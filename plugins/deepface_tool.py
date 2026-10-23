@@ -228,7 +228,7 @@ def run(action, inputs, params, context):
                 annotations.append(
                     {
                         "type": "image",
-                        "label": f"DeepFace · Bild {index + 1} · Overlay",
+                        "label": f"DeepFace · Overlay {index + 1}",
                         "data": {
                             "file_id": stored["file_id"],
                             "filename": stored["filename"],

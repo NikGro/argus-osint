@@ -559,6 +559,7 @@ function Inspector({ app }) {
           value={c.groupTitle(group)}
           onChange={(value) => {
             group.label = value;
+            group.label_custom = true;
             delete group.label_key;
             c.change();
             c.render();

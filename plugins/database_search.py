@@ -40,6 +40,12 @@ PLUGIN = {
         "de": {
             "Datenbank durchsuchen": "Datenbank durchsuchen",
             "Datenbanken": "Datenbanken",
+            "match_mode": "Vergleichsmodus",
+            "case_sensitive": "Groß-/Kleinschreibung beachten",
+            "max_results": "Maximale Treffer",
+            "exact": "Exakt",
+            "contains": "Enthält",
+            "starts_with": "Beginnt mit",
         },
         "en": {
             "Datenbank durchsuchen": "Search database",
