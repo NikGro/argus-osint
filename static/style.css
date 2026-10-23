@@ -22,6 +22,7 @@
   --radius-control: 7px;
   --control-height: 36px;
   --space-section: 24px;
+  --space-unit: 6px;
   --header-height: 66px;
   --toolbar-height: 52px;
 }
@@ -230,8 +231,9 @@ small,
 }
 .react-field {
   display: grid;
-  gap: 5px;
-  margin-bottom: 12px;
+  /* Label to control: one spacing unit; field to next label: two units. */
+  gap: var(--space-unit);
+  margin-bottom: calc(2 * var(--space-unit));
   min-width: 0;
 }
 .react-field label {
@@ -304,6 +306,9 @@ header nav {
   flex: 0 0 36px;
   margin-left: auto;
 }
+#helpTab {
+  flex: 0 0 36px;
+}
 #status {
   display: inline-flex;
   gap: 8px;
@@ -312,7 +317,8 @@ header nav {
   font-size: 12px;
   margin-left: auto;
 }
-#settingsTab + #status {
+#settingsTab + #status,
+#helpTab + #status {
   margin-left: 0;
 }
 #statusLight,
@@ -885,6 +891,45 @@ main:not(#workspace) {
 }
 .installed-plugin-section {
   margin-bottom: 20px;
+}
+/* Add-plugins library: same card rhythm as the installed list. */
+.plugin-library {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.plugin-library > h3 {
+  margin: 8px 0 0;
+}
+.plugin-library-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.plugin-library-header h2 {
+  margin: 0;
+  flex: 0 0 auto;
+}
+.plugin-library-header input {
+  flex: 1 1 auto;
+  max-width: 420px;
+}
+.plugin-library-header > button {
+  margin-left: auto;
+}
+.plugin-library-list {
+  display: grid;
+  gap: 12px;
+}
+.plugin-row > :is(h3, p) {
+  margin: 0 0 12px;
+}
+.repository-row strong {
+  display: block;
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
 }
 .plugin-header {
   display: flex;
@@ -2202,7 +2247,7 @@ body.workspace-mode #status {
 }
 .fields-stack {
   display: grid;
-  gap: 12px;
+  gap: calc(2 * var(--space-unit));
 }
 .fields-stack:empty {
   display: none;

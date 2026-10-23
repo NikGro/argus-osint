@@ -87,6 +87,7 @@ var fieldNames = {
   request_timeout: 'Zeitlimit je Website (Sekunden)',
   run_timeout: 'Gesamtzeitlimit (Sekunden)',
   max_results: 'Maximale Treffer',
+  max_comparisons: 'Maximale Vergleiche',
   enrich: 'Online vervollst\xE4ndigen',
   filename: 'Dateiname',
   retrieved_at: 'Abgerufen am',

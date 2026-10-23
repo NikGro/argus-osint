@@ -2554,6 +2554,9 @@
     "Quellen": "Sources",
     "Fehlgeschlagen": "Failed",
     "Maskiert": "Masked",
-    "ui.edit": "Edit"
+    "ui.edit": "Edit",
+    "ui.include_all_in_report": "Include all in report",
+    "ui.delete_nodes": "Delete nodes",
+    "Maximale Vergleiche": "Maximum comparisons"
   }
 }

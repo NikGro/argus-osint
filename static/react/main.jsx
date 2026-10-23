@@ -58,10 +58,16 @@ function Application() {
         );
     };
     app.safely(async () => {
-      const data = await c.api('/api/settings');
-      s.preferencesState.appSettings = data.settings;
-      ui.languages = data.languages;
-      await setLanguage(data.settings.language);
+      try {
+        const data = await c.api('/api/settings');
+        s.preferencesState.appSettings = data.settings;
+        ui.languages = data.languages;
+        await setLanguage(data.settings.language);
+      } finally {
+        // Show the interface (and any error toast) even if loading the language failed.
+        ui.languageReady = true;
+        app.redraw();
+      }
       await c.refreshCatalog();
       await c.home();
       ui.ready = true;
@@ -169,6 +175,13 @@ function Application() {
           : ['workspace', 'settingsView', 'pluginsView', 'databasesView'].includes(ui.view)
             ? t('ui.saved')
             : t('ui.connected');
+  // Render nothing translated until the language pack is loaded, so no raw keys flash.
+  if (!ui.languageReady)
+    return (
+      <p className="loading-state" role="status" aria-busy="true">
+        ARGUS …
+      </p>
+    );
   return (
     <>
       <header>
@@ -226,18 +239,6 @@ function Application() {
           </Button>
           <Button
             app={app}
-            id="helpTab"
-            icon="help"
-            className={ui.view === 'helpView' ? 'active' : ''}
-            onClick={async () => {
-              await c.leaveWorkspace();
-              c.show('helpView');
-            }}
-          >
-            {t('ui.help')}
-          </Button>
-          <Button
-            app={app}
             id="pluginsTab"
             icon="plugin"
             className={ui.view === 'pluginsView' ? 'active' : ''}
@@ -256,6 +257,21 @@ function Application() {
             onClick={c.settingsHome}
           >
             {t('ui.settings')}
+          </Button>
+        )}
+        {ui.view !== 'workspace' && (
+          <Button
+            app={app}
+            id="helpTab"
+            icon="help"
+            only
+            className={ui.view === 'helpView' ? 'active' : ''}
+            onClick={async () => {
+              await c.leaveWorkspace();
+              c.show('helpView');
+            }}
+          >
+            {t('ui.help')}
           </Button>
         )}
         <span id="status" role="status" title={error || status}>

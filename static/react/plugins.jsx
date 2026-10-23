@@ -451,104 +451,109 @@ function Plugin({ app, plugin }) {
 function Library({ app }) {
   const { commands: c } = app;
   const [data, setData] = useState({ plugins: [], repositories: [] }),
-    [query, setQuery] = useState(''),
-    [url, setURL] = useState('');
+    [query, setQuery] = useState('');
   const load = async () => setData(await c.api('/api/plugin-library'));
   useEffect(() => {
     app.safely(load);
   }, []);
+  async function addRepository() {
+    const url = await c.askText(t('ui.add_community_repository'), t('ui.repository_url'), '');
+    if (!url?.trim()) return;
+    if (
+      !(await c.askConfirm(t('ui.add_community_repository'), t('ui.community_repository_warning')))
+    )
+      return;
+    await c.api('/api/repositories/add', { url: url.trim() });
+    await load();
+  }
   return (
     <section className="plugin-library">
-      <h2>{t('ui.plugin_library_4ba1045f')}</h2>
-      <input
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={t('ui.search_plugins')}
-      />
-      {data.plugins
-        .filter((plugin) =>
-          (plugin.name + ' ' + plugin.id).toLowerCase().includes(query.toLowerCase())
-        )
-        .map((plugin) => (
-          <article key={plugin.id} className="plugin-row">
-            <h3>{c.pluginDisplayName(plugin)}</h3>
-            <p>{c.pluginText(plugin, plugin.description)}</p>
-            <Button
-              app={app}
-              icon="plus"
-              className="primary"
-              disabled={plugin.installed}
-              onClick={async () => {
-                if (
-                  plugin.origin === 'community' &&
-                  !(await c.askConfirm(
-                    t('ui.install_community_plugin'),
-                    t('ui.community_plugin_install_warning', {
-                      repository: plugin.repo_url || plugin.id,
-                      commit: String(plugin.commit || '').slice(0, 12) || '–'
-                    })
-                  ))
-                )
-                  return;
-                await c.api('/api/plugin/install', { id: plugin.id });
-                await c.refreshCatalog();
-                await load();
-                app.redraw();
-              }}
-            >
-              {t(plugin.installed ? 'Installiert' : 'Installieren')}
-            </Button>
-          </article>
-        ))}
+      <div className="plugin-library-header">
+        <h2>{t('ui.plugin_library_4ba1045f')}</h2>
+        <input
+          type="search"
+          value={query}
+          aria-label={t('ui.search_plugins')}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t('ui.search_plugins')}
+        />
+        <Button app={app} icon="plus" onClick={addRepository}>
+          {t('ui.add_community_repository')}
+        </Button>
+      </div>
+      <div className="plugin-library-list">
+        {data.plugins
+          .filter((plugin) =>
+            (plugin.name + ' ' + plugin.id).toLowerCase().includes(query.toLowerCase())
+          )
+          .map((plugin) => (
+            <article key={plugin.id} className="plugin-row">
+              <h3>{c.pluginDisplayName(plugin)}</h3>
+              <p>{c.pluginText(plugin, plugin.description)}</p>
+              <Button
+                app={app}
+                icon="plus"
+                className="primary"
+                disabled={plugin.installed}
+                onClick={async () => {
+                  if (
+                    plugin.origin === 'community' &&
+                    !(await c.askConfirm(
+                      t('ui.install_community_plugin'),
+                      t('ui.community_plugin_install_warning', {
+                        repository: plugin.repo_url || plugin.id,
+                        commit: String(plugin.commit || '').slice(0, 12) || '–'
+                      })
+                    ))
+                  )
+                    return;
+                  await c.api('/api/plugin/install', { id: plugin.id });
+                  await c.refreshCatalog();
+                  await load();
+                  app.redraw();
+                }}
+              >
+                {t(plugin.installed ? 'Installiert' : 'Installieren')}
+              </Button>
+            </article>
+          ))}
+      </div>
       <h3>{t('ui.community_repositories')}</h3>
-      {data.repositories.map((repo) => (
-        <article key={repo.id}>
-          <strong>{repo.url}</strong>
-          {repo.error && <p>{repo.error}</p>}
-          <Button
-            app={app}
-            icon="refresh"
-            onClick={async () => {
-              await c.api('/api/repositories/refresh', { id: repo.id });
-              await load();
-            }}
-          >
-            {t('ui.refresh')}
-          </Button>
-          <Button
-            app={app}
-            className="danger-filled"
-            icon="trash"
-            onClick={async () => {
-              await c.api('/api/repositories/remove', { id: repo.id });
-              await load();
-            }}
-          >
-            {t('ui.remove')}
-          </Button>
-        </article>
-      ))}
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          app.safely(async () => {
-            if (
-              !(await c.askConfirm(
-                t('ui.add_community_repository'),
-                t('ui.community_repository_warning')
-              ))
-            )
-              return;
-            await c.api('/api/repositories/add', { url });
-            setURL('');
-            await load();
-          });
-        }}
-      >
-        <Field label={t('ui.repository_url')} value={url} onChange={setURL} />
-        <button type="submit">{t('ui.add')}</button>
-      </form>
+      {data.repositories.length ? (
+        <div className="plugin-library-list">
+          {data.repositories.map((repo) => (
+            <article key={repo.id} className="plugin-row repository-row">
+              <strong>{repo.url}</strong>
+              {repo.error && <p>{repo.error}</p>}
+              <div className="tile-actions">
+                <Button
+                  app={app}
+                  icon="refresh"
+                  onClick={async () => {
+                    await c.api('/api/repositories/refresh', { id: repo.id });
+                    await load();
+                  }}
+                >
+                  {t('ui.refresh')}
+                </Button>
+                <Button
+                  app={app}
+                  className="danger-filled"
+                  icon="trash"
+                  onClick={async () => {
+                    await c.api('/api/repositories/remove', { id: repo.id });
+                    await load();
+                  }}
+                >
+                  {t('ui.remove')}
+                </Button>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="empty-state">{t('ui.no_community_repositories_added_yet')}</p>
+      )}
     </section>
   );
 }

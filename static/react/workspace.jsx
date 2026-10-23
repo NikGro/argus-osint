@@ -643,22 +643,26 @@ function Inspector({ app }) {
         <h2>
           {nodes.length} {t('ui.nodes_selected_c456770e')}
         </h2>
-        <Check
-          checked={nodes.every((node) => node.report)}
-          onChange={(value) => {
-            nodes.forEach((node) => (node.report = value));
-            c.change();
-          }}
-        >
-          {t('ui.include_in_report')}
-        </Check>
-        <Button
-          icon="trash"
-          className="danger-filled wide"
-          onClick={() => c.deleteNodes(nodes.map((node) => node.id))}
-        >
-          {t('ui.delete_node')}
-        </Button>
+        <DetailSection className="node-report-section">
+          <Check
+            checked={nodes.every((node) => node.report)}
+            onChange={(value) => {
+              nodes.forEach((node) => (node.report = value));
+              c.change();
+            }}
+          >
+            {t('ui.include_all_in_report')}
+          </Check>
+        </DetailSection>
+        <DetailSection className="node-delete-section">
+          <Button
+            icon="trash"
+            className="danger-filled wide node-delete"
+            onClick={() => c.deleteNodes(nodes.map((node) => node.id))}
+          >
+            {t('ui.delete_nodes')}
+          </Button>
+        </DetailSection>
       </>
     );
   return <NodeDetails key={nodes[0].id} app={app} node={nodes[0]} />;
@@ -1134,7 +1138,7 @@ function DatabaseColumn({ app, node, source, onChange }) {
     (field) => node.data.plugin !== 'deepface' || field.type === 'image'
   );
   return (
-    <DetailSection>
+    <div className="react-field">
       <label>{t('ui.reference_column')}</label>
       <Select
         label={t('ui.reference_column')}
@@ -1142,7 +1146,7 @@ function DatabaseColumn({ app, node, source, onChange }) {
         options={available.map((field) => ({ value: field.id, label: field.name }))}
         onChange={onChange}
       />
-    </DetailSection>
+    </div>
   );
 }
 

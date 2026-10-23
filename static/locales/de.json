@@ -2554,6 +2554,9 @@
     "Quellen": "Quellen",
     "Fehlgeschlagen": "Fehlgeschlagen",
     "Maskiert": "Maskiert",
-    "ui.edit": "Bearbeiten"
+    "ui.edit": "Bearbeiten",
+    "ui.include_all_in_report": "Alle in Report aufnehmen",
+    "ui.delete_nodes": "Ausgewählte Knoten löschen",
+    "Maximale Vergleiche": "Maximale Vergleiche"
   }
 }
