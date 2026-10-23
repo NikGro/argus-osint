@@ -1,8 +1,18 @@
-# ARGUS 26.10.3 Beta 1
+# ARGUS 26.10.4 Beta 1
+
+This beta adds an official Compose file for hosts without seccomp support, such as Synology DSM. It includes everything from 26.10.3 Beta 1 (below). Existing data volumes remain compatible.
+
+## Synology and hosts without seccomp
+
+- New `compose.synology.yaml` runs ARGUS unprivileged as UID 10001 with no extra capabilities. Select it with `COMPOSE_FILE=compose.synology.yaml` in `.env`; add `BIND_ADDRESS=0.0.0.0` for access from the home network.
+- On these hosts the integrated VPN, community plugins and the built-in browser stay disabled, and `/api/health` reports `worker_isolation: false`. The default `compose.yaml` is unchanged for hosts that support seccomp.
+- README and `.env.example` describe the setup.
+
+## Included from 26.10.3 Beta 1
 
 This beta hardens the worker boundary, makes the interface consistently German or English, and leaves React as the only user interface layer. Existing graphs, databases and uploaded files remain compatible. Retain the complete data volume, including encryption keys, when updating.
 
-## Security and runtime
+### Security and runtime
 
 - The isolated worker proxy accepts public HTTP(S) destinations on ports 80 and 443 only, checks Unix peer credentials against the reserved worker identities and logs rejections without URL paths or secrets. Broker connect, upload and polling have separate time limits; transport failures cancel the job instead of surfacing raw socket errors.
 - Before starting services, the privileged supervisor verifies the complete worker identity, capability and seccomp transition in a disposable probe. Each worker re-checks its kernel state before running untrusted code. Failures abort startup; there is still no unrestricted fallback.
@@ -10,7 +20,7 @@ This beta hardens the worker boundary, makes the interface consistently German o
 - Manual cancellation is no longer swallowed by provider aggregation, deep research or Instagram collection. Narrower error recovery keeps programming defects from looking like ordinary fallback results.
 - Request headers and identifiers derive their version from `VERSION`.
 
-## Interface
+### Interface
 
 - React is the only view layer. About 5,500 lines of retired imperative UI code and unused modules were removed; domain modules no longer read or write application markup.
 - German and English no longer mix: generated tool labels, warnings, errors, run states, group titles and reports are translated, and plugin text falls back to its own language. Locale contract tests guard against regressions.
@@ -20,13 +30,13 @@ This beta hardens the worker boundary, makes the interface consistently German o
 - Multi-selection details separate the count, **Include all in report** and **Delete nodes** into their own sections.
 - DeepFace accepts a total timeout of 0 to disable the deadline for long database comparisons; the default remains 300 seconds.
 
-## Fixes and maintenance
+### Fixes and maintenance
 
 - A tool failure is no longer lost when the project is saved while the tool runs; the error node, failed run and tool status are kept.
 - Reports translate type labels, group titles, relationships, run history and generated error text.
 - Tool execution and result materialization were refactored for readability without behaviour changes (verified against the previous implementation with randomized synthetic results).
 - CI runs `ruff check .`; tests that need ExifTool or Holehe skip explicitly outside the container image, while the image gate requires them.
 
-## Deployment note
+### Deployment note
 
 Hosts whose kernel lacks seccomp (for example Synology DSM) cannot run the integrated VPN and isolated workers. ARGUS then starts unprivileged, as before, and reports `worker_isolation: false`.
