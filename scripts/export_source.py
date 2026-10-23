@@ -39,6 +39,7 @@ ROOT_FILES = {
     "compose.vpn.yaml",
     "RELEASE_NOTES.md",
     "compose.standalone.yaml",
+    "compose.synology.yaml",
     "README.md",
     "ARCHITECTURE.md",
     "CONTRIBUTING.md",

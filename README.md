@@ -72,6 +72,8 @@ The supplied Compose file declares the Linux capabilities and TUN device require
 
 ARGUS currently has no user-account login. Keep access within a trusted environment; the default binding is localhost. The interface targets desktop browsers; small-screen users see a desktop-mode notice.
 
+**Synology and other hosts without seccomp:** the DSM kernel cannot load the seccomp filter that the integrated VPN and isolated workers require, so the default file does not start there. Use the unprivileged variant instead by adding `COMPOSE_FILE=compose.synology.yaml` (and `BIND_ADDRESS=0.0.0.0` for access from your home network) to `.env`, then run `docker compose up -d --build`. ARGUS then runs as UID 10001 without extra capabilities; VPN, community plugins and the built-in browser stay disabled and `/api/health` reports `worker_isolation: false`.
+
 Projects, files, settings, encrypted credentials and sessions live in the data volume. Back up the complete volume, including encryption keys. Update with `docker compose up -d --build` and retain the volume.
 
 ## Optional VPN and logs

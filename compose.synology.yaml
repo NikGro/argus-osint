@@ -1,0 +1,28 @@
+# ARGUS on hosts whose kernel has no seccomp support, such as Synology DSM.
+# The integrated VPN and the isolated community/browser workers need seccomp and
+# stay disabled; ARGUS runs unprivileged as UID 10001 and reports
+# worker_isolation: false. Select this file with COMPOSE_FILE in .env.
+name: argus
+services:
+  argus:
+    build: .
+    image: argus:local
+    container_name: ARGUS
+    user: "10001:10001"
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8080}:8080"
+    volumes:
+      - argus-data:/data
+    environment:
+      DATA_DIR: /data
+      GEOCODER_URL: ${GEOCODER_URL:-}
+      GEOCODER_USER_AGENT: ${GEOCODER_USER_AGENT:-}
+    shm_size: 1gb
+    restart: unless-stopped
+
+volumes:
+  argus-data:
+    name: argus_argus-data
