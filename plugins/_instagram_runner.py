@@ -450,6 +450,8 @@ class InstagramCollector:
                 if isinstance(user, dict) and (user.get("id") or user.get("pk")):
                     return user
             except Exception:
+                # Preserve the original library failure below if this alternate
+                # endpoint also fails; it is not converted into a successful result.
                 pass
             if not self.config.get("browser_enabled") or not self.payload.get(
                 "username"

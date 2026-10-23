@@ -10,6 +10,8 @@ from plugins._process import bounded_run
 from plugins._profile import provider_key, profile_url, recipes
 from plugins._research import deduplicate, fact_outputs
 from core.provider_registry import label as provider_label, services
+from core.build_info import user_agent
+from core.errors import AppError
 
 PLUGIN = {
     "id": "deep_research",
@@ -242,6 +244,12 @@ class ProfileEnrichment:
                     }
                     self.outputs.append(self.item)
             except Exception as _caught_1:
+                # Provider boundary: retain partial results, but never consume cancellation.
+                if (
+                    isinstance(_caught_1, AppError)
+                    and _caught_1.code == "actor_cancelled"
+                ):
+                    raise
                 self.exc = _caught_1
                 self.warnings.append(TOOLS[self.tool] + ": " + str(self.exc))
                 self.logs.append(TOOLS[self.tool] + ": " + str(self.exc))
@@ -296,7 +304,11 @@ class ProfileEnrichment:
                         str(Path(__file__).with_name("_profile_extract_runner.py")),
                     ],
                     self.timeout,
-                    {"url": self.url, "request_timeout": self.request},
+                    {
+                        "url": self.url,
+                        "request_timeout": self.request,
+                        "user_agent": user_agent("public profile research"),
+                    },
                 )
                 self.facts = json.loads(self.stdout)
                 self.common = {

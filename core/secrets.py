@@ -1,4 +1,4 @@
-"""Install-local encryption with descriptor-defined secrets and legacy-name compatibility."""
+"""Install-local encryption with descriptor secrets and defensive name-based redaction."""
 
 from core.errors import DomainError
 import copy

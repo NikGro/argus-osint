@@ -3,6 +3,7 @@
 import configparser
 import ipaddress
 import json
+import logging
 import os
 from pathlib import Path
 import shlex
@@ -607,6 +608,22 @@ class Controller:
                 self.switching = False
 
 
+def tick_once(controller):
+    """Keep the controller loop alive with an observable, secret-free failure."""
+    try:
+        controller.tick()
+    except Exception as error:
+        controller.state = "unhealthy"
+        logging.getLogger("argus.vpn").error(
+            json.dumps(
+                {
+                    "event": "vpn_controller_tick_failed",
+                    "error_type": type(error).__name__,
+                }
+            )
+        )
+
+
 def main():
     controller = Controller(os.environ.get("ARGUS_VPN_STATE", "/vpn-state"), Network())
 
@@ -646,10 +663,7 @@ def main():
 
     def worker():
         while True:
-            try:
-                controller.tick()
-            except Exception:
-                controller.state = "unhealthy"
+            tick_once(controller)
             time.sleep(1)
 
     threading.Thread(target=worker, daemon=True).start()

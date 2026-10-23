@@ -8,6 +8,7 @@ import threading
 import time
 import unittest
 import hashlib
+import shutil
 from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
@@ -440,6 +441,7 @@ class RevisionSources(unittest.TestCase):
         finally:
             app.MANAGER.configure(pid, prior)
 
+    @unittest.skipUnless(shutil.which("exiftool"), "ExifTool executable absent locally")
     def test_exiftool_actual_pdf_and_image_metadata_are_individual_and_read_only(self):
         from PIL import Image
 

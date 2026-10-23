@@ -302,7 +302,7 @@ def run(action, inputs, params, context):
                     seen.add(key)
                     options.append(option)
                 logs.append(provider + "\n" + json.dumps(response, ensure_ascii=False))
-            except Exception as exc:
+            except (OSError, ValueError, KeyError, TypeError) as exc:
                 warnings.append(
                     provider + ": Adressdienst nicht erreichbar. " + str(exc)
                 )

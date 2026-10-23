@@ -21,7 +21,7 @@ jobs:
           cache: npm
       - run: pip install -r requirements-dev.txt
       - run: npm ci
-      - run: ruff check core plugins scripts tests server.py
+      - run: ruff check .
       - run: black --check core plugins scripts tests server.py
       - run: npm run lint
       - run: npm run format:check
@@ -43,6 +43,11 @@ jobs:
         run: |
           printf 'FROM argus:ci\nUSER root\nCOPY requirements-test.txt /tmp/requirements-test.txt\nRUN pip install --no-cache-dir -r /tmp/requirements-test.txt\nUSER workbench\n' > Dockerfile.ci
           docker build -f Dockerfile.ci -t argus-tests:ci .
+      - name: Require integration dependencies in the test image
+        run: |
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+            --entrypoint python argus-tests:ci \
+            -c "import holehe.core, httpx, trio; import shutil; assert shutil.which('exiftool'), 'ExifTool missing from CI image'; print('Required integration dependencies available')"
       - name: Complete offline Python and real Chromium suite
         id: python
         run: |

@@ -247,6 +247,8 @@ def extract_page(page, url):
 
 
 def collect(payload):
+    from core.errors import AppError
+
     url = public_url(payload["url"])
     warnings = []
     browser_enabled = bool(payload.get("browser_enabled", True))
@@ -255,7 +257,7 @@ def collect(payload):
         page, final = get_page(url, int(payload["request_timeout"]))
         if blocked(page):
             raise ValueError("Die Profilseite liefert eine Bot-Prüfung.")
-    except Exception as exc:
+    except (AppError, OSError, ValueError) as exc:
         if isinstance(exc, urllib.error.HTTPError) and exc.code not in (403, 503):
             raise ValueError(
                 "Profilseite nicht verfügbar: HTTP " + str(exc.code)
@@ -291,7 +293,7 @@ def collect(payload):
             if not blocked(rendered):
                 facts.update(extract_page(rendered, rendered_url))
                 browser = True
-        except Exception as exc:
+        except (AppError, OSError, ValueError) as exc:
             warnings.append(str(exc))
     if not any(k not in ("Seitentitel",) for k in facts):
         facts = {}

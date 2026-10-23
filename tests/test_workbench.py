@@ -1,5 +1,6 @@
 import io
 import json
+import shutil
 import threading
 import unittest
 import urllib.error
@@ -239,6 +240,7 @@ class APITests(unittest.TestCase):
             )
         self.assertEqual(error.exception.code, 403)
 
+    @unittest.skipUnless(shutil.which("exiftool"), "ExifTool executable absent locally")
     def test_image_upload_and_metadata(self):
         img = Image.new("RGB", (4, 4), "red")
         exif = Image.Exif()

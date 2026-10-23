@@ -2,6 +2,8 @@
 
 import json
 import hashlib
+import subprocess
+from core.errors import AppError
 from core.secrets import SecretStore
 from pathlib import Path
 import re
@@ -249,7 +251,9 @@ def collect(lookup, settings, context, remaining=4999, auth_only=False):
                 max_bytes=12 * 1024 * 1024,
             )
             result = json.loads(stdout)
-        except Exception:
+        except AppError:
+            raise
+        except (OSError, ValueError, subprocess.SubprocessError):
             if checkpoint.exists():
                 result = json.loads(checkpoint.read_text())
                 result.setdefault("warnings", []).append(

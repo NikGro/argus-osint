@@ -4,6 +4,7 @@ import copy
 import json
 import math
 import re
+from core.errors import AppError
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 
@@ -231,6 +232,9 @@ def aggregate(kind, providers, inputs, params, context):
                 )
                 logs.append(name + "\n" + str(result.get("log", "")))
             except Exception as exc:
+                # Independent provider failures are partial results; cancellation is not.
+                if isinstance(exc, AppError) and exc.code == "actor_cancelled":
+                    raise
                 message = name + ": " + str(exc)
                 warnings.append(message)
                 logs.append(message)
