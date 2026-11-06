@@ -14,6 +14,7 @@ Compose drops every default capability and adds only:
 | NET_RAW | OpenVPN and WireGuard transport sockets |
 | SETUID / SETGID | Start the application as UID 10001 |
 | CHOWN | Give the data, tool and plugin folders to UID 10001 |
+| DAC_OVERRIDE | Reach the VPN state inside the data volume, which belongs to UID 10001 |
 | KILL | Stop the application when the VPN controller stops |
 
 `/dev/net/tun` is needed for the VPN. `no-new-privileges` is set. No seccomp or

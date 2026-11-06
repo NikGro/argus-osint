@@ -10,7 +10,7 @@ services:
     # plugin then run as UID 10001. No other privileges are needed.
     user: "0:0"
     cap_drop: [ALL]
-    cap_add: [NET_ADMIN, NET_RAW, SETUID, SETGID, CHOWN, KILL]
+    cap_add: [NET_ADMIN, NET_RAW, SETUID, SETGID, CHOWN, DAC_OVERRIDE, KILL]
     devices: [/dev/net/tun:/dev/net/tun]
     security_opt: [no-new-privileges:true]
     ports:

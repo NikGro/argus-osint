@@ -73,7 +73,7 @@ jobs:
         run: |
           docker run -d --name argus-smoke --user 0:0 --cap-drop ALL \
             --cap-add NET_ADMIN --cap-add NET_RAW --cap-add SETUID --cap-add SETGID \
-            --cap-add CHOWN --cap-add KILL --device /dev/net/tun \
+            --cap-add CHOWN --cap-add DAC_OVERRIDE --cap-add KILL --device /dev/net/tun \
             --security-opt no-new-privileges argus:ci
           healthy=0
           for attempt in $(seq 1 60); do
