@@ -39,7 +39,7 @@ class Dopplergeist(unittest.TestCase):
             self.assertTrue(config["cache_root"].endswith("dopplergeist/cache"))
             self.assertTrue(Path(args[2]).name.endswith(".mp3"))
             if fail:
-                raise ValueError("Suchwerkzeug fehlgeschlagen: exit 1")
+                raise ValueError("Search tool failed: exit 1")
             return json.dumps(result), ""
 
         with patch.object(dopplergeist, "bounded_run", side_effect=fake):

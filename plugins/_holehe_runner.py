@@ -14,7 +14,7 @@ async def collect(payload):
         available = {function.__name__.lower() for function in functions}
         if selected - available:
             raise ValueError(
-                "Unbekannte Holehe-Anbieter: " + ", ".join(sorted(selected - available))
+                "Unknown Holehe providers: " + ", ".join(sorted(selected - available))
             )
         functions = [f for f in functions if f.__name__.lower() in selected]
     results = []
@@ -42,7 +42,7 @@ async def collect(payload):
                             {
                                 "name": function.__name__,
                                 "exists": None,
-                                "error": "Kein auswertbares Ergebnis",
+                                "error": "No usable result",
                             }
                         ]
                 except Exception as exc:

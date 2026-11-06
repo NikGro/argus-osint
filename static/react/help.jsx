@@ -1,121 +1,120 @@
 import React, { useState } from 'react';
 import { Icon } from './ui/index.jsx';
-import { t } from '../i18n.js';
 
 const chapters = [
   [
     'projects',
-    'Projekte und Dateien',
+    'Projects and files',
     [
       [
-        'Ein Projekt beginnen',
-        'Im Hauptmenü ein Projekt anlegen und öffnen. ARGUS speichert Änderungen automatisch. Oben rechts zeigt der Speicherstatus, ob noch Änderungen ausstehen.'
+        'Start a project',
+        'Create and open a project from the main menu. ARGUS saves changes automatically. The status at the top right shows whether changes are still pending.'
       ],
       [
-        'Dateien behalten',
-        'Bilder, Videos und Dateien können hochgeladen werden. Projektdateien bleiben mit dem Projekt verknüpft. Bearbeitungswerkzeuge erstellen Kopien; Originaldateien bleiben erhalten.'
+        'Keep your files',
+        'Upload images, videos and files. Project files stay associated with the project. Editing tools create copies and preserve original files.'
       ],
       [
-        'Archiv und Sicherung',
-        'Projekte lassen sich umbenennen, archivieren und aus dem Archiv löschen. Für Sicherungen das gesamte ARGUS-Datenvolume einschließlich der Schlüssel sichern.'
+        'Archives and backups',
+        'Rename and archive projects, or delete them from the archive. Back up the complete ARGUS data volume, including its keys.'
       ]
     ]
   ],
   [
     'graph',
-    'Canvas und Tools',
+    'Canvas and tools',
     [
       [
-        'Daten verbinden',
-        'Links einen Daten-Node hinzufügen und rechts seine Werte bearbeiten. Ein ausgewählter Node hebt passende Tools hervor. Ein Tool auf den Node ziehen oder hinzufügen und die Andockpunkte verbinden.'
+        'Connect data',
+        'Add a data node on the left and edit its values on the right. Selecting a node highlights compatible tools. Drag a tool onto the node, or add it and connect the ports.'
       ],
       [
-        'Mehrere Eingaben',
-        'Mit Umschalt oder dem Auswahlrahmen mehrere Nodes auswählen. Tools mit mehreren Eingaben benötigen die passenden Typen, beispielsweise ein Bild und eine Datenbank oder zwei Bilder.'
+        'Multiple inputs',
+        'Select multiple nodes with Shift or the selection rectangle. Tools with multiple inputs require compatible types, such as an image and a database, or two images.'
       ],
       [
-        'Navigieren und gruppieren',
-        'Canvas mit Leertaste und Ziehen verschieben; mit Strg und Mausrad oder der Zoomanzeige zoomen. Gruppen können verschachtelt und auf- oder zugeklappt werden. Bereinigen ordnet den Graphen an.'
+        'Navigate and group',
+        'Pan with Space and drag; zoom with Ctrl and the mouse wheel or the zoom field. Groups can be nested, expanded and collapsed. Arrange organizes the graph.'
       ],
       [
-        'Ausführen und Ergebnisse',
-        'Tool auswählen und „Tool ausführen“ drücken. Weitere Aufträge kommen in die Warteschlange. Ergebnis-Nodes behalten ihre Herkunft. Warnungen und Fehler können zusätzlich als Error-Nodes erscheinen, auch wenn Teilergebnisse vorliegen.'
+        'Execution and results',
+        'Select a tool and press Run tool. Further jobs enter the queue. Output nodes retain their provenance. Warnings and failures may also appear as error nodes, even when partial results are available.'
       ]
     ]
   ],
   [
     'databases',
-    'Datenbanken und Importe',
+    'Databases and imports',
     [
       [
-        'Daten pflegen',
-        'Im Tab Datenbanken eine Datenbank anlegen und Felder hinzufügen. Feldtypen umfassen Werte, Text, Zahlen, Ja/Nein, Kennungen, Bilder, Dateien und JSON. Datensätze lassen sich bearbeiten und löschen.'
+        'Manage data',
+        'Create a database in the Databases tab and add fields. Types include values, text, numbers, booleans, identifiers, images, files and JSON. Records can be edited and deleted.'
       ],
       [
-        'Import vorbereiten',
-        'Dateien importieren, ein Ziel wählen und eine Vorschau erzeugen. CSV, TSV, XLSX, ODS, JSON, JSONL, XML und Text werden als Daten gelesen; andere Formate als Anhänge aufgenommen. Formeln werden nicht ausgeführt.'
+        'Prepare an import',
+        'Import files, choose a destination and generate a preview. CSV, TSV, XLSX, ODS, JSON, JSONL, XML and text are read as data; other formats become attachments. Formulas are not executed.'
       ],
       [
-        'Spalten zuordnen',
-        'Gleiche Feldnamen werden automatisch zugeordnet. Jede Quellspalte kann einem bestehenden Feld, einem neuen Feld oder „Nicht importieren“ zugeordnet werden. Bei Tabellen lassen sich Blatt, Kopfzeile, Kodierung und Trennzeichen wählen. Erst „Import bestätigen“ übernimmt den gesamten Import.'
+        'Map columns',
+        'Matching field names are mapped automatically. Each source column can map to an existing field, a new field or Do not import. Choose the worksheet, header row, encoding and delimiter for tables. Confirm import applies the whole import.'
       ],
       [
-        'Viele Bilder aufnehmen',
-        'Mehrere Bilder auswählen und „Jede Datei als neuer Datensatz“ verwenden. Alternativ sammelt „Alle Dateien als ein Datensatz“ die Anhänge in einer Zeile. Bild- und Dateifelder können mehrere Anhänge enthalten.'
+        'Add multiple images',
+        'Choose multiple images and use Each file becomes a new record. Alternatively, All files in one record collects attachments in a single row. Image and file fields can hold multiple attachments.'
       ],
       [
-        'Im Graphen suchen',
-        'Einen Datenbank-Node hinzufügen und die Datenbank auswählen. Mit „Datenbank durchsuchen“ zusätzlich einen Value-, E-Mail-, Telefon-, URL- oder Username-Node verbinden. Beim ersten Ausführen die Referenzspalte wählen. Jeder passende Datensatz wird als eigene Gruppe mit allen ausgefüllten Feldern ausgegeben.'
+        'Search from the graph',
+        'Add a database node and choose a database. Connect Search database to that node and a value, email, phone, URL or username node. Choose the reference column on the first execution. Each matching record becomes a separate group containing all populated fields.'
       ],
       [
-        'Bildspalten vergleichen',
-        'DeepFace akzeptiert weiterhin zwei Bilder oder ein Referenzbild und eine Datenbank. Eine Bildspalte auswählen; passende Datensätze erscheinen als Gruppen mit Herkunft und Vergleichswerten. Vergleichslimits und Warnungen beachten.'
+        'Compare image columns',
+        'DeepFace accepts two images, or a reference image and a database. Select an image column; matching records appear as groups with provenance and comparison values. Review comparison limits and warnings.'
       ]
     ]
   ],
   [
     'media',
-    'Medien und Karten',
+    'Media and maps',
     [
       [
-        'Vorschauen und Zuschnitt',
-        'Glances zeigen Bilder, Videos und Karten direkt im Canvas. Quick Actions öffnen die Ressource in einem neuen Tab. Videozuschnitt verwendet einen gemeinsamen Zeitbereich und einen grafischen Bildausschnitt.'
+        'Previews and cropping',
+        'Glances show images, videos and maps on the canvas. Quick actions open the resource in a new tab. Video cropping uses a shared time-range control and a graphical crop area.'
       ],
       [
-        'Ortsangaben',
-        'Im Location-Node Adresse oder Koordinaten eintragen und die Kartenvorschau aktivieren. Die Vorschau wird über ARGUS geladen und unterliegt dessen Netzwerkeinstellungen.'
+        'Locations',
+        'Enter an address or coordinates in a location node and enable the map preview. The preview loads through ARGUS and follows its network settings.'
       ]
     ]
   ],
   [
     'report',
-    'Verifizierung und Report',
+    'Verification and report',
     [
       [
-        'Erkenntnisse markieren',
-        'Verifizierung und eigene Tags helfen bei der Einordnung. „In Report aufnehmen“ bestimmt, welche Nodes im Bericht erscheinen. Ergebnisse unabhängig prüfen.'
+        'Mark findings',
+        'Verification and custom tags help assess findings. Include in report controls which nodes appear in the report. Verify results independently.'
       ],
       [
-        'Bericht erstellen',
-        'In der Toolbar Report öffnen, Berichtsanmerkungen ergänzen und die Vorschau aktualisieren. Über Drucken / als PDF speichern entsteht ein Bericht auf weißem A4-Papier. Verschachtelte Daten werden mit Feldpfaden ohne wachsende Einrückung dargestellt.'
+        'Create a report',
+        'Open Report from the toolbar, add notes and refresh the preview. Print / save as PDF creates a report on white A4 paper. Nested data uses field paths without increasing indentation.'
       ]
     ]
   ],
   [
     'configuration',
-    'Plugins, VPN und Logs',
+    'Plugins, VPN and logs',
     [
       [
-        'Einstellungen und Defaults',
-        'Plugin-Einstellungen trennen globale Konfiguration von Vorgaben für neue Tool-Ausführungen. Quellen und ihre Reihenfolge werden dort festgelegt; Suchprofile können für die konkrete Suche angepasst werden.'
+        'Settings and defaults',
+        'Plugin settings separate global configuration from defaults for new tool runs. Configure sources and their order there; search profiles can be changed for a specific search.'
       ],
       [
-        'VPN und Warteschlange',
-        'OpenVPN- oder WireGuard-Profile in den Einstellungen pflegen. Die Rotation kann zeitgesteuert oder nach einer Tool-Ausführung erfolgen. Bei aktivierter VPN-Nutzung wartet die Warteschlange auf die Verbindung. Der Docker-Host muss die dokumentierten Netzwerkrechte bereitstellen.'
+        'VPN and queue',
+        'Manage OpenVPN or WireGuard profiles in settings. Rotate on a timer or after a tool run. When VPN use is enabled, the queue waits for the connection. The Docker host must provide the documented networking permissions.'
       ],
       [
-        'Probleme nachvollziehen',
-        'Projekt-Logs zeigen Ausführungen; System-Logs bieten Suche, Export und automatische Aktualisierung. Bei unvollständigen Ergebnissen zuerst Warnungen und Herkunft ansehen. Zugangsdaten gehören in die Plugin-Einstellungen.'
+        'Investigate problems',
+        'Project logs show tool runs; system logs offer search, export and automatic refresh. For incomplete results, inspect warnings and provenance first. Store credentials in plugin settings.'
       ]
     ]
   ]
@@ -128,7 +127,7 @@ export function Help() {
       id,
       title,
       items.filter(([heading, body]) =>
-        (t(heading) + ' ' + t(body) + ' ' + t(title)).toLowerCase().includes(query.toLowerCase())
+        (heading + ' ' + body + ' ' + title).toLowerCase().includes(query.toLowerCase())
       )
     ])
     .filter(([, , items]) => items.length);
@@ -136,33 +135,33 @@ export function Help() {
     <main className="help-view content-view">
       <div className="view-heading">
         <div>
-          <h1>{t('ui.help')}</h1>
-          <p>{t('ui.a_short_guide_to_argus')}</p>
+          <h1>{'Help'}</h1>
+          <p>{'A short guide to ARGUS'}</p>
         </div>
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={t('ui.search_the_manual')}
-          aria-label={t('ui.search_the_manual')}
+          placeholder={'Search the manual …'}
+          aria-label={'Search the manual …'}
         />
       </div>
       <div className="help-layout">
-        <nav aria-label={t('ui.contents')}>
+        <nav aria-label={'Contents'}>
           {matching.map(([id, title]) => (
             <a key={id} href={'#help-' + id}>
-              {t(title)}
+              {title}
             </a>
           ))}
         </nav>
         <article>
           {matching.map(([id, title, items]) => (
             <section key={id} id={'help-' + id}>
-              <h2>{t(title)}</h2>
+              <h2>{title}</h2>
               {items.map(([heading, body]) => (
                 <div key={heading}>
-                  <h3>{t(heading)}</h3>
-                  <p>{t(body)}</p>
+                  <h3>{heading}</h3>
+                  <p>{body}</p>
                 </div>
               ))}
             </section>
@@ -170,7 +169,7 @@ export function Help() {
           {!matching.length && (
             <p>
               <Icon name="search" />
-              {t('ui.no_matching_entries')}
+              {'No matching entries.'}
             </p>
           )}
         </article>

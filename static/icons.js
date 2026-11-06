@@ -1,4 +1,3 @@
-import { t } from './i18n.js';
 // Material Design Icons 7.4.47, Pictogrammers, Apache-2.0.
 const ICON_PATHS = {
   upload: ['M5 20H19V18H5ZM11 16H13V8L17 12L18.4 10.6L12 4L5.6 10.6L7 12L11 8Z'],
@@ -222,7 +221,6 @@ function buttonContent(button, label, name, only = false, suffix = false) {
     const text = document.createElement('span');
     text.className = 'button-label';
     text.textContent = label;
-    if (button.dataset.labelKey) text.dataset.i18n = button.dataset.labelKey;
     button.append(text);
   }
   if (name && suffix) button.append(icon(name));
@@ -239,12 +237,8 @@ function buttonContent(button, label, name, only = false, suffix = false) {
 }
 function decorateStaticIcons() {
   for (const element of document.querySelectorAll('[data-icon]')) {
-    const key = element.dataset.labelKey || element.dataset.i18n;
-    if (key) {
-      element.dataset.labelKey = key;
-      element.removeAttribute('data-i18n');
-    }
-    const label = key ? t(key) : element.getAttribute('aria-label') || element.textContent;
+    const label =
+      element.dataset.labelKey || element.getAttribute('aria-label') || element.textContent;
     buttonContent(element, label, element.dataset.icon, element.hasAttribute('data-icon-only'));
   }
 }

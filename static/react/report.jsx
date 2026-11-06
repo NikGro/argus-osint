@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Button, Field } from './ui/index.jsx';
-import { t } from '../i18n.js';
 
 export function Report({ app }) {
   const [revision, setRevision] = useState(0),
@@ -12,9 +11,9 @@ export function Report({ app }) {
         <div className="view-heading">
           <div className="action-row">
             <Button icon="back" only onClick={() => app.commands.show('workspace')}>
-              {t('ui.back')}
+              {'Back'}
             </Button>
-            <h1>{t('ui.report_b6ce788d')}</h1>
+            <h1>{'Report'}</h1>
           </div>
           <Button
             app={app}
@@ -30,13 +29,13 @@ export function Report({ app }) {
               }
             }}
           >
-            {t('ui.refresh_preview')}
+            {'Refresh preview'}
           </Button>
         </div>
         <details className="report-notes">
-          <summary>{t('ui.report_notes')}</summary>
+          <summary>{'Report notes'}</summary>
           <Field
-            label={t('ui.report_notes')}
+            label={'Report notes'}
             multiline
             value={project.document.report_notes || ''}
             onChange={(value) => {
@@ -45,12 +44,12 @@ export function Report({ app }) {
             }}
           />
         </details>
-        <p>{t('ui.the_preview_uses_softer_contrast_printing_uses_white_a4_paper')}</p>
+        <p>{'The preview uses softer contrast. Printing uses white A4 paper.'}</p>
       </div>
       <iframe
         key={revision}
         id="reportFrame"
-        title={t('ui.report_b6ce788d')}
+        title={'Report'}
         src={'/api/projects/' + project.id + '/report?preview=' + revision}
       />
     </main>

@@ -54,10 +54,6 @@ def build():
         descriptor = json.loads(json.dumps(module.PLUGIN))
         pid = descriptor["id"]
         files = {f"plugins/{name}.py": digest(ROOT / "plugins" / f"{name}.py")}
-        locale = ROOT / "plugins" / "locales" / f"{pid}.json"
-        if locale.exists():
-            files[f"plugins/locales/{pid}.json"] = digest(locale)
-            descriptor["translations"] = json.loads(locale.read_text(encoding="utf-8"))
         tools = descriptor.pop("tools", [])
         unknown = set(tools) - set(RECIPES)
         if unknown:

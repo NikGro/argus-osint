@@ -1,5 +1,3 @@
-import { language } from '../i18n.js';
-import { t, diagnostic } from '../i18n.js';
 import { nodeLabels } from './labels.js';
 var catalogue_default = {
   name: 'catalogue',
@@ -37,46 +35,21 @@ var catalogue_default = {
         info.node_display_defaults || preferencesState.appSettings.node_display_defaults || {};
       if (workspaceState.project) renderPalette();
     }
-    function pluginText(plugin, key) {
-      const catalog = plugin?.translations;
-      const stable =
-        catalog?.en && Object.keys(catalog.en).find((source) => catalog.en[source] === key);
-      const localized =
-        catalog?.[language]?.[key] ?? (stable ? catalog?.[language]?.[stable] : undefined);
-      if (localized !== undefined) return localized;
-      const common = t(key);
-      if (common !== key) return common;
-      // Untranslated text stays in the plugin's own language when that is the active
-      // language; English is only the fallback for other interface languages.
-      if (language === (plugin?.default_language || 'de')) return diagnostic(common);
-      return plugin?.translations?.en?.[key] ?? diagnostic(common);
-    }
     function nodePlugin(type) {
       return pluginsState.dataTypes.get(type)?.plugin;
     }
     function dataLabel(type) {
       const entry = pluginsState.dataTypes.get(type);
-      return entry ? pluginText(entry.plugin, entry.node.name) : t(nodeLabels[type] || type);
+      return entry ? entry.node.name : nodeLabels[type] || type;
     }
     function nodeTitle(node) {
       if (node.evidence?.label_custom) return node.label;
-      if (node.evidence?.label_key)
-        return pluginText(
-          pluginsState.catalog.find((p) => p.id === (node.data?.plugin || node.evidence?.plugin)) ||
-            nodePlugin(node.type),
-          node.evidence.label_key
-        );
+      if (node.evidence?.label_key) return node.evidence.label_key;
       if (node.evidence?.origin === 'manual') return node.label;
-      return pluginText(
-        pluginsState.catalog.find((p) => p.id === node.evidence?.plugin) || nodePlugin(node.type),
-        node.label
-      );
+      return node.label;
     }
     function pluginDisplayName(plugin) {
-      return pluginText(
-        plugin,
-        plugin.actions?.length === 1 ? plugin.actions[0].name : plugin.name
-      );
+      return plugin.actions?.length === 1 ? plugin.actions[0].name : plugin.name;
     }
     function sourceLabel(key) {
       return (
@@ -98,32 +71,28 @@ var catalogue_default = {
     }
     function newNodeLabel(type) {
       const entry = pluginsState.dataTypes.get(type);
-      if (entry) return pluginText(entry.plugin, entry.node.new_label || entry.node.name);
-      return t(
+      if (entry) return entry.node.new_label || entry.node.name;
+      return (
         {
-          email: 'Neue E-Mail',
-          phone: 'Neue Telefonnummer',
-          url: 'Neue URL',
-          username: 'Neuer Benutzername',
-          value: 'Neuer Wert',
-          note: 'Neue Notiz',
-          location: 'Neuer Ort',
-          datetime: 'Neues Datum / Zeit',
-          image: 'Neues Bild',
-          file: 'Neue Datei'
-        }[type] || 'Neue Information'
+          email: 'New email',
+          phone: 'New phone number',
+          url: 'New URL',
+          username: 'New username',
+          value: 'New value',
+          note: 'New note',
+          location: 'New place',
+          datetime: 'New date / time',
+          image: 'New image',
+          file: 'New file'
+        }[type] || 'New information'
       );
     }
     function actorTitle(node) {
       const plugin = pluginsState.catalog.find((p) => p.id === node.data.plugin);
-      return pluginText(
-        plugin,
-        plugin?.actions.find((a) => a.id === node.data.action)?.name || node.label
-      );
+      return plugin?.actions.find((a) => a.id === node.data.action)?.name || node.label;
     }
     return {
       refreshCatalog,
-      pluginText,
       nodePlugin,
       dataLabel,
       nodeTitle,

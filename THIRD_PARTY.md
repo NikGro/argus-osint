@@ -2,7 +2,7 @@
 
 The original ARGUS application code is MIT licensed; see [LICENSE](LICENSE). That license does **not** replace the licenses of research engines, datasets, libraries, icons, model weights or operating-system packages. This repository publishes application source and build recipes, not a prebuilt third-party tool/model distribution. The research tools below are not part of the image: ARGUS downloads each one from its upstream source into the data volume when you install a plugin that needs it. A built image and a data volume with installed tools contain separately licensed components and cannot be described as MIT-only.
 
-The following projects make ARGUS possible. Repository ownership and links identify upstream maintainers; no endorsement or partnership is implied. The executable version record is the Dockerfile, `requirements.txt`, the tool recipes in `core/tools.py` and the package lock.
+The following projects make ARGUS possible. Repository ownership and links identify upstream maintainers; no endorsement or partnership is implied. The executable version record is the Dockerfile, `requirements.txt`, the tool recipes in `core/tools.py`, the hash-pinned tool locks in `core/tool_locks/` and the package lock.
 
 | Component / upstream credit | Version or pin | Role and license notes |
 | --- | --- | --- |

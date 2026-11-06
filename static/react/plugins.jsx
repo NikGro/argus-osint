@@ -1,5 +1,5 @@
+import { errorText } from '../errors.js';
 import React, { useEffect, useRef, useState } from 'react';
-import { t } from '../i18n.js';
 import { pollJob } from '../jobs-client.js';
 import { Button, Check, Fields, Icon, SearchProfiles, SortList } from './ui/index.jsx';
 import { providerFields, displayOptions } from '../app/labels.js';
@@ -8,19 +8,32 @@ export function Plugins({ app }) {
   const { commands: c, state: s } = app;
   const hasTools = s.pluginsState.catalog.some((plugin) => plugin.actions?.length);
   const [query, setQuery] = useState(''),
-    [library, setLibrary] = useState(!hasTools);
+    [library, setLibrary] = useState(!hasTools),
+    [attention, setAttention] = useState({ installing: 0, failed: 0 });
+  // Installed plugins whose update or repair is running or failed are not in
+  // the catalogue until they work again; say so instead of hiding them.
+  useEffect(() => {
+    if (app.ui.view !== 'pluginsView' || library) return;
+    app.safely(async () => {
+      const items = await c.api('/api/plugin-library');
+      setAttention({
+        installing: items.filter((item) => item.progress?.state === 'installing').length,
+        failed: items.filter((item) => item.progress?.state === 'failed').length
+      });
+    });
+  }, [app.ui.view, library]);
   return (
     <main id="pluginsView" hidden={app.ui.view !== 'pluginsView'}>
       <div className="intro">
-        <h1>{t('ui.installed_plugins')}</h1>
-        <p>{t('ui.search_configure_and_manage_your_installed_plugins')}</p>
+        <h1>{'Installed plugins'}</h1>
+        <p>{'Search, configure and manage your installed plugins.'}</p>
       </div>
       <section className="home-tools">
         <input
           type="search"
           value={query}
-          aria-label={t('ui.search_plugins_3313d63d')}
-          placeholder={t('ui.search_plugins')}
+          aria-label={'Search plugins'}
+          placeholder={'Search plugins …'}
           onChange={(event) => setQuery(event.target.value)}
         />
         <Button
@@ -30,14 +43,26 @@ export function Plugins({ app }) {
           aria-controls="pluginLibrary"
           onClick={() => setLibrary(!library)}
         >
-          {t(library ? 'ui.close_plugin_library' : 'ui.add_plugins_a728662a')}
+          {library ? 'Close library' : 'Add plugins'}
         </Button>
       </section>
       {library && <Library app={app} query={query} />}
       <div id="pluginList" className="plugin-list">
         {[true, false].map((tools) => (
           <section key={String(tools)} className="installed-plugin-section">
-            <h2>{t(tools ? 'Tools' : 'Daten-Nodes')}</h2>
+            <h2>{tools ? 'Tools' : 'Data nodes'}</h2>
+            {tools && (attention.installing > 0 || attention.failed > 0) && (
+              <div className="plugin-attention" role="status">
+                <p>
+                  {attention.failed > 0
+                    ? `${attention.failed} plugin${attention.failed === 1 ? '' : 's'} could not be installed and ${attention.failed === 1 ? 'is' : 'are'} unavailable.`
+                    : `${attention.installing} plugin${attention.installing === 1 ? ' is' : 's are'} being installed or updated.`}
+                </p>
+                <Button app={app} icon="plugin" onClick={() => setLibrary(true)}>
+                  {'Open library'}
+                </Button>
+              </div>
+            )}
             {s.pluginsState.catalog
               .filter(
                 (plugin) =>
@@ -50,7 +75,11 @@ export function Plugins({ app }) {
                 <Plugin key={plugin.id} app={app} plugin={plugin} />
               ))}
             {tools && !hasTools && (
-              <p className="empty-state">{t('ui.no_tool_plugins_installed_yet')}</p>
+              <p className="empty-state">
+                {
+                  'No tools installed yet. Choose in the plugin library above which research tools ARGUS should download.'
+                }
+              </p>
             )}
           </section>
         ))}
@@ -132,7 +161,7 @@ function Plugin({ app, plugin }) {
     setConnecting(true);
     try {
       await persist();
-      if (pending.current || running.current) throw Error(t('ui.wait_for_saving_to_complete'));
+      if (pending.current || running.current) throw Error('Wait for saving to complete.');
       let transient = {};
       for (let attempt = 0; attempt < 4; attempt++) {
         const job = await c.api('/api/plugin/connection', {
@@ -143,7 +172,7 @@ function Plugin({ app, plugin }) {
         });
         const finished = await pollJob(job.id);
         if (finished.state !== 'completed')
-          throw Error(t('errors.' + (finished.error_code || 'execution_interrupted')));
+          throw Error(errorText(finished.error_code || 'execution_interrupted'));
         if (finished.result?.input_request) {
           const values = await c.parameterModal(finished.result.input_request);
           if (values === null) return;
@@ -151,12 +180,12 @@ function Plugin({ app, plugin }) {
           continue;
         }
         if (!finished.result?.authenticated)
-          throw Error((finished.result?.warnings || []).join(' · ') || t('ui.login_failed'));
+          throw Error((finished.result?.warnings || []).join(' · ') || 'Login failed.');
         await c.refreshCatalog();
-        c.toast(t('ui.instagram_login_successful'));
+        c.toast('Instagram login successful.');
         return;
       }
-      throw Error(t('ui.too_many_consecutive_input_requests'));
+      throw Error('Too many consecutive input requests.');
     } finally {
       setConnecting(false);
     }
@@ -175,11 +204,11 @@ function Plugin({ app, plugin }) {
             else s.pluginsState.pluginSettingsOpen.add(plugin.id);
           }}
         >
-          {t('ui.plugin_settings')}
+          {'Plugin settings'}
         </Button>
         <div className="plugin-copy">
           <strong>{c.pluginDisplayName(plugin)}</strong>
-          <p>{c.pluginText(plugin, plugin.description)}</p>
+          <p>{plugin.description}</p>
         </div>
         <Button
           app={app}
@@ -189,12 +218,10 @@ function Plugin({ app, plugin }) {
           onClick={async () => {
             if (
               !(await c.askConfirm(
-                t('ui.remove_plugin_title', { name: c.pluginDisplayName(plugin) }),
-                t(
-                  plugin.tools?.length
-                    ? 'ui.remove_plugin_with_tools_message'
-                    : 'ui.remove_plugin_message'
-                )
+                `Remove “${c.pluginDisplayName(plugin)}”?`,
+                plugin.tools?.length
+                  ? 'The plugin is uninstalled. Tools that no other installed plugin needs are deleted and downloaded again on the next install. Settings are kept.'
+                  : 'The plugin is uninstalled. Its settings are kept and apply again if you reinstall it.'
               ))
             )
               return;
@@ -204,7 +231,7 @@ function Plugin({ app, plugin }) {
             app.redraw();
           }}
         >
-          {t('ui.remove')}
+          {'Remove'}
         </Button>
       </div>
       <div className="plugin-settings" hidden={!open}>
@@ -213,9 +240,9 @@ function Plugin({ app, plugin }) {
         </small>
         {(plugin.nodes || []).map((node) => (
           <section key={node.type}>
-            <h3>{c.pluginText(plugin, node.name)}</h3>
+            <h3>{node.name}</h3>
             <section className="plugin-default-section">
-              <h4>{t('ui.defaults_for_new_nodes')}</h4>
+              <h4>{'Defaults for new nodes'}</h4>
               <Fields
                 values={
                   settings.nodes?.[node.type]?.defaults ||
@@ -243,7 +270,7 @@ function Plugin({ app, plugin }) {
             </section>
             {(displayOptions[node.type] || []).length > 0 && (
               <section className="plugin-display-section">
-                <h4>{t('ui.quick_actions_glances')}</h4>
+                <h4>{'Quick Actions & Glances'}</h4>
                 {(displayOptions[node.type] || []).map(([key, label]) => (
                   <Check
                     key={key}
@@ -268,7 +295,7 @@ function Plugin({ app, plugin }) {
                       })
                     }
                   >
-                    {t(label)}
+                    {label}
                   </Check>
                 ))}
               </section>
@@ -277,7 +304,7 @@ function Plugin({ app, plugin }) {
               .filter((key) => node[key])
               .map((key) => (
                 <div key={key}>
-                  <h4>{t(key)}</h4>
+                  <h4>{key}</h4>
                   <SortList
                     items={settings.nodes?.[node.type]?.[key] || node[key]}
                     remove={false}
@@ -329,11 +356,11 @@ function Plugin({ app, plugin }) {
           const order = params.source_order || [];
           return (
             <section key={action.id}>
-              <h3>{c.pluginText(plugin, action.name)}</h3>
+              <h3>{action.name}</h3>
               <section className="plugin-config-section">
-                <h4>{t('ui.plugin_settings')}</h4>
+                <h4>{'Plugin settings'}</h4>
                 <p className="source-help">
-                  {t('ui.applies_to_the_whole_plugin_including_credentials_and_source_conf')}
+                  {'Applies to the whole plugin, including credentials and source configuration.'}
                 </p>
                 {order.length > 0 && (
                   <SortList
@@ -361,16 +388,14 @@ function Plugin({ app, plugin }) {
                               .map((key) => [key, params[key]])
                           )}
                           schema={action.parameter_schema}
-                          label={(key) => c.pluginText(plugin, c.fieldName(key))}
+                          label={(key) => c.fieldName(key)}
                           onChange={(key, value) => defaults(action, key, value)}
                         />
                         {action.research_profiles?.[id] ? (
                           <section className="provider-defaults">
-                            <h4>{t('ui.defaults_for_new_tools')}</h4>
+                            <h4>{'Defaults for new tools'}</h4>
                             <p className="source-help">
-                              {t(
-                                'ui.you_can_change_these_values_for_each_tool_in_its_node_details'
-                              )}
+                              {'You can change these values for each tool in its node details.'}
                             </p>
                             <SearchProfiles
                               catalog={action.research_profiles[id]}
@@ -386,7 +411,7 @@ function Plugin({ app, plugin }) {
                         ) : (
                           !(providerFields[id] || []).some((key) => key in params) && (
                             <p className="source-help">
-                              {t('ui.no_additional_settings_are_required_for_this_provider')}
+                              {'No additional settings are required for this provider.'}
                             </p>
                           )
                         )}
@@ -424,16 +449,15 @@ function Plugin({ app, plugin }) {
                   )}
                   schema={action.parameter_schema}
                   sections={action.parameter_sections}
-                  translate={(text) => c.pluginText(plugin, text)}
-                  label={(key) => c.pluginText(plugin, c.fieldName(key))}
+                  label={(key) => c.fieldName(key)}
                   onChange={(key, value) => defaults(action, key, value)}
                   help={action.parameter_help}
                 />
               </section>
               <section className="plugin-default-section">
-                <h4>{t('ui.defaults_for_new_tools')}</h4>
+                <h4>{'Defaults for new tools'}</h4>
                 <p className="source-help">
-                  {t('ui.you_can_change_these_values_for_each_tool_in_its_node_details')}
+                  {'You can change these values for each tool in its node details.'}
                 </p>
                 <Fields
                   values={Object.fromEntries(
@@ -443,8 +467,7 @@ function Plugin({ app, plugin }) {
                   )}
                   schema={action.parameter_schema}
                   sections={action.parameter_sections}
-                  translate={(text) => c.pluginText(plugin, text)}
-                  label={(key) => c.pluginText(plugin, c.fieldName(key))}
+                  label={(key) => c.fieldName(key)}
                   onChange={(key, value) => defaults(action, key, value)}
                   help={action.parameter_help}
                 />
@@ -460,7 +483,7 @@ function Plugin({ app, plugin }) {
             disabled={connecting}
             onClick={connect}
           >
-            {c.pluginText(plugin, plugin.connection_action.label)}
+            {plugin.connection_action.label}
           </Button>
         )}
         {error && <p role="alert">{error}</p>}
@@ -481,15 +504,11 @@ function installStep(plugin) {
   const progress = plugin.progress || {};
   if (progress.step === 'tool') {
     const labels = (plugin.tool_status || []).map((tool) => tool.label);
-    return t('ui.installing_tool', {
-      tool: progress.detail,
-      index: Math.max(1, labels.indexOf(progress.detail) + 1),
-      total: labels.length || 1
-    });
+    return `Installing tool ${Math.max(1, labels.indexOf(progress.detail) + 1)} of ${labels.length || 1}: ${progress.detail}`;
   }
-  if (progress.step === 'download') return t('ui.downloading_plugin_files');
-  if (progress.step === 'catalogue') return t('ui.updating_site_catalogues');
-  return t('ui.waiting_for_installation');
+  if (progress.step === 'download') return 'Downloading plugin files';
+  if (progress.step === 'catalogue') return 'Updating site catalogues';
+  return 'Waiting for another installation';
 }
 
 function LibraryPlugin({ app, plugin, reload }) {
@@ -503,11 +522,8 @@ function LibraryPlugin({ app, plugin, reload }) {
     if (
       plugin.origin === 'community' &&
       !(await c.askConfirm(
-        t('ui.install_community_plugin'),
-        t('ui.community_plugin_install_warning', {
-          repository: plugin.repo_url || plugin.id,
-          commit: String(plugin.commit || '').slice(0, 12) || '–'
-        })
+        'Install community plugin',
+        `ARGUS does not review community plugins. Python code from ${plugin.repo_url || plugin.id} (commit ${String(plugin.commit || '').slice(0, 12) || '–'}) runs without a sandbox and with all of ARGUS's permissions: it can read your projects, credentials and files and fetch web pages. Install only if you have reviewed the repository and trust its author.`
       ))
     )
       return;
@@ -521,15 +537,12 @@ function LibraryPlugin({ app, plugin, reload }) {
       <div className="plugin-header">
         <div className="plugin-copy">
           <strong>{c.pluginDisplayName(plugin)}</strong>
-          <p>{c.pluginText(plugin, plugin.description)}</p>
+          <p>{plugin.description}</p>
           {tools.length > 0 && (
             <p className="library-tools">
               {plugin.installed && installedSize
-                ? t('ui.uses_tools_installed_size', {
-                    tools: tools.map((tool) => tool.label).join(', '),
-                    size: size(installedSize)
-                  })
-                : t('ui.downloads_tools', { tools: tools.map((tool) => tool.label).join(', ') })}
+                ? `Tools: ${tools.map((tool) => tool.label).join(', ')} · ${size(installedSize)} used`
+                : `Downloads on install: ${tools.map((tool) => tool.label).join(', ')}`}
             </p>
           )}
         </div>
@@ -539,20 +552,20 @@ function LibraryPlugin({ app, plugin, reload }) {
           </span>
         ) : plugin.installed ? (
           <span className="install-state installed">
-            <Icon name="check" /> {t('Installiert')}
+            <Icon name="check" /> {'Installed'}
           </span>
         ) : (
           <Button app={app} icon={failed ? 'refresh' : 'download'} onClick={install}>
-            {t(failed ? 'ui.retry_installation' : 'Installieren')}
+            {failed ? 'Retry installation' : 'Install'}
           </Button>
         )}
       </div>
       {failed && (
         <div className="install-failure" role="alert">
-          <p>{t('errors.' + (progress.error || 'tool_install_failed'))}</p>
+          <p>{errorText(progress.error || 'tool_install_failed')}</p>
           {progress.log?.length > 0 && (
             <details>
-              <summary>{t('ui.show_installation_log')}</summary>
+              <summary>{'Show installation log'}</summary>
               <pre>{progress.log.join('\n')}</pre>
             </details>
           )}
@@ -587,10 +600,13 @@ function Library({ app, query }) {
     return () => clearInterval(timer);
   }, [busy]);
   async function addRepository() {
-    const url = await c.askText(t('ui.add_community_repository'), t('ui.repository_url'), '');
+    const url = await c.askText('Add community repository', 'Repository URL', '');
     if (!url?.trim()) return;
     if (
-      !(await c.askConfirm(t('ui.add_community_repository'), t('ui.community_repository_warning')))
+      !(await c.askConfirm(
+        'Add community repository',
+        'The repository makes its plugins visible in the library; nothing is installed yet. Add only sources whose author you know and whose code you can review before installing.'
+      ))
     )
       return;
     await c.api('/api/repositories/add', { url: url.trim() });
@@ -604,19 +620,19 @@ function Library({ app, query }) {
   return (
     <section className="plugin-library" id="pluginLibrary">
       <div className="plugin-library-header">
-        <h2>{t('ui.plugin_library_4ba1045f')}</h2>
+        <h2>{'Plugin library'}</h2>
         <Button app={app} icon="plus" onClick={addRepository}>
-          {t('ui.add_community_repository')}
+          {'Add community repository'}
         </Button>
       </div>
       {[
-        ['ui.argus_plugins', visible.filter((p) => p.origin !== 'community')],
-        ['ui.community_plugins', visible.filter((p) => p.origin === 'community')]
+        ['ARGUS plugins', visible.filter((p) => p.origin !== 'community')],
+        ['Community plugins', visible.filter((p) => p.origin === 'community')]
       ].map(
         ([title, plugins]) =>
           plugins.length > 0 && (
             <section key={title} className="plugin-library-group">
-              <h3>{t(title)}</h3>
+              <h3>{title}</h3>
               <div className="plugin-library-list">
                 {plugins.filter(matches).map((plugin) => (
                   <LibraryPlugin key={plugin.id} app={app} plugin={plugin} reload={load} />
@@ -625,7 +641,7 @@ function Library({ app, query }) {
             </section>
           )
       )}
-      <h3>{t('ui.community_repositories')}</h3>
+      <h3>{'Community repositories'}</h3>
       {data.repositories.length ? (
         <div className="plugin-library-list">
           {data.repositories.map((repo) => (
@@ -641,7 +657,7 @@ function Library({ app, query }) {
                     await load();
                   }}
                 >
-                  {t('ui.refresh')}
+                  {'Refresh'}
                 </Button>
                 <Button
                   app={app}
@@ -652,14 +668,14 @@ function Library({ app, query }) {
                     await load();
                   }}
                 >
-                  {t('ui.remove')}
+                  {'Remove'}
                 </Button>
               </div>
             </article>
           ))}
         </div>
       ) : (
-        <p className="empty-state">{t('ui.no_community_repositories_added_yet')}</p>
+        <p className="empty-state">{'No community repositories added yet.'}</p>
       )}
     </section>
   );

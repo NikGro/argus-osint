@@ -114,9 +114,7 @@ class CatalogueBrowserContracts(unittest.TestCase):
                     }
                 )
         finally:
-            app.save_settings(
-                {"language": before["language"], "tags": before.get("tags", [])}
-            )
+            app.save_settings({"tags": before.get("tags", [])})
 
     def test_merge_completes_person_and_never_changes_inputs(self):
         inputs = [
@@ -260,8 +258,8 @@ class CatalogueBrowserContracts(unittest.TestCase):
     def test_native_page_metadata_yields_specific_image_and_bio(self):
         html = '<meta property="og:description" content="Public biography"><meta property="og:image" content="https://cdn.example.invalid/jtv_user_pictures/profile_image.png"><script type="application/ld+json">{"@type":"ProfilePage","mainEntity":{"@type":"Person","name":"Fixture","description":"Structured bio"}}</script>'
         facts = web.extract_page(html, "https://example.invalid/fixture")
-        self.assertEqual(facts["Biografie"], "Structured bio")
-        self.assertIn("Profilbild", facts)
+        self.assertEqual(facts["Biography"], "Structured bio")
+        self.assertIn("Profile image", facts)
         self.assertEqual(facts["Name"], "Fixture")
 
     def test_native_page_handles_malformed_json_and_labels_general_preview(self):
@@ -269,7 +267,7 @@ class CatalogueBrowserContracts(unittest.TestCase):
             '<meta property="og:image" content="/card.jpg"><script type="application/ld+json">{not valid</script>',
             "https://example.invalid/fixture",
         )
-        self.assertEqual(facts["Vorschaubild"], "https://example.invalid/card.jpg")
+        self.assertEqual(facts["Preview image"], "https://example.invalid/card.jpg")
 
     def test_deep_empty_run_outputs_visible_error_not_a_missing_account_claim(self):
         params = {
@@ -286,7 +284,7 @@ class CatalogueBrowserContracts(unittest.TestCase):
         self.assertEqual(result["outputs"][0]["type"], "error")
         self.assertFalse(result["group_outputs"])
         self.assertFalse(result["failed"])
-        self.assertIn("nicht existiert", result["outputs"][0]["data"]["message"])
+        self.assertIn("does not exist", result["outputs"][0]["data"]["message"])
 
     def test_deep_failed_run_keeps_failure_status_and_explanation(self):
         params = {

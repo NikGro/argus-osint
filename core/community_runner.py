@@ -14,7 +14,7 @@ with contextlib.redirect_stdout(sys.stderr):
     def resolve_file(file_id):
         path = payload.get("files", {}).get(file_id)
         if not path:
-            raise ValueError("Datei gehört nicht zu den übergebenen Eingaben.")
+            raise ValueError("The file does not belong to the supplied inputs.")
         return path
 
     context = {
@@ -24,7 +24,7 @@ with contextlib.redirect_stdout(sys.stderr):
     }
     if payload.get("operation", "run") == "connect":
         if not hasattr(module, "connect"):
-            raise ValueError("Plugin bietet keine Verbindungsaktion.")
+            raise ValueError("The plugin provides no connection action.")
         result = module.connect(payload["action"], payload["params"], context)
     else:
         result = module.run(

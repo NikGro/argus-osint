@@ -1,8 +1,6 @@
 import React, { memo, useRef, useState, useEffect, useMemo } from 'react';
 import phoneCountries from '../phone-countries.js';
 import locationCountries from '../location-countries.js';
-import { language } from '../i18n.js';
-import { t, diagnostic } from '../i18n.js';
 import { providerFields, displayOptions } from '../app/labels.js';
 import { hasMediaEditor, cropKeys, MediaEditor } from '../app/media-editor.js';
 import {
@@ -94,7 +92,7 @@ export function Workspace({ app }) {
               togglePanel('leftCollapsed');
             }}
           >
-            {t('ui.tool_menu')}
+            {'Tool menu'}
           </Button>
           <Button
             id="toggleRight"
@@ -106,7 +104,7 @@ export function Workspace({ app }) {
               togglePanel('rightCollapsed');
             }}
           >
-            {t('ui.node_details')}
+            {'Node details'}
           </Button>
         </section>
         <div
@@ -140,7 +138,7 @@ export function Workspace({ app }) {
         }
       />
       <p id="graphKeyboardHint" className="sr-only">
-        {t('ui.space_to_pan_ctrl_wheel_to_zoom')}
+        {'Space to pan. Ctrl + wheel to zoom.'}
       </p>
     </main>
   );
@@ -178,7 +176,7 @@ function Toolbar({ app }) {
       onClick={onClick}
       disabled={disabled}
     >
-      {t(label)}
+      {label}
     </Button>
   );
   const none =
@@ -206,12 +204,12 @@ function Toolbar({ app }) {
   const running = s.executionState.activeActors.size;
   const queued = s.executionState.actorQueue.length;
   return (
-    <div className={'toolbar'} role="toolbar" aria-label={t('ui.project_tools')}>
-      <div className="tool-group">{btn('back', 'Hauptmenü', 'home', c.home, false, true)}</div>
+    <div className={'toolbar'} role="toolbar" aria-label={'Project tools'}>
+      <div className="tool-group">{btn('back', 'Home', 'home', c.home, false, true)}</div>
       <div className="tool-group">
         {btn(
           'undo',
-          'Rückgängig',
+          'Undo',
           'undo',
           () => c.applyHistory('undo'),
           !s.historyState.undoStack.length,
@@ -219,7 +217,7 @@ function Toolbar({ app }) {
         )}
         {btn(
           'redo',
-          'Wiederholen',
+          'Redo',
           'redo',
           () => c.applyHistory('redo'),
           !s.historyState.redoStack.length,
@@ -227,31 +225,29 @@ function Toolbar({ app }) {
         )}
       </div>
       <div className="tool-group">
-        <Dropdown label={t('ui.group_b4c02265')} icon="group">
-          {btn('groupNodes', 'Gruppieren', 'group', c.createGroupFromSelection, !canGroup)}
+        <Dropdown label={'Group'} icon="group">
+          {btn('groupNodes', 'Group', 'group', c.createGroupFromSelection, !canGroup)}
           {btn(
             'ungroupNodes',
-            'Gruppe aufheben',
+            'Ungroup',
             'ungroup',
             c.dissolveSelectedGroups,
             !selectedGroups.length
           )}
-          {btn('detachNodes', 'Aus Gruppe lösen', 'ungroup', detach, !canDetach)}
-          {btn('expandAllGroups', 'Alle Gruppen aufklappen', 'chevron-down', () =>
-            c.setAllGroups(false)
-          )}
-          {btn('collapseAllGroups', 'Alle Gruppen einklappen', 'chevron-right', () =>
+          {btn('detachNodes', 'Detach from group', 'ungroup', detach, !canDetach)}
+          {btn('expandAllGroups', 'Expand all groups', 'chevron-down', () => c.setAllGroups(false))}
+          {btn('collapseAllGroups', 'Collapse all groups', 'chevron-right', () =>
             c.setAllGroups(true)
           )}
         </Dropdown>
-        <Dropdown label={t('ui.arrange_b6a83ebd')} icon="cleanup">
+        <Dropdown label={'Arrange'} icon="cleanup">
           {['hierarchy', 'grid', 'radial'].map((mode) =>
             btn(
               'cleanup-' + mode,
               {
-                hierarchy: 'Hierarchisch',
-                grid: 'Raster je Arbeitsschritt',
-                radial: 'Kreis je Arbeitsschritt'
+                hierarchy: 'Hierarchical',
+                grid: 'Grid per research step',
+                radial: 'Circle per research step'
               }[mode],
               'arrange',
               () => c.arrangeProject(mode)
@@ -260,10 +256,10 @@ function Toolbar({ app }) {
         </Dropdown>
       </div>
       <div className="tool-group">
-        <Dropdown label={t('ui.delete')} icon="trash" danger>
+        <Dropdown label={'Delete'} icon="trash" danger>
           {btn(
             'deleteSelected',
-            'Objekt löschen',
+            'Delete object',
             'trash',
             c.deleteSelection,
             none,
@@ -272,7 +268,7 @@ function Toolbar({ app }) {
           )}
           {btn(
             'deleteDescendants',
-            'Objekt und Nachkommen löschen',
+            'Delete object and descendants',
             'trash',
             c.deleteSelectionWithChildren,
             none,
@@ -282,15 +278,15 @@ function Toolbar({ app }) {
         </Dropdown>
       </div>
       <div className="tool-group">
-        {btn('zoomOut', 'Verkleinern', 'search-minus', () => c.zoomStep(-1), false, true)}
+        {btn('zoomOut', 'Zoom out', 'search-minus', () => c.zoomStep(-1), false, true)}
         <input
           id="zoomLevel"
-          aria-label={t('ui.zoom_percentage')}
+          aria-label={'Zoom percentage'}
           defaultValue="100%"
           onBlur={(event) => {
             const percent = Number(event.target.value.replace('%', ''));
             if (!Number.isFinite(percent) || percent < 15 || percent > 250)
-              return c.toast(t('ui.zoom_must_be_between_15_and_250_percent'));
+              return c.toast('Zoom must be between 15 and 250 percent.');
             const box = document.getElementById('graph').getBoundingClientRect();
             c.zoomAt(box.width / 2, box.height / 2, percent / 100);
           }}
@@ -298,8 +294,8 @@ function Toolbar({ app }) {
             if (event.key === 'Enter') event.currentTarget.blur();
           }}
         />
-        {btn('zoomIn', 'Vergrößern', 'search-plus', () => c.zoomStep(1), false, true)}
-        {btn('fit', 'Zentrieren', 'center', c.centerProject)}
+        {btn('zoomIn', 'Zoom in', 'search-plus', () => c.zoomStep(1), false, true)}
+        {btn('fit', 'Fit graph', 'center', c.centerProject)}
       </div>
       <div className="tool-group">
         {btn('logs', 'Logs', 'logs', c.openLogs)}
@@ -311,12 +307,12 @@ function Toolbar({ app }) {
       <div className="tool-group execution-group">
         <div className={'execution-status' + (!running && !queued ? ' idle' : '')} role="status">
           <Icon name={running ? 'spinner' : 'clock'} />
-          {running} {t('ui.running_870fa7cc')} · {queued} {t('ui.queued')}
-          {s.executionState.vpnWaiting && <span>{t('ui.waiting_for_vpn')}</span>}
+          {running} running · {queued} queued
+          {s.executionState.vpnWaiting && <span>{'Waiting for VPN'}</span>}
         </div>
         {btn(
           'cancelActor',
-          'Tool abbrechen',
+          'Cancel tool',
           'close',
           c.cancelCurrentActor,
           !running,
@@ -357,7 +353,7 @@ function Palette({ app }) {
   const tools = s.pluginsState.catalog.flatMap((plugin) =>
     (plugin.actions || []).map((action) => ({
       id: plugin.id + ':' + action.id,
-      label: c.pluginText(plugin, action.name),
+      label: action.name,
       category: c.actionCategory(plugin, action),
       plugin,
       action
@@ -385,12 +381,12 @@ function Palette({ app }) {
     return (
       <>
         <div className="palette-heading">
-          <h2>{t(title)}</h2>
+          <h2>{title}</h2>
           <div className="palette-tools">
             {[
-              ['search', 'Suchen'],
-              ['filter', 'Filtern'],
-              ['sort', 'Sortieren']
+              ['search', 'Search'],
+              ['filter', 'Filter'],
+              ['sort', 'Sort']
             ].map(([icon, label]) => (
               <Button
                 key={icon}
@@ -401,7 +397,7 @@ function Palette({ app }) {
                 aria-expanded={!!panels[kind + icon]}
                 onClick={() => setPanels({ ...panels, [kind + icon]: !panels[kind + icon] })}
               >
-                {t(label)}
+                {label}
               </Button>
             ))}
           </div>
@@ -410,19 +406,19 @@ function Palette({ app }) {
           <input
             type="search"
             value={queries[kind]}
-            placeholder={t('ui.search_51942c20')}
+            placeholder={'Search …'}
             onChange={(event) => setQueries({ ...queries, [kind]: event.target.value })}
           />
         )}
         {panels[kind + 'sort'] && (
           <Select
-            label={t('ui.sort')}
+            label={'Sort'}
             id={kind + 'Sort'}
             value={sorts[kind]}
             options={[
               { value: 'az', label: 'A–Z' },
               { value: 'za', label: 'Z–A' },
-              { value: 'category_az', label: t('ui.by_category') }
+              { value: 'category_az', label: 'By category' }
             ]}
             onChange={(value) => setSorts({ ...sorts, [kind]: value })}
           />
@@ -442,7 +438,7 @@ function Palette({ app }) {
                   })
                 }
               >
-                {t(category)}
+                {category}
               </Check>
             ))}
           </div>
@@ -453,7 +449,7 @@ function Palette({ app }) {
             last = entry.category;
             return (
               <React.Fragment key={entry.id}>
-                {heading && <div className="palette-category-divider">{t(entry.category)}</div>}
+                {heading && <div className="palette-category-divider">{entry.category}</div>}
                 <Button
                   app={app}
                   className={
@@ -503,13 +499,13 @@ function Palette({ app }) {
   return (
     <>
       <section id="dataWindow" style={{ height, flex: '0 0 ' + height + 'px' }}>
-        {section('node', nodes, 'Daten')}
+        {section('node', nodes, 'Data')}
       </section>
       <div
         id="paletteSplit"
         role="separator"
         tabIndex={0}
-        aria-label={t('ui.resize_sections')}
+        aria-label={'Resize sections'}
         onPointerDown={(event) => {
           const handle = event.currentTarget,
             y = event.clientY,
@@ -552,10 +548,10 @@ function Inspector({ app }) {
     const members = doc.nodes.filter((node) => c.groupNodeIds(group).has(node.id));
     return (
       <>
-        <span className="node-kind">{t('ui.group_b4c02265').toUpperCase()}</span>
-        <h2>{t('ui.group_details')}</h2>
+        <span className="node-kind">{'Group'.toUpperCase()}</span>
+        <h2>{'Group details'}</h2>
         <Field
-          label={t('ui.label')}
+          label={'Label'}
           value={c.groupTitle(group)}
           onChange={(value) => {
             group.label = value;
@@ -571,7 +567,7 @@ function Inspector({ app }) {
             icon={group.collapsed ? 'chevron-right' : 'chevron-down'}
             onClick={() => c.toggleGroup(group)}
           >
-            {t(group.collapsed ? 'Aufklappen' : 'Einklappen')}
+            {group.collapsed ? 'Expand' : 'Collapse'}
           </Button>
         </DetailSection>
         <DetailSection className="node-report-section">
@@ -582,7 +578,7 @@ function Inspector({ app }) {
               c.change();
             }}
           >
-            {t('ui.include_group_in_report')}
+            {'Include group in report'}
           </Check>
         </DetailSection>
         {doc.groups.filter((child) => child.parent_id === group.id).length > 0 && (
@@ -598,12 +594,12 @@ function Inspector({ app }) {
         )}
         <DetailSection className="group-controls">
           <Button className="wide" onClick={() => c.dissolveGroup(group)} icon="ungroup">
-            {t('ui.ungroup_a7471297')}
+            {'Ungroup'}
           </Button>
         </DetailSection>
         <DetailSection className="node-delete-section">
           <Button className="danger-filled wide" icon="trash" onClick={() => c.deleteGroup(group)}>
-            {t('ui.delete_group')}
+            {'Delete group'}
           </Button>
         </DetailSection>
       </>
@@ -616,9 +612,9 @@ function Inspector({ app }) {
           .filter((edge) => s.selectionState.selectedEdges.has(edge.id))
           .map((edge) => (
             <section key={edge.id}>
-              <h2>{t('ui.connection_details')}</h2>
+              <h2>{'Connection details'}</h2>
               <Field
-                label={t('ui.label')}
+                label={'Label'}
                 value={edge.label}
                 onChange={(value) => {
                   edge.label = value;
@@ -631,7 +627,7 @@ function Inspector({ app }) {
                 className="danger-filled wide"
                 onClick={() => c.deleteEdges([edge.id])}
               >
-                {t('ui.delete_connection')}
+                {'Delete connection'}
               </Button>
             </section>
           ))}
@@ -641,7 +637,7 @@ function Inspector({ app }) {
     return (
       <>
         <h2>
-          {nodes.length} {t('ui.nodes_selected_c456770e')}
+          {nodes.length} {'nodes selected'}
         </h2>
         <DetailSection className="node-report-section">
           <Check
@@ -651,7 +647,7 @@ function Inspector({ app }) {
               c.change();
             }}
           >
-            {t('ui.include_all_in_report')}
+            {'Include all in report'}
           </Check>
         </DetailSection>
         <DetailSection className="node-delete-section">
@@ -660,7 +656,7 @@ function Inspector({ app }) {
             className="danger-filled wide node-delete"
             onClick={() => c.deleteNodes(nodes.map((node) => node.id))}
           >
-            {t('ui.delete_nodes')}
+            {'Delete nodes'}
           </Button>
         </DetailSection>
       </>
@@ -718,7 +714,7 @@ function NodeDetails({ app, node }) {
   return (
     <>
       <span className="node-kind">{c.dataLabel(node.type).toUpperCase()}</span>
-      <h2>{t('ui.node_details')}</h2>
+      <h2>{'Node details'}</h2>
       {actor && (
         <DetailSection className="tool-run-section">
           <Button
@@ -740,21 +736,19 @@ function NodeDetails({ app, node }) {
             }
             onClick={() => c.run(node)}
           >
-            {t(
-              running || preparing
-                ? 'Wird ausgeführt …'
-                : queued
-                  ? 'In Warteschlange'
-                  : s.executionState.activeActors.size
-                    ? 'Zur Warteschlange hinzufügen'
-                    : 'Tool ausführen'
-            )}
+            {running || preparing
+              ? 'Running …'
+              : queued
+                ? 'Queued'
+                : s.executionState.activeActors.size
+                  ? 'Add to queue'
+                  : 'Run tool'}
           </Button>
         </DetailSection>
       )}
       <DetailSection className={'node-title-section' + (actor ? ' actor-title' : '')}>
         <Field
-          label={t('ui.title')}
+          label={'Title'}
           value={c.nodeTitle(node)}
           onChange={(value) => {
             node.label = value;
@@ -784,7 +778,7 @@ function NodeDetails({ app, node }) {
         )}
       {node.type === 'email' && (
         <Field
-          label={t('ui.email')}
+          label={'Email'}
           value={node.data.value || ''}
           schema={{ type: 'email' }}
           onChange={(value) => commit('value', value)}
@@ -794,45 +788,40 @@ function NodeDetails({ app, node }) {
       {node.type === 'location' && (
         <div className="country-input">
           <Field
-            label={t('ui.country')}
+            label={'Country'}
             value={node.data.country_code || ''}
             schema={{
               enum: ['', ...locationCountries],
               labels: Object.fromEntries(
                 ['', ...locationCountries].map((code) => [
                   code,
-                  code
-                    ? new Intl.DisplayNames([language], { type: 'region' }).of(code)
-                    : t('ui.any')
+                  code ? new Intl.DisplayNames(['en'], { type: 'region' }).of(code) : 'Any'
                 ])
               )
             }}
             onChange={(code) => {
               node.data.country_code = code;
               node.data.country = code
-                ? new Intl.DisplayNames([language], { type: 'region' }).of(code)
+                ? new Intl.DisplayNames(['en'], { type: 'region' }).of(code)
                 : '';
               c.change(node.id);
             }}
           />
-          <Field label={t('ui.code')} value={node.data.country_code || ''} disabled />
+          <Field label={'Code'} value={node.data.country_code || ''} disabled />
         </div>
       )}
       {node.type === 'datetime' && <DateTimeFields node={node} commit={commit} />}
       {node.type === 'profile' && (
         <>
           <Field
-            label={t('ui.provider')}
+            label={'Provider'}
             value={
               s.pluginsState.providerIndex.has(c.providerSearchKey(node.data.provider))
                 ? c.providerName(node.data.provider)
-                : t('ui.other_custom_fbc668fd')
+                : 'Other / Custom'
             }
             schema={{
-              enum: [
-                ...s.pluginsState.providerCatalogue.map((item) => item.name),
-                t('ui.other_custom_fbc668fd')
-              ]
+              enum: [...s.pluginsState.providerCatalogue.map((item) => item.name), 'Other / Custom']
             }}
             onChange={(value) =>
               commit(
@@ -845,7 +834,7 @@ function NodeDetails({ app, node }) {
           {(!s.pluginsState.providerIndex.has(c.providerSearchKey(node.data.provider)) ||
             String(node.data.provider).startsWith('custom:')) && (
             <Field
-              label={t('ui.custom_provider')}
+              label={'Custom provider'}
               value={String(node.data.provider || '').replace(/^custom:/, '')}
               onChange={(value) => commit('provider', 'custom:' + value)}
             />
@@ -856,9 +845,8 @@ function NodeDetails({ app, node }) {
         values={data}
         schema={action?.parameter_schema}
         sections={action?.parameter_sections}
-        translate={(text) => c.pluginText(plugin || c.nodePlugin(node.type), text)}
         exclude={exclude}
-        label={(key) => c.pluginText(plugin || c.nodePlugin(node.type), c.fieldName(key))}
+        label={(key) => c.fieldName(key)}
         onChange={commit}
         help={action?.parameter_help}
       />
@@ -874,7 +862,7 @@ function NodeDetails({ app, node }) {
       )}
       {action?.research_profiles && (
         <section className="tool-search-profiles">
-          <h3>{t('ui.search_profiles_for_this_search')}</h3>
+          <h3>{'Search profiles for this search'}</h3>
           {Object.entries(action.research_profiles)
             .filter(([provider]) => action.default_params['use_' + provider] !== false)
             .map(([provider, catalog]) => (
@@ -901,7 +889,7 @@ function NodeDetails({ app, node }) {
       {['note', 'marker'].includes(node.type) && (
         <section>
           <ColorField
-            label={t('ui.color')}
+            label={'Color'}
             value={node.appearance?.color || '#ffcc70'}
             onChange={(color) => {
               if (/^#[0-9a-f]{6}$/i.test(color)) {
@@ -913,7 +901,7 @@ function NodeDetails({ app, node }) {
           {['width', 'height'].map((key) => (
             <Field
               key={key}
-              label={t(key === 'width' ? 'Breite' : 'Höhe')}
+              label={key === 'width' ? 'Width' : 'Height'}
               value={node.appearance?.[key] || (key === 'width' ? 320 : 180)}
               schema={{
                 min: key === 'width' ? 200 : 120,
@@ -930,7 +918,7 @@ function NodeDetails({ app, node }) {
       )}
       {(displayOptions[node.type] || []).length > 0 && (
         <section className="node-display-section">
-          <h3>{t('ui.quick_actions_glances')}</h3>
+          <h3>{'Quick Actions & Glances'}</h3>
           {c.resourceActions(node).map((item) => (
             <Button
               app={app}
@@ -939,7 +927,7 @@ function NodeDetails({ app, node }) {
               icon={item.icon}
               onClick={() => c.openNodeResource(node, item.provider)}
             >
-              {t(item.label)}
+              {item.label}
             </Button>
           ))}
           {(displayOptions[node.type] || []).map(([key, label]) => (
@@ -951,7 +939,7 @@ function NodeDetails({ app, node }) {
                 c.change(node.id);
               }}
             >
-              {t(label)}
+              {label}
             </Check>
           ))}
         </section>
@@ -961,7 +949,7 @@ function NodeDetails({ app, node }) {
       )}
       {node.type === 'audio' && fileURL && (
         <audio className="audio-preview" controls preload="metadata" src={fileURL}>
-          {t('ui.audio_playback_unsupported')}
+          {'Your browser cannot play this audio file.'}
         </audio>
       )}
       {node.type === 'image' && fileURL && (
@@ -975,14 +963,14 @@ function NodeDetails({ app, node }) {
           {!['error', 'note'].includes(node.type) && (
             <section className="verification-section">
               <Field
-                label={t('ui.verification')}
+                label={'Verification'}
                 value={node.verification || 'unverified'}
                 schema={{
                   enum: ['unverified', 'unclear', 'verified'],
                   labels: {
-                    unverified: t('ui.unverified'),
-                    unclear: t('ui.unclear'),
-                    verified: t('ui.verified')
+                    unverified: 'Unverified',
+                    unclear: 'Unclear',
+                    verified: 'Verified'
                   }
                 }}
                 onChange={(value) => {
@@ -993,7 +981,7 @@ function NodeDetails({ app, node }) {
             </section>
           )}
           <section className="node-tags-section">
-            <h3>{t('ui.tags')}</h3>
+            <h3>{'Tags'}</h3>
             <div className="tag-badges">
               {(node.tags || []).map((id) => {
                 const tag = s.preferencesState.appSettings.tags?.find((item) => item.id === id);
@@ -1010,7 +998,7 @@ function NodeDetails({ app, node }) {
                           c.change(node.id);
                         }}
                       >
-                        {t('ui.remove')}
+                        {'Remove'}
                       </Button>
                     </span>
                   )
@@ -1018,8 +1006,8 @@ function NodeDetails({ app, node }) {
               })}
             </div>
             <Select
-              label={t('ui.add_tag')}
-              placeholder={t('ui.add_tag_7d178046')}
+              label={'Add tag'}
+              placeholder={'Add tag …'}
               value=""
               options={availableTags.map((tag) => ({ value: tag.id, label: tag.name }))}
               onChange={(id) => {
@@ -1040,7 +1028,7 @@ function NodeDetails({ app, node }) {
             c.change(node.id);
           }}
         >
-          {t('ui.include_in_report')}
+          {'Include in report'}
         </Check>
       </DetailSection>
       <Provenance value={node.evidence} />
@@ -1050,10 +1038,10 @@ function NodeDetails({ app, node }) {
         .reverse()
         .map((run) => (
           <section key={run.id} className={'run ' + run.status}>
-            <strong>{t(run.status)}</strong>
-            {run.error && <p>{diagnostic(run.error)}</p>}
+            <strong>{run.status}</strong>
+            {run.error && <p>{run.error}</p>}
             {run.warnings?.map((warning, index) => (
-              <p key={index}>{diagnostic(warning)}</p>
+              <p key={index}>{warning}</p>
             ))}
           </section>
         ))}
@@ -1064,7 +1052,7 @@ function NodeDetails({ app, node }) {
           className="danger-filled wide node-delete"
           onClick={() => c.deleteNodes([node.id])}
         >
-          {t('ui.delete_node')}
+          {'Delete node'}
         </Button>
       </DetailSection>
     </>
@@ -1079,7 +1067,7 @@ function Provenance({ value }) {
       open={open}
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >
-      <summary>{t('ui.source_origin')}</summary>
+      <summary>{'Source / Origin'}</summary>
       {open && <Facts value={value} />}
     </details>
   );
@@ -1104,9 +1092,9 @@ function DatabaseReference({ app, node, onChange }) {
   }, [app]);
   return (
     <DetailSection>
-      <label>{t('ui.database')}</label>
+      <label>{'Database'}</label>
       <Select
-        label={t('ui.choose_database')}
+        label={'Choose database'}
         value={node.data.database_id}
         options={items.map((item) => ({ value: item.id, label: item.title }))}
         onChange={(id) => {
@@ -1117,7 +1105,7 @@ function DatabaseReference({ app, node, onChange }) {
         }}
       />
       {error && <p role="alert">{error}</p>}
-      {!items.length && !error && <p>{t('ui.create_or_import_databases_from_the_main_menu')}</p>}
+      {!items.length && !error && <p>{'Create or import databases from the main menu.'}</p>}
     </DetailSection>
   );
 }
@@ -1144,9 +1132,9 @@ function DatabaseColumn({ app, node, source, onChange }) {
   );
   return (
     <div className="react-field">
-      <label>{t('ui.reference_column')}</label>
+      <label>{'Reference column'}</label>
       <Select
-        label={t('ui.reference_column')}
+        label={'Reference column'}
         value={node.data.params?.column_id || ''}
         options={available.map((field) => ({ value: field.id, label: field.name }))}
         onChange={onChange}
@@ -1159,7 +1147,7 @@ function PhoneField({ app, node, commit }) {
   const parsed = app.commands.splitPhoneNumber(node.data.value, node.display?.phoneRegion),
     [region, setRegion] = useState(parsed.region || ''),
     [number, setNumber] = useState(parsed.national || '');
-  const names = new Intl.DisplayNames([language], { type: 'region' });
+  const names = new Intl.DisplayNames(['en'], { type: 'region' });
   function update(value, nextRegion = region) {
     let national = value,
       selected = nextRegion;
@@ -1175,10 +1163,10 @@ function PhoneField({ app, node, commit }) {
   }
   return (
     <div className="react-field">
-      <label>{t('ui.phone_number')}</label>
+      <label>{'Phone number'}</label>
       <div className="phone-input">
         <Select
-          label={t('ui.country_calling_code')}
+          label={'Country calling code'}
           value={region}
           displayValue={phoneCountries[region]?.code || '+'}
           options={[
@@ -1194,7 +1182,7 @@ function PhoneField({ app, node, commit }) {
         />
         <input
           type="tel"
-          aria-label={t('ui.phone_number')}
+          aria-label={'Phone number'}
           value={number}
           onChange={(event) => update(event.target.value)}
         />
@@ -1241,19 +1229,19 @@ function DateTimeFields({ node, commit }) {
   return (
     <>
       <Field
-        label={t('ui.date')}
+        label={'Date'}
         value={node.data.date || ''}
         schema={{ type: 'date' }}
         onChange={(value) => commit('date', value)}
       />
       <Field
-        label={t('ui.time')}
+        label={'Time'}
         value={node.data.time || ''}
         schema={{ type: 'time' }}
         onChange={(value) => commit('time', value)}
       />
       <Field
-        label={t('ui.time_zone')}
+        label={'Time zone'}
         value={node.data.timezone || 'UTC'}
         schema={{ enum: zones, labels: zoneLabels }}
         onChange={(value) => commit('timezone', value)}

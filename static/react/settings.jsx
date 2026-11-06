@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { t, setLanguage } from '../i18n.js';
 import { Button, Check, Field, Icon, SortList, ColorSwatch } from './ui/index.jsx';
 
 export function Settings({ app }) {
@@ -36,7 +35,6 @@ export function Settings({ app }) {
     app.redraw();
     clearTimeout(timer.current);
     timer.current = setTimeout(flush, 500);
-    if (changes.language) return setLanguage(changes.language).then(app.redraw);
   }
   useEffect(
     () => () => {
@@ -48,26 +46,13 @@ export function Settings({ app }) {
   return (
     <main id="settingsView" hidden={app.ui.view !== 'settingsView'}>
       <div className="intro">
-        <h1>{t('ui.settings')}</h1>
+        <h1>{'Settings'}</h1>
       </div>
       <section className="settings-form">
-        <Field
-          label={t('ui.language')}
-          value={values.language || 'de'}
-          schema={{
-            labels: Object.fromEntries(
-              (app.ui.languages || []).map((item) => [item.code, item.name])
-            ),
-            enum: (app.ui.languages || [{ code: 'de' }, { code: 'en' }]).map(
-              (language) => language.code
-            )
-          }}
-          onChange={(language) => app.safely(() => persist({ language }))}
-        />
-        <p>{t('ui.address_lookups_are_controlled_through_the_installed_photon_plugi')}</p>
-        <p>{t('ui.configure_quick_actions_and_glances_in_the_corresponding_data_plu')}</p>
+        <p>{'Address lookups are controlled through the installed Photon plugin.'}</p>
+        <p>{'Configure Quick Actions and Glances in the corresponding data plugin.'}</p>
         <section className="global-tag-settings">
-          <h2>{t('ui.global_tags')}</h2>
+          <h2>{'Global tags'}</h2>
           <TagSettings
             app={app}
             tags={values.tags || []}
@@ -111,12 +96,16 @@ function WorkerSettings({ app, value, onChange }) {
   return (
     <section id="workerSettings">
       <h2>
-        <Icon name="nodes" /> {t('ui.parallel_tools')}
+        <Icon name="nodes" /> {'Parallel tools'}
       </h2>
-      <p className="source-help">{t('ui.parallel_tools_help')}</p>
+      <p className="source-help">
+        {
+          'ARGUS runs this many tools at the same time. More parallel tools need more processor cores and memory; they all share the VPN connection. A VPN change waits until no tool is running.'
+        }
+      </p>
       <div className="worker-controls">
         <Field
-          label={t('ui.tools_running_at_once')}
+          label={'Tools running at once'}
           value={value}
           schema={{ min: 1, max: system?.max_workers || 32, step: 1 }}
           onChange={(workers) =>
@@ -129,16 +118,12 @@ function WorkerSettings({ app, value, onChange }) {
           disabled={checking}
           onClick={detect}
         >
-          {t('ui.detect_system_resources')}
+          {'Detect system resources'}
         </Button>
       </div>
       {system && (
         <p role="status" className="worker-recommendation">
-          {t('ui.system_resources_found', {
-            cores: system.cpu_count,
-            memory: system.memory_available ? (system.memory_available / GIB).toFixed(1) : '?',
-            workers: system.recommended_workers
-          })}
+          {`${system.cpu_count} processor cores and ${system.memory_available ? (system.memory_available / GIB).toFixed(1) : '?'} GB of free memory available. Recommended and set: ${system.recommended_workers} tools at once.`}
         </p>
       )}
       {error && <p role="alert">{error}</p>}
@@ -153,7 +138,7 @@ function TagSettings({ app, tags, onChange }) {
         {tags.map((tag, index) => (
           <div key={tag.id} className="tag-manager-row">
             <Field
-              label={t('ui.tag_name')}
+              label={'Tag name'}
               value={tag.name}
               schema={{ maxLength: 40 }}
               onChange={(name) => {
@@ -163,7 +148,7 @@ function TagSettings({ app, tags, onChange }) {
             />
             <ColorSwatch
               compact
-              label={t('ui.tag_color')}
+              label={'Tag color'}
               value={tag.color}
               onChange={(color) =>
                 onChange(tags.map((item, i) => (i === index ? { ...item, color } : item)))
@@ -175,7 +160,7 @@ function TagSettings({ app, tags, onChange }) {
               className="danger-filled"
               onClick={() => onChange(tags.filter((item) => item.id !== tag.id))}
             >
-              {t('ui.delete_tag')}
+              {'Delete tag'}
             </Button>
           </div>
         ))}
@@ -184,14 +169,14 @@ function TagSettings({ app, tags, onChange }) {
         app={app}
         icon="plus"
         onClick={async () => {
-          const name = await app.commands.askText(t('ui.create_tag'), t('ui.tag_name'), '');
+          const name = await app.commands.askText('Create tag', 'Tag name', '');
           if (!name?.trim()) return;
           if (tags.some((tag) => tag.name.toLowerCase() === name.trim().toLowerCase()))
-            throw Error(t('ui.a_tag_with_this_name_already_exists'));
+            throw Error('A tag with this name already exists.');
           onChange([...tags, { id: app.commands.uid(), name: name.trim(), color: '#8799b2' }]);
         }}
       >
-        {t('ui.add_tag')}
+        {'Add tag'}
       </Button>
     </>
   );
@@ -256,7 +241,7 @@ function VPNSettings({ app }) {
         <h2>
           <Icon name="vpn" /> VPN
         </h2>
-        <p>{error || t('ui.loading')}</p>
+        <p>{error || 'Loading …'}</p>
       </section>
     );
   const { settings, status } = data;
@@ -266,20 +251,18 @@ function VPNSettings({ app }) {
         <Icon name="vpn" /> VPN
       </h2>
       <span className="vpn-state" role="status">
-        {t(
-          !status.available
-            ? 'VPN nicht verfügbar: Container-Netzwerkrechte prüfen'
-            : status.connected
-              ? 'VPN verbunden'
-              : settings.enabled
-                ? 'VPN wird verbunden'
-                : 'VPN aus'
-        )}
+        {!status.available
+          ? 'VPN unavailable: check container network permissions'
+          : status.connected
+            ? 'VPN connected'
+            : settings.enabled
+              ? 'Connecting to VPN'
+              : 'VPN off'}
         {status.active?.name && ' · ' + status.active.name}
         <i className={status.connected ? 'connected' : settings.enabled ? 'warning' : ''} />
       </span>
       <p className="source-help">
-        {t('ui.during_a_vpn_change_tools_wait_for_the_next_verified_connection')}
+        {'During a VPN change, tools wait for the next verified connection.'}
       </p>
       {error && <p role="alert">{error}</p>}
       <div className="vpn-controls">
@@ -288,27 +271,27 @@ function VPNSettings({ app }) {
           disabled={busy || !status.available}
           onChange={(enabled) => save({ enabled })}
         >
-          {t('ui.use_vpn')}
+          {'Use VPN'}
         </Check>
         <Check
           checked={settings.rotation_enabled}
           disabled={busy}
           onChange={(rotation_enabled) => save({ rotation_enabled })}
         >
-          {t('ui.enable_rotation')}
+          {'Enable rotation'}
         </Check>
         <Field
-          label={t('ui.vpn_rotation')}
+          label={'VPN rotation'}
           value={settings.rotation_mode}
           schema={{
             enum: ['interval', 'actor'],
-            labels: { interval: t('ui.at_a_time_interval'), actor: t('ui.after_each_tool') }
+            labels: { interval: 'At a time interval', actor: 'After each tool' }
           }}
           disabled={busy || !settings.rotation_enabled}
           onChange={(rotation_mode) => save({ rotation_mode })}
         />
         <Field
-          label={t('ui.interval_in_minutes')}
+          label={'Interval in minutes'}
           value={settings.interval_seconds / 60}
           schema={{ min: 1, max: 1440, step: 1 }}
           disabled={busy || settings.rotation_mode !== 'interval'}
@@ -319,7 +302,7 @@ function VPNSettings({ app }) {
           disabled={busy || !settings.enabled || !status.available}
           onClick={() => save({}, true)}
         >
-          {t('ui.switch_vpn_now')}
+          {'Switch VPN now'}
         </Button>
       </div>
       <SortList
@@ -340,14 +323,14 @@ function VPNSettings({ app }) {
                 save({ profiles: settings.profiles.filter((row) => row.id !== item.id) })
               }
             >
-              {t('ui.remove')}
+              {'Remove'}
             </Button>
           </div>
         )}
         renderDetails={(item) => (
           <>
             <Field
-              label={t('ui.profile_name')}
+              label={'Profile name'}
               value={item.name}
               disabled={busy}
               onChange={(name) =>
@@ -359,13 +342,15 @@ function VPNSettings({ app }) {
               }
             />
             <p className="source-help">
-              {t('ui.credentials_are_stored_encrypted_to_replace_them_remove_the_profi')}
+              {
+                'Credentials are stored encrypted. To replace them, remove the profile and add it again.'
+              }
             </p>
           </>
         )}
       />
       <Button className="primary" icon="plus" onClick={() => setAdding(!adding)}>
-        {t('ui.add_vpn_profile')}
+        {'Add VPN profile'}
       </Button>
       {adding && (
         <form
@@ -373,7 +358,7 @@ function VPNSettings({ app }) {
             event.preventDefault();
             app.safely(async () => {
               if (!profile.name.trim() || !profile.config.trim())
-                throw Error(t('ui.complete_all_required_fields'));
+                throw Error('Complete all required fields.');
               if (await save({ profiles: [...settings.profiles, profile] })) {
                 setAdding(false);
                 setProfile({ name: '', type: 'openvpn', config: '', username: '', password: '' });
@@ -384,12 +369,12 @@ function VPNSettings({ app }) {
           <input
             type="file"
             accept=".ovpn,.conf,.txt"
-            aria-label={t('ui.import_profile_file')}
+            aria-label={'Import profile file'}
             onChange={(event) =>
               app.safely(async () => {
                 const file = event.target.files[0];
                 if (!file) return;
-                if (file.size > 131072) throw Error(t('ui.profile_file_is_too_large'));
+                if (file.size > 131072) throw Error('Profile file is too large.');
                 const config = await file.text();
                 setProfile({
                   ...profile,
@@ -403,15 +388,15 @@ function VPNSettings({ app }) {
           {Object.entries(profile).map(([key, value]) => (
             <Field
               key={key}
-              label={t(
+              label={
                 {
-                  name: 'Profilname',
-                  type: 'VPN-Typ',
-                  config: 'VPN-Profil',
-                  username: 'VPN-Benutzername (optional)',
-                  password: 'VPN-Passwort (optional)'
+                  name: 'Profile name',
+                  type: 'VPN type',
+                  config: 'VPN profile',
+                  username: 'VPN username (optional)',
+                  password: 'VPN password (optional)'
                 }[key]
-              )}
+              }
               value={value}
               schema={key === 'type' ? { enum: ['openvpn', 'wireguard'] } : {}}
               secret={key === 'password'}
@@ -420,7 +405,7 @@ function VPNSettings({ app }) {
             />
           ))}
           <button type="submit" className="primary" disabled={busy}>
-            {t('ui.save_profile')}
+            {'Save profile'}
           </button>
         </form>
       )}
@@ -484,26 +469,26 @@ export function LogViewer({ app, project = false }) {
       <div className="view-heading">
         {project && (
           <Button only icon="back" onClick={() => c.show('workspace')}>
-            {t('ui.back')}
+            {'Back'}
           </Button>
         )}
         <h2>
-          <Icon name="logs" /> {t(project ? 'Logs' : 'Systemlogs')}
+          <Icon name="logs" /> {project ? 'Logs' : 'System logs'}
         </h2>
       </div>
       <div className="system-log-controls">
         <input
           type="search"
-          aria-label={t('ui.search_system_logs')}
-          placeholder={t('ui.search_system_logs')}
+          aria-label={'Search system logs'}
+          placeholder={'Search system logs'}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
         <Button icon="refresh" onClick={() => load()}>
-          {t('ui.refresh')}
+          {'Refresh'}
         </Button>
         <Field
-          label={t('ui.export_lines_0_all')}
+          label={'Export lines (0 = all)'}
           value={limit}
           schema={{ min: 0, step: 1 }}
           onChange={setLimit}
@@ -521,7 +506,7 @@ export function LogViewer({ app, project = false }) {
           download="argus-logs.txt"
         >
           <Icon name="download" />
-          {t('ui.export')}
+          {'Export'}
         </a>
         <Button
           app={app}
@@ -540,7 +525,7 @@ export function LogViewer({ app, project = false }) {
             await load();
           }}
         >
-          {t('ui.clear_system_logs')}
+          {'Clear system logs'}
         </Button>
       </div>
       <div className="system-log-options">
@@ -551,7 +536,7 @@ export function LogViewer({ app, project = false }) {
             localStorage.setItem('argus.logs.autoRefresh', String(value));
           }}
         >
-          {t('ui.auto_refresh')}
+          {'Auto refresh'}
         </Check>
         <Check
           checked={follow}
@@ -560,7 +545,7 @@ export function LogViewer({ app, project = false }) {
             localStorage.setItem('argus.logs.autoScroll', String(value));
           }}
         >
-          {t('ui.auto_scroll_to_bottom')}
+          {'Auto scroll to bottom'}
         </Check>
       </div>
       {error && <p role="alert">{error}</p>}
@@ -570,10 +555,10 @@ export function LogViewer({ app, project = false }) {
           .map((row) => row.text)
           .join('\n')}
       </pre>
-      <p role="status">{t('ui.log_lines_count', { count: data.total })}</p>
+      <p role="status">{`Log lines: ${data.total}`}</p>
       {(data.more || data.lines.length < data.total) && (
         <Button icon="plus" onClick={() => load(true)}>
-          {t('ui.load_more')}
+          {'Load more'}
         </Button>
       )}
     </section>

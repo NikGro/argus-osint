@@ -85,11 +85,11 @@ def run(payload, self_test=False):
             )
             result = utils.object_to_dict(service.controller_v1_endpoint(req))
             if result.get("status") != "ok":
-                raise ValueError(result.get("message", "Browserabruf fehlgeschlagen."))
+                raise ValueError(result.get("message", "Browser request failed."))
             solution = result.get("solution", {})
             html = solution.get("response", "")
             if len(html.encode()) > 4 * 1024 * 1024:
-                raise ValueError("Browserseite größer als 4 MiB.")
+                raise ValueError("Browser page exceeds 4 MiB.")
             return {
                 **({"image_base64": screenshots[-1]} if screenshots else {}),
                 "html": html,

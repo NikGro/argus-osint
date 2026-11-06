@@ -286,7 +286,7 @@ class GraphSchema:
             raise DomainError("validation.6161428e7a")
         for field in ("nodes", "edges", "groups", "runs"):
             if not isinstance(doc.get(field), list):
-                raise ValueError(field + " muss eine Liste sein.")
+                raise ValueError(field + " must be a list.")
         if len(doc["nodes"]) > 5000 or len(doc["edges"]) > 15000:
             raise DomainError("validation.5fea98af5a")
         ids = set()

@@ -1,6 +1,7 @@
 """Offline regression contracts for access, transport, history and durable execution."""
 
 import tool_stubs  # noqa: F401  (external tools count as installed)
+from core.migrations import VERSION
 import copy
 from email.message import Message
 import json
@@ -221,7 +222,7 @@ class PersistenceContracts(unittest.TestCase):
         app.validate(doc)
         self.assertEqual(doc, original)
         p = app.PROJECTS.create("fixture", doc)
-        self.assertEqual(p["document"]["schema_version"], 1)
+        self.assertEqual(p["document"]["schema_version"], VERSION)
         again = app.load_project(p["id"])
         self.assertEqual(again, p)
 

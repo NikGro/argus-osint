@@ -1,6 +1,5 @@
+import { errorText } from '../errors.js';
 import { authorizedFetch } from '../auth.js';
-import { t } from '../i18n.js';
-import { diagnostic } from '../i18n.js';
 var api_default = {
   name: 'api',
   dependencies: ['updateStatus'],
@@ -31,9 +30,9 @@ var api_default = {
       if (!response.ok) {
         const problem = data.error || {};
         const error = new Error(
-          t('errors.' + (problem.code || 'internal_error'), {
+          errorText(problem.code || 'internal_error', {
             ...problem.params,
-            detail: diagnostic(problem.detail || '')
+            detail: problem.detail || ''
           })
         );
         error.code = problem.code;

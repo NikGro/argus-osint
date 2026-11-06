@@ -129,7 +129,7 @@ class FileRepository:
             )
         filename = (
             unquote(original_name).replace(chr(92), "/").rsplit("/", 1)[-1][:240]
-            or "Datei"
+            or "File"
         )
         fid = uuid4().hex
         path = (

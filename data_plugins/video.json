@@ -1,15 +1,15 @@
 {
   "id": "data_video",
   "name": "Video",
-  "description": "Daten-Node: Video",
+  "description": "Data node: Video",
   "actions": [],
   "nodes": [
     {
       "type": "video",
       "name": "Video",
-      "new_label": "Neues Video",
+      "new_label": "New video",
       "icon": "video",
-      "category": "Medien",
+      "category": "Media",
       "defaults": {
         "filename": "",
         "file_id": "",
@@ -22,19 +22,5 @@
         "videoButton": false
       }
     }
-  ],
-  "translations": {
-    "de": {
-      "Video": "Video",
-      "Daten-Node: Video": "Daten-Node: Video",
-      "Neues Video": "Neues Video",
-      "Medien": "Medien"
-    },
-    "en": {
-      "Video": "Video",
-      "Daten-Node: Video": "Data node: Video",
-      "Neues Video": "New video",
-      "Medien": "Media"
-    }
-  }
+  ]
 }

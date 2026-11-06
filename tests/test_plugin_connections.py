@@ -216,7 +216,7 @@ class GraphReleaseContracts(unittest.TestCase):
                 "type": "username",
                 "data": {"value": "fixture"},
                 "group_path": [
-                    {"id": "followers", "label": "Follower"},
+                    {"id": "followers", "label": "Followers"},
                     {"id": "user1", "label": "fixture"},
                 ],
             },
@@ -224,7 +224,7 @@ class GraphReleaseContracts(unittest.TestCase):
                 "type": "url",
                 "data": {"value": "https://www.instagram.com/fixture/"},
                 "group_path": [
-                    {"id": "followers", "label": "Follower"},
+                    {"id": "followers", "label": "Followers"},
                     {"id": "user1", "label": "fixture"},
                 ],
             },
@@ -573,7 +573,7 @@ class InstagramCollectionContracts(unittest.TestCase):
         self.assertTrue(
             any(
                 (
-                    len(o.get("group_path", [])) == 4 and o["label"] == "Kommentar"
+                    len(o.get("group_path", [])) == 4 and o["label"] == "Comment"
                     for o in result["outputs"]
                 )
             )
@@ -606,7 +606,7 @@ class InstagramCollectionContracts(unittest.TestCase):
         self.assertTrue(
             any(
                 (
-                    o["type"] == "error" and o["label"] == "Teilabruf"
+                    o["type"] == "error" and o["label"] == "Partial result"
                     for o in partial["outputs"]
                 )
             )

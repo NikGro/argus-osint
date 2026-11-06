@@ -126,8 +126,8 @@ doc = {
         },
     ],
     "edges": [
-        {"id": "e1", "source": "a", "target": "m", "label": "Eingabe"},
-        {"id": "e2", "source": "b", "target": "m", "label": "Eingabe"},
+        {"id": "e1", "source": "a", "target": "m", "label": "Input"},
+        {"id": "e2", "source": "b", "target": "m", "label": "Input"},
     ],
     "groups": [],
     "runs": [],
@@ -247,7 +247,7 @@ try:
     )
     if os.environ.get("ARGUS_BROWSER_SCENARIO") != "instagram":
         click("#settingsTab")
-        text_button("Tag hinzufügen").click()
+        text_button("Add tag").click()
         field = css("dialog[open] input[type=text]")
         field.send_keys("NSFW")
         click("dialog[open] button[type=submit]")
@@ -279,8 +279,8 @@ try:
             )
         )
         click(".verification-section [role=combobox]")
-        css(".react-select-popup input").send_keys("verifiziert")
-        choose("Verifiziert")
+        css(".react-select-popup input").send_keys("verified")
+        choose("Verified")
         click(".node-tags-section [role=combobox]")
         choose("NSFW")
         wait.until(
@@ -303,14 +303,14 @@ try:
         assert css("#inspector .danger-filled svg")
         checks.append("consistent edge and arrowhead highlighting with delete icon")
         select_node("m")
-        text_button("Tool ausführen", css("#inspector")).click()
+        text_button("Run tool", css("#inspector")).click()
         wait.until(
             lambda d: d.find_elements(By.CSS_SELECTOR, ".manual-dialog [role=combobox]")
         )
         click(".manual-dialog [role=combobox]")
         css(".react-select-popup input").send_keys("Grace")
         choose("b: Grace")
-        text_button("Fortsetzen", css(".manual-dialog")).click()
+        text_button("Continue", css(".manual-dialog")).click()
         wait.until(lambda d: len(api("/api/projects/" + pid)["document"]["nodes"]) == 5)
         merged = next(
             (
@@ -341,7 +341,7 @@ try:
             assert handle.value_of_css_property("cursor") == "ew-resize"
         checks.append("single sidebar borders and full-width detail Quick Actions")
         click("#actorSortToggle")
-        assert "Kategorie" in css("#actorSort").text
+        assert "Category" in css("#actorSort").text
         click("#actorSort")
         choose("A–Z")
         assert not driver.find_elements(
@@ -472,7 +472,7 @@ try:
             "id": "ig-edge",
             "source": "ig-profile",
             "target": "ig-actor",
-            "label": "Eingabe",
+            "label": "Input",
         }
     )
     api(
@@ -490,7 +490,7 @@ try:
     click("#inspector .tool-run-section>.primary")
     wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "dialog[open].manual-dialog"))
     css("dialog[open] input[type=checkbox]").click()
-    text_button("Plugin-Einstellungen", css("dialog[open]")).click()
+    text_button("Plugin settings", css("dialog[open]")).click()
     wait.until(
         lambda d: not d.find_element(By.ID, "pluginsView").get_attribute("hidden")
     )

@@ -1,7 +1,6 @@
 /** UI-independent command registry. React supplies view callbacks; domains keep their stores. */
 import * as features from '../main.js';
 import { flushSync } from 'react-dom';
-import { t } from '../i18n.js';
 
 export function createController() {
   const state = features.createState();
@@ -160,7 +159,7 @@ export function createController() {
       redraw();
     },
     async deleteProject(project) {
-      if (!(await overrides.askConfirm(t('ui.delete_project'), project.title))) return;
+      if (!(await overrides.askConfirm('Delete project', project.title))) return;
       await methods.api('/api/projects/' + project.id + '/delete', { revision: project.revision });
       state.libraryState.projectIndex = await methods.api('/api/projects');
       redraw();

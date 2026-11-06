@@ -11,15 +11,15 @@ from plugins._research import fact_outputs
 
 PLUGIN = {
     "id": "maigret",
-    "name": "Profile suchen - Maigret",
-    "description": "Benutzernamen prüfen und öffentliche Profilangaben sammeln.",
+    "name": "Find profiles - Maigret",
+    "description": "Check usernames and collect public profile details.",
     "actions": [
         {
             "id": "search",
-            "name": "Profile mit Maigret suchen",
+            "name": "Find profiles with Maigret",
             "inputs": ["username"],
             "external": True,
-            "external_notice": "Der Benutzername wird an ausgewählte Websites gesendet. Gleiche Benutzernamen beweisen keine gemeinsame Identität.",
+            "external_notice": "The username is sent to selected websites. Matching usernames do not establish a shared identity.",
             "default_params": {
                 "sites": [],
                 "top_sites": 100,
@@ -33,7 +33,7 @@ PLUGIN = {
 
 def parse_results(rows, node, limit):
     if not isinstance(rows, dict):
-        raise ValueError("Ungültiges Maigret-JSON.")
+        raise ValueError("Invalid Maigret JSON.")
     outputs = []
     warnings = []
     for name, row in rows.items():
@@ -50,7 +50,7 @@ def parse_results(rows, node, limit):
         if parsed.scheme not in ("https", "http") or not parsed.hostname:
             continue
         if sum(o["type"] == "url" for o in outputs) >= limit:
-            warnings.append("Trefferlimit erreicht.")
+            warnings.append("Result limit reached.")
             break
         common = {
             "source_input": node["id"],
@@ -61,9 +61,9 @@ def parse_results(rows, node, limit):
             {
                 **common,
                 "type": "url",
-                "label": name + " · Profiladresse",
+                "label": name + " · Profile URL",
                 "data": {"value": url},
-                "relation": "Benutzername gefunden",
+                "relation": "Username found",
             }
         )
         facts = status.get("ids_data", {}) if isinstance(status, dict) else {}
@@ -73,7 +73,9 @@ def parse_results(rows, node, limit):
             if value is None or value == "":
                 continue
             outputs.extend(
-                fact_outputs(value, str(key), {**common, "relation": "Profilangabe"})
+                fact_outputs(
+                    value, str(key), {**common, "relation": "Profile information"}
+                )
             )
             if len(outputs) >= 950:
                 break
@@ -84,7 +86,7 @@ def parse_results(rows, node, limit):
 
 def run(action, inputs, params, context):
     if action != "search" or len(inputs) != 1:
-        raise ValueError("Maigret benötigt genau einen Benutzernamen.")
+        raise ValueError("Maigret requires exactly one username.")
     node = inputs[0]
     username = str(node["data"].get("value", ""))
     if (
@@ -92,7 +94,7 @@ def run(action, inputs, params, context):
         or username.startswith("-")
         or username in (".", "..")
     ):
-        raise ValueError("Ungültiger Benutzername.")
+        raise ValueError("Invalid username.")
     sites = params.get("sites", [])
     if (
         not isinstance(sites, list)
@@ -102,12 +104,12 @@ def run(action, inputs, params, context):
             for v in sites
         )
     ):
-        raise ValueError("Ungültige Anbieterliste.")
+        raise ValueError("Invalid provider list.")
     request = int(params.get("request_timeout", 10))
     top = int(params.get("top_sites", 100))
     limit = int(params.get("max_results", 100))
     if not 1 <= request <= 30 or not 1 <= top <= 500 or not 1 <= limit <= 300:
-        raise ValueError("Ungültiges Maigret-Limit.")
+        raise ValueError("Invalid Maigret limit.")
     executable = tools.executable("maigret", "maigret")
     with tempfile.TemporaryDirectory(prefix="argus-maigret-") as directory:
         command = [
@@ -143,7 +145,7 @@ def run(action, inputs, params, context):
         stdout, stderr = bounded_run(command, None)
         reports = list(Path(directory).glob("*.json"))
         if len(reports) != 1 or reports[0].stat().st_size > 8 * 1024 * 1024:
-            raise ValueError("Maigret lieferte keinen eindeutigen JSON-Bericht.")
+            raise ValueError("Maigret did not return a single unambiguous JSON report.")
         rows = json.loads(reports[0].read_text())
     outputs, warnings = parse_results(rows, node, limit)
     if params.get("identity_only"):

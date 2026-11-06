@@ -6,15 +6,15 @@ from plugins._process import bounded_run
 
 PLUGIN = {
     "id": "phoneinfoga",
-    "name": "Telefonnummer prüfen - PhoneInfoga",
-    "description": "Telefonnummern analysieren und direkte Suchtreffer sowie Anbieterbefunde sammeln.",
+    "name": "Check phone number - PhoneInfoga",
+    "description": "Analyze phone numbers and collect direct search results and provider findings.",
     "actions": [
         {
             "id": "scan",
-            "name": "Telefonnummer mit PhoneInfoga prüfen",
+            "name": "Check phone number with PhoneInfoga",
             "inputs": ["phone", "value"],
             "external": True,
-            "external_notice": "Die Telefonnummer wird an aktivierte Scanner übermittelt. Suchlinks sind keine bestätigten Treffer.",
+            "external_notice": "The phone number is sent to enabled scanners. Search links are not confirmed matches.",
             "default_params": {
                 "phone_region": "",
                 "disabled_scanners": [],
@@ -79,7 +79,7 @@ def parse_output(text, node):
             if url in seen:
                 continue
             seen.add(url)
-            kind = "URL"
+            kind = "Profile URL"
             outputs.append(
                 {
                     **common,
@@ -99,17 +99,17 @@ def parse_output(text, node):
                     "type": "value",
                     "label": match.group(1).strip(),
                     "data": {"value": match.group(2).strip()},
-                    "relation": "Telefonbefund",
+                    "relation": "Phone finding",
                 }
             )
     outputs.append(
         {
             "type": "value",
-            "label": "PhoneInfoga · Suchprotokoll",
+            "label": "PhoneInfoga · Search record",
             "data": {"value": text.strip()},
             "source_input": node["id"],
             "source": {"tool": "PhoneInfoga"},
-            "relation": "Suchprotokoll",
+            "relation": "Search record",
         }
     )
     return outputs
@@ -117,24 +117,28 @@ def parse_output(text, node):
 
 def run(action, inputs, params, context):
     if action != "scan" or len(inputs) != 1:
-        raise ValueError("PhoneInfoga benötigt genau eine Telefonnummer als Eingabe.")
+        raise ValueError("PhoneInfoga requires exactly one phone number input.")
     node = inputs[0]
     raw = str(node["data"].get("value", "")).strip()
     if not re.fullmatch(r"\+?[0-9 ()-]{6,30}", raw):
-        raise ValueError("Ungültige Telefonnummer; internationale Vorwahl angeben.")
+        raise ValueError(
+            "Invalid phone number; include the international dialing code."
+        )
     region = str(params.get("phone_region", "")).upper()
     if region and region not in phonenumbers.SUPPORTED_REGIONS:
-        raise ValueError("Ungültige Ländervorwahl.")
+        raise ValueError("Invalid country calling code.")
     if region and not raw.startswith("+"):
         try:
             raw = phonenumbers.format_number(
                 phonenumbers.parse(raw, region), phonenumbers.PhoneNumberFormat.E164
             )
         except phonenumbers.NumberParseException as exc:
-            raise ValueError("Ungültige Telefonnummer.") from exc
+            raise ValueError("Invalid phone number.") from exc
     number = re.sub(r"[ ()-]", "", raw)
     if not re.fullmatch(r"\+?[1-9][0-9]{5,14}", number):
-        raise ValueError("Ungültige Telefonnummer; internationale Vorwahl angeben.")
+        raise ValueError(
+            "Invalid phone number; include the international dialing code."
+        )
     disabled = params.get("disabled_scanners", [])
     if (
         not isinstance(disabled, list)
@@ -144,7 +148,7 @@ def run(action, inputs, params, context):
             for s in disabled
         )
     ):
-        raise ValueError("Ungültige Scannerliste.")
+        raise ValueError("Invalid scanner list.")
     executable = tools.executable("phoneinfoga", "phoneinfoga")
     command = [executable, "scan", "-n", number]
     for scanner in disabled:

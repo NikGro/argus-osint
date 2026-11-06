@@ -7,12 +7,12 @@ def column_prompt(database, *, images=False):
         "outputs": [],
         "input_request": {
             "kind": "database_column",
-            "title": "Datenbankspalte auswählen",
+            "title": "Choose database column",
             "message": database["title"],
             "fields": [
                 {
                     "key": "column_id",
-                    "label": "Referenzspalte",
+                    "label": "Reference column",
                     "type": "select",
                     "options": [{"value": f["id"], "label": f["name"]} for f in fields],
                     "required": True,
@@ -25,5 +25,5 @@ def column_prompt(database, *, images=False):
 def connected_database(inputs, context):
     nodes = [n for n in inputs if n["type"] == "database"]
     if len(nodes) != 1 or not nodes[0]["data"].get("database_id"):
-        raise ValueError("Genau eine Datenbank und eine passende Eingabe verbinden.")
+        raise ValueError("Connect exactly one database and one compatible input.")
     return nodes[0], context["datasets"].snapshot(nodes[0]["data"]["database_id"])

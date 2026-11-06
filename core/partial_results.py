@@ -16,12 +16,12 @@ def include_warning_node(result, inputs, tool, capacity=5000):
                 *outputs,
                 {
                     "type": "error",
-                    "label": "Unvollständige Recherche",
+                    "label": "Incomplete research",
                     "data": {
-                        "title": "Ergebnisse möglicherweise unvollständig",
+                        "title": "Results may be incomplete",
                         "message": "\n".join(dict.fromkeys(result["warnings"]))[:12000],
                     },
-                    "relation": "Recherchehinweis",
+                    "relation": "Research information",
                     "source_input": inputs[0]["id"] if inputs else None,
                     "source": {"tool": tool, "incomplete": True},
                 },

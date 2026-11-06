@@ -1,35 +1,19 @@
 {
   "id": "data_username",
-  "name": "Benutzername",
-  "description": "Daten-Node: Benutzername",
+  "name": "Username",
+  "description": "Data node: Username",
   "actions": [],
   "nodes": [
     {
       "type": "username",
-      "name": "Benutzername",
-      "new_label": "Neuer Benutzername",
+      "name": "Username",
+      "new_label": "New username",
       "icon": "account",
-      "category": "Kennungen",
+      "category": "Identifiers",
       "defaults": {
         "value": ""
       },
       "display_defaults": {}
     }
-  ],
-  "translations": {
-    "de": {
-      "Benutzername": "Benutzername",
-      "Daten-Node: Benutzername": "Daten-Node: Benutzername",
-      "Neuer Benutzername": "Neuer Benutzername",
-      "Kennungen": "Kennungen",
-      "Inhalt": "Inhalt"
-    },
-    "en": {
-      "Benutzername": "Username",
-      "Daten-Node: Benutzername": "Data node: Username",
-      "Neuer Benutzername": "New username",
-      "Kennungen": "Identifiers",
-      "Inhalt": "Value"
-    }
-  }
+  ]
 }

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { t } from '../../i18n.js';
 
 export function DetailSection({ children, className = '', ...props }) {
   return (
@@ -57,11 +56,9 @@ export function BrowserVideo({ src, ref, onError, onLoadedData, onPlay, onPause,
       />
       {(preparing || failed) && (
         <span className="media-playback-status" role="status">
-          {t(
-            preparing
-              ? 'Browserkompatible Videokopie wird vorbereitet …'
-              : 'Video kann nicht wiedergegeben werden. Original in neuem Tab öffnen.'
-          )}
+          {preparing
+            ? 'Preparing browser-compatible video …'
+            : 'Cannot play video. Open the original in a new tab.'}
         </span>
       )}
     </>
@@ -97,7 +94,7 @@ export function MapPreview({ src, title, className = '' }) {
           loading="lazy"
         />
       ) : (
-        <p role="status">{t('ui.loading')}</p>
+        <p role="status">{'Loading …'}</p>
       )}
     </div>
   );

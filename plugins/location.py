@@ -9,16 +9,16 @@ import urllib.request
 
 PLUGIN = {
     "id": "location",
-    "name": "Ort normalisieren & vervollständigen",
-    "category": "Orte und Zeit",
-    "description": "Ort mit Photon und einem konfigurierbaren Nominatim-Endpunkt normalisieren.",
+    "name": "Normalize and complete place",
+    "category": "Places and time",
+    "description": "Normalize a place using Photon and a configurable Nominatim endpoint.",
     "actions": [
         {
             "id": "normalize",
-            "name": "Ort normalisieren & vervollständigen",
+            "name": "Normalize and complete place",
             "inputs": ["location"],
             "external": True,
-            "external_notice": "Ortsangaben werden an aktivierte Adressdienste gesendet. Nominatim-Endpunkt passend zu Datenschutz und Nutzungsbedingungen konfigurieren.",
+            "external_notice": "Place details are sent to enabled address services. Configure a Nominatim endpoint suitable for privacy and its usage terms.",
             "default_params": {
                 "use_photon": True,
                 "use_nominatim": True,
@@ -69,7 +69,7 @@ _cache = {}
 
 def normalize(data):
     if not isinstance(data, dict):
-        raise ValueError("Location-Daten müssen ein JSON-Objekt sein.")
+        raise ValueError("Location data must be a JSON object.")
     out, extra = {}, {}
     for key, value in data.items():
         key = ALIASES.get(key, key)
@@ -81,14 +81,14 @@ def normalize(data):
             number = float(value)
             limit = 90 if key == "latitude" else 180
             if not math.isfinite(number) or abs(number) > limit:
-                raise ValueError("Ungültige Koordinate: " + key)
+                raise ValueError("Invalid coordinate: " + key)
             out[key] = number
         elif key == "extra" and isinstance(value, dict):
             extra.update(value)
         else:
             extra[key] = value
     if ("latitude" in out) != ("longitude" in out):
-        raise ValueError("Latitude und Longitude müssen gemeinsam angegeben werden.")
+        raise ValueError("Latitude and longitude must be supplied together.")
     if "country_code" in out:
         out["country_code"] = out["country_code"].upper()
         if (
@@ -96,11 +96,11 @@ def normalize(data):
             or not out["country_code"].isascii()
             or not out["country_code"].isalpha()
         ):
-            raise ValueError("country_code muss ein zweistelliger Ländercode sein.")
+            raise ValueError("country_code must be a two-letter country code.")
     if extra:
         out["extra"] = extra
     if not out:
-        raise ValueError("Bitte mindestens eine Standortangabe eintragen.")
+        raise ValueError("Enter at least one location field.")
     return out
 
 
@@ -122,7 +122,7 @@ def request(endpoint, params, provider="nominatim", base_override=None):
     if not base or not agent:
         return None
     if urllib.parse.urlparse(base).scheme not in ("http", "https"):
-        raise ValueError("GEOCODER_URL muss eine HTTP(S)-Adresse sein.")
+        raise ValueError("GEOCODER_URL must be an HTTP(S) URL.")
     url = base + "/" + endpoint + "?" + urllib.parse.urlencode(params)
     with _lock:
         if url in _cache:
@@ -135,7 +135,7 @@ def request(endpoint, params, provider="nominatim", base_override=None):
         with urllib.request.urlopen(req, timeout=12) as response:
             payload = response.read(2_000_001)
             if len(payload) > 2_000_000:
-                raise ValueError("Antwort des Adressdienstes zu groß.")
+                raise ValueError("Address service response too large.")
             result = json.loads(payload)
         if len(_cache) > 500:
             _cache.clear()
@@ -240,7 +240,7 @@ def candidate(feature, original, reverse):
 
 def run(action, inputs, params, context):
     if action != "normalize":
-        raise ValueError("Unbekannte Standortaktion.")
+        raise ValueError("Unknown location action.")
     outputs = []
     warnings = []
     selections = []
@@ -252,7 +252,7 @@ def run(action, inputs, params, context):
         or any(p not in ("photon", "nominatim") for p in order)
         or len(set(order)) != len(order)
     ):
-        raise ValueError("Ungültige Quellenreihenfolge.")
+        raise ValueError("Invalid source order.")
     order = order + [p for p in ("photon", "nominatim") if p not in order]
     defaults = {key: "" for key in FIELDS}
     defaults.update(latitude=None, longitude=None)
@@ -274,15 +274,13 @@ def run(action, inputs, params, context):
                 else "https://photon.komoot.io"
             )
             if not base:
-                warnings.append(
-                    "Nominatim: Kein Endpunkt konfiguriert; Quelle übersprungen."
-                )
+                warnings.append("Nominatim: no endpoint configured; source skipped.")
                 continue
             endpoint, qp = query(data, provider, config.get("language", "de"))
             try:
                 response = request(endpoint, qp, provider, base)
                 if not isinstance(response, dict):
-                    raise ValueError("Unlesbare Antwort.")
+                    raise ValueError("Unreadable response.")
                 received = True
                 queried.append(provider)
                 for feature in response.get("features", []):
@@ -303,27 +301,23 @@ def run(action, inputs, params, context):
                     options.append(option)
                 logs.append(provider + "\n" + json.dumps(response, ensure_ascii=False))
             except (OSError, ValueError, KeyError, TypeError) as exc:
-                warnings.append(
-                    provider + ": Adressdienst nicht erreichbar. " + str(exc)
-                )
+                warnings.append(provider + ": address service unavailable. " + str(exc))
         if len(options) == 1:
             normalized = options[0]
         elif len(options) > 1:
             selections.append({"input_id": node["id"], "options": options})
         elif received:
-            warnings.append(
-                "Keine passende Adresse gefunden; vorhandene Angaben bleiben erhalten."
-            )
+            warnings.append("No matching address found; existing fields are preserved.")
         normalized["formatted_address"] = formatted_address(
             normalized
         ) or normalized.get("formatted_address", "")
         outputs.append(
             {
                 "type": "location",
-                "label": formatted_address(normalized) or node.get("label", "Ort"),
+                "label": formatted_address(normalized) or node.get("label", "Location"),
                 "data": normalized,
                 "source_input": node["id"],
-                "relation": "Normalisierter Ort",
+                "relation": "Normalized location",
                 "source": {
                     "providers": queried,
                     "attribution": "© OpenStreetMap contributors",

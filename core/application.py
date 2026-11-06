@@ -74,7 +74,7 @@ class ApplicationResources:
         # Installed native plugin modules, keyed by plugin id.
         self.PLUGINS = self.MANAGER.builtins
         self.ACTOR_LOCK = threading.Lock()
-        self.TAG_PREFERENCES = {"tags": [], "language": "de"}
+        self.TAG_PREFERENCES = {"tags": []}
         self.SETTINGS = SettingsRepository(
             lambda: self.connect(), self.MANAGER, self.ROOT, self.TAG_PREFERENCES
         )
@@ -131,9 +131,6 @@ class ApplicationResources:
 
     def settings(self):
         return self.SETTINGS.load()
-
-    def languages(self):
-        return self.SETTINGS.languages()
 
     def save_settings(self, body):
         saved = self.SETTINGS.save(body)
@@ -228,14 +225,8 @@ class ApplicationResources:
         return self.FILES.resolve(fid)
 
     def report(self, project):
-        preferences = self.settings()
-        messages = json.loads(
-            (
-                self.ROOT / "static" / "locales" / (preferences["language"] + ".json")
-            ).read_text(encoding="utf-8")
-        ).get("messages", {})
         return render_report(
-            project, preferences, self.MANAGER.all_descriptors(), messages, self.now()
+            project, self.settings(), self.MANAGER.all_descriptors(), self.now()
         )
 
     def start(self):

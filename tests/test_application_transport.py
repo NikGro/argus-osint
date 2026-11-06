@@ -133,8 +133,7 @@ class ToolContracts(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_result(result)
 
-    def test_unavailable_map_is_localized_html(self):
-        self.assertIn(b'role="status"', Maps.unavailable("en"))
-        self.assertIn(b"currently unavailable", Maps.unavailable("en"))
-        self.assertIn("nicht verfügbar", Maps.unavailable("de").decode())
-        self.assertNotIn(b"request_id", Maps.unavailable("en"))
+    def test_unavailable_map_is_status_html(self):
+        self.assertIn(b'role="status"', Maps.unavailable())
+        self.assertIn(b"currently unavailable", Maps.unavailable())
+        self.assertNotIn(b"request_id", Maps.unavailable())

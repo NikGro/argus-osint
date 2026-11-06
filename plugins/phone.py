@@ -6,16 +6,16 @@ from plugins import _consensus
 PLUGIN = {
     "id": "phone",
     "tools": ["consensus", "phoneinfoga", "ignorant"],
-    "name": "Telefonnummer",
-    "category": "Recherche",
-    "description": "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.",
+    "name": "Phone number",
+    "category": "Research",
+    "description": "Combined research with selectable sources and deduplication.",
     "actions": [
         {
             "id": "lookup",
-            "name": "Telefonnummer recherchieren",
+            "name": "Research phone number",
             "inputs": ["phone", "value"],
             "external": True,
-            "external_notice": "Die Eingabe wird an die aktivierten Recherchequellen gesendet.",
+            "external_notice": "The input is sent to the enabled research sources.",
             "settings_only": [
                 "consensus_sites",
                 "disabled_scanners",
@@ -45,7 +45,7 @@ PLUGIN = {
 
 def run(action, inputs, params, context):
     if action != "lookup":
-        raise ValueError("Unbekannte Aktion.")
+        raise ValueError("Unknown action.")
     return aggregate(
         "phone",
         {

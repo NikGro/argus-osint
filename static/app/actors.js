@@ -1,5 +1,4 @@
-import { t } from '../i18n.js';
-import { diagnostic } from '../i18n.js';
+import { errorText } from '../errors.js';
 import { transformExample } from './labels.js';
 import { pollJob } from '../jobs-client.js';
 var actors_default = {
@@ -46,7 +45,7 @@ var actors_default = {
         const worker = new Worker('/transform-worker.js');
         const timer = setTimeout(() => {
           worker.terminate();
-          reject(Error(t('ui.transform_stopped_after_2_seconds')));
+          reject(Error('Transform stopped after 2 seconds.'));
         }, 2e3);
         worker.onmessage = (e) => {
           clearTimeout(timer);
@@ -192,7 +191,7 @@ var actors_default = {
         }
         if (terminal.state !== 'completed') {
           if (terminal.state !== 'cancelled')
-            throw Error(t('errors.' + (terminal.error_code || 'execution_interrupted')));
+            throw Error(errorText(terminal.error_code || 'execution_interrupted'));
           return;
         }
         const last = finished.document.runs.find((run2) => run2.id === terminal.run_id);
@@ -221,10 +220,10 @@ var actors_default = {
           continue;
         }
         if (last?.candidates?.some((c) => !c.chosen)) await handleManualChoices(job.pid, last);
-        toast(last?.status === 'failed' ? diagnostic(last.error) : t('ui.action_completed'));
+        toast(last?.status === 'failed' ? last.error : 'Action completed.');
         return;
       }
-      throw Error(t('ui.too_many_consecutive_input_requests'));
+      throw Error('Too many consecutive input requests.');
     }
     async function persistActorParameters(job, current, node) {
       if (workspaceState.project?.id === job.pid) {
@@ -259,8 +258,8 @@ var actors_default = {
       for (const choice of run2.candidates || []) {
         if (choice.chosen || choice.cancelled || run2.status === 'cancelled') continue;
         const value = await modalChoice(
-          t('ui.select_address'),
-          t('ui.select_the_matching_place'),
+          'Select address',
+          'Select the matching place.',
           choice.options.map((option, index) => ({
             label:
               (option.formatted_address || option.locality || option.country || String(index + 1)) +
@@ -306,17 +305,18 @@ var actors_default = {
         return true;
       const pid = workspaceState.project.id,
         result = await notice({
-          title: t('ui.instagram_without_login'),
-          message: t('ui.without_instagram_credentials_some_results_may_be_unavailable_con'),
-          checkboxText: t('ui.do_not_show_again_for_this_project'),
+          title: 'Instagram without login',
+          message:
+            'Without Instagram credentials, some results may be unavailable. Continue or add credentials in the plugin settings.',
+          checkboxText: 'Do not show again for this project',
           actions: [
             {
               id: 'settings',
-              label: t('ui.plugin_settings')
+              label: 'Plugin settings'
             },
             {
               id: 'continue',
-              label: t('ui.continue_without_login'),
+              label: 'Continue without login',
               primary: true
             }
           ]

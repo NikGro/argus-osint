@@ -4,6 +4,8 @@ ARGUS now starts as a slim all-in-one container without research plugins. You in
 
 ## Read before updating
 
+- **ARGUS is English-only now.** The language setting and both language packs are gone; interface, plugins, tool results and reports are written in English. Existing projects are converted once when opened: generated labels, relations, group names, error nodes and run warnings become English. Text you wrote yourself (renamed nodes, notes, your values) stays as typed.
+
 - **After the update no plugins are installed.** Open **Plugins → Add plugins** and install the ones you use. Their settings, saved logins and node defaults are kept and apply again.
 - Tools (Sherlock, Maigret, DeepFace, FlareSolverr and the others) are downloaded into the data volume (`/data/tools`) on install. Expect a few hundred MB to a few GB depending on the plugins.
 - Use the updated Compose files: the container needs fewer privileges (no `SYS_ADMIN`, no seccomp or AppArmor profile) and the same file now works on Synology DSM, including the VPN.
@@ -23,6 +25,16 @@ ARGUS now starts as a slim all-in-one container without research plugins. You in
 
 - **Clear system logs** no longer shows an "Unexpected token" error. The request body was left unread, so the next request on the same connection failed; ARGUS now closes such connections.
 - Settings and help in the header are spaced like the other buttons.
+- Plugins whose update or repair failed no longer disappear silently; the plugins page points to the library to retry.
+
+## Clean-up
+
+- Removed the outdated source manifest and export script, duplicate Compose files, the unused VPN sidecar Dockerfile and archived test specifications. Dated review documents moved to `docs/archive`.
+- The plugin manager is split by responsibility: catalogue and settings, native installation, community repositories and settings upgrades.
+
+## Supply chain
+
+- Every Python research tool installs only from a hash-pinned lock (`core/tool_locks/`, `pip --require-hashes`); a changed or substituted package fails the installation. GitHub sources stay pinned to a commit, PhoneInfoga to its published checksum. Existing tool installations are reinstalled once from the locks after the update.
 
 ## Execution
 

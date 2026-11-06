@@ -61,25 +61,25 @@ def bounded_run(
                     if cancellation is not None and cancellation.is_set():
                         raise AppError("actor_cancelled", 409)
                     if timeout is not None and time.monotonic() - start > timeout:
-                        raise ValueError("Zeitlimit erreicht; Suche unvollständig.")
+                        raise ValueError("Timeout reached; search incomplete.")
                     if (
                         os.fstat(out.fileno()).st_size + os.fstat(err.fileno()).st_size
                         > max_bytes
                     ):
-                        raise ValueError("Suchergebnis zu groß.")
+                        raise ValueError("Search result too large.")
                     time.sleep(0.05)
                 check_artifact()
                 out.seek(0)
                 err.seek(0)
                 stdout, stderr = out.read(max_bytes + 1), err.read(max_bytes + 1)
                 if len(stdout) + len(stderr) > max_bytes:
-                    raise ValueError("Suchergebnis zu groß.")
+                    raise ValueError("Search result too large.")
                 if process.returncode:
                     error = stderr.decode(errors="replace")[-1000:]
                     for value in (extra_env or {}).values():
                         if value:
                             error = error.replace(str(value), "[redacted]")
-                    raise ValueError("Suchwerkzeug fehlgeschlagen: " + error)
+                    raise ValueError("Search tool failed: " + error)
                 return stdout.decode(errors="replace"), stderr.decode(errors="replace")
             finally:
                 try:

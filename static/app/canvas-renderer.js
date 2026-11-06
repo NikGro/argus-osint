@@ -1,6 +1,4 @@
 import layout_spec_default from '../layout-spec.json';
-import { t } from '../i18n.js';
-import { language } from '../i18n.js';
 var canvas_renderer_default = {
   name: 'canvas-renderer',
   dependencies: [
@@ -8,7 +6,6 @@ var canvas_renderer_default = {
     'graphGroupModel',
     'locationDisplayLines',
     'nodeBadgeHeight',
-    'pluginText',
     'resourceActions'
   ],
   create({
@@ -21,7 +18,6 @@ var canvas_renderer_default = {
     graphGroupModel,
     locationDisplayLines,
     nodeBadgeHeight,
-    pluginText,
     resourceActions
   }) {
     function nodeRect(node) {
@@ -116,20 +112,20 @@ var canvas_renderer_default = {
       );
     }
     function summary(n) {
-      if (n.type === 'database') return n.data.database_title || t('ui.choose_database');
+      if (n.type === 'database') return n.data.database_title || 'Choose database';
       if (n.type === 'actor')
         return executionState.activeActors.has(n.id)
-          ? t('ui.running')
+          ? 'Running …'
           : executionState.actorQueue.some((job) => job.id === n.id)
-            ? t('ui.queued')
-            : t(n.data.status) || t('ui.ready_7f2ffe9a');
+            ? 'Queued'
+            : n.data.status || 'ready';
       if (n.type === 'person')
         return [
           n.data.birth_date,
           n.data.birth_place,
           n.data.birth_country
             ? /^[A-Z]{2}$/.test(n.data.birth_country)
-              ? new Intl.DisplayNames([language], {
+              ? new Intl.DisplayNames(['en'], {
                   type: 'region'
                 }).of(n.data.birth_country)
               : n.data.birth_country
@@ -143,14 +139,9 @@ var canvas_renderer_default = {
       if (n.type === 'datetime')
         return [n.data.date, n.data.time, n.data.timezone].filter(Boolean).join(' \xB7 ');
       if (n.type === 'location')
-        return formatLocation(n.data) || n.data.formatted_address || t('ui.location');
+        return formatLocation(n.data) || n.data.formatted_address || 'Location';
       return (
-        (n.type === 'value' && n.evidence?.run_id
-          ? pluginText(
-              pluginsState.catalog.find((p) => p.id === n.evidence.plugin),
-              n.data.value
-            )
-          : n.data.value) ??
+        (n.type === 'value' && n.evidence?.run_id ? n.data.value : n.data.value) ??
         n.data.text ??
         n.data.filename ??
         Object.keys(n.data).join(', ')

@@ -14,7 +14,7 @@ def working_image(path, resize_large=False, max_pixels=MAX_PIXELS):
         oversized = original[0] * original[1] > max_pixels
         if oversized and not resize_large:
             raise ValueError(
-                "Bild ist größer als 40 Megapixel. Automatische Arbeitskopie aktivieren."
+                "Image exceeds 40 megapixels. Enable an automatic working copy."
             )
         ratio = min(1, math.sqrt(max_pixels / (original[0] * original[1])))
         target = tuple(max(1, math.floor(side * ratio)) for side in original)

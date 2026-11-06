@@ -1,5 +1,4 @@
 import ArgusRouting from '../graph-routing.js';
-import { t } from '../i18n.js';
 
 /** Transient SVG overlays (selection frame, connection preview) live outside React state. */
 function svg(tag, attributes) {
@@ -497,7 +496,7 @@ var canvas_input_default = {
         target,
         source_port: 'right',
         target_port: state.port.startsWith('left') ? state.port : state.targetPort,
-        label: t('ui.connected_to')
+        label: 'connected to'
       });
       change();
       render();

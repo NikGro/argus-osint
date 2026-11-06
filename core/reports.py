@@ -2,56 +2,55 @@
 
 import copy
 import html
-import re
 
 REPORT_LABELS = {
-    "first_name": "Vorname",
-    "middle_name": "Zweitname",
-    "last_name": "Nachname",
-    "birth_date": "Geburtsdatum",
-    "birth_place": "Geburtsort",
-    "birth_country": "Geburtsland",
-    "provider": "Anbieter",
-    "url": "URL",
+    "first_name": "First name",
+    "middle_name": "Middle name",
+    "last_name": "Last name",
+    "birth_date": "Date of birth",
+    "birth_place": "Place of birth",
+    "birth_country": "Country of birth",
+    "provider": "Provider",
+    "url": "Profile URL",
     "identifier": "Identifier",
-    "date": "Datum",
-    "time": "Uhrzeit",
-    "timezone": "Zeitzone",
-    "value": "Inhalt",
-    "semantic_key": "Bedeutung",
-    "service": "Anbieter",
+    "date": "Date",
+    "time": "Time",
+    "timezone": "Time zone",
+    "value": "Contents",
+    "semantic_key": "Meaning",
+    "service": "Provider",
     "text": "Text",
-    "country_code": "Ländercode",
-    "country": "Land",
-    "admin_area_1": "Bundesland / State / Provinz",
-    "admin_area_2": "Landkreis / County",
-    "locality": "Stadt / Ort",
-    "dependent_locality": "Stadtteil",
-    "postal_code": "Postleitzahl",
-    "street": "Straße",
-    "house_number": "Hausnummer",
-    "latitude": "Breitengrad",
-    "longitude": "Längengrad",
-    "original_input": "Ursprüngliche Ortsangabe",
-    "formatted_address": "Vollständige Adresse",
-    "retrieved_at": "Abgerufen am",
-    "origin": "Herkunft",
-    "source": "Quelle",
+    "country_code": "Country code",
+    "country": "Country",
+    "admin_area_1": "State / Province",
+    "admin_area_2": "County",
+    "locality": "City / Town",
+    "dependent_locality": "District",
+    "postal_code": "Postal code",
+    "street": "Street",
+    "house_number": "House number",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "original_input": "Original location input",
+    "formatted_address": "Formatted address",
+    "retrieved_at": "Retrieved at",
+    "origin": "Origin",
+    "source": "Source",
     "plugin": "Plugin",
-    "action": "Aktion",
+    "action": "Action",
     "status": "Status",
-    "started_at": "Gestartet am",
-    "finished_at": "Beendet am",
-    "warnings": "Warnungen",
-    "error": "Fehler",
-    "run_id": "Ausführungs-ID",
-    "source_input": "Eingabe-Node",
-    "last_update": "Letzte Aktualisierung",
-    "at": "Zeitpunkt",
+    "started_at": "Started at",
+    "finished_at": "Finished at",
+    "warnings": "Warnings",
+    "error": "Error",
+    "run_id": "Run ID",
+    "source_input": "Input node",
+    "last_update": "Last update",
+    "at": "Time",
     "tool": "Tool",
-    "sources": "Quellen",
-    "failed": "Fehlgeschlagen",
-    "masked": "Maskiert",
+    "sources": "Sources",
+    "failed": "Failed",
+    "masked": "Masked",
 }
 
 
@@ -86,54 +85,23 @@ def facts_html(value, tr=lambda value: value):
     return '<table class="facts-table"><tbody>' + "".join(rows) + "</tbody></table>"
 
 
-class Translator:
-    """Server-side counterpart of static/i18n.js for generated labels and diagnostics."""
-
-    def __init__(self, messages):
-        self.pack = messages
-        self.sources = sorted(
-            (k for k, v in messages.items() if len(k) >= 10 and isinstance(v, str)),
-            key=len,
-            reverse=True,
-        )
-
-    def __call__(self, key):
-        key = str(key)
-        if key in self.pack:
-            return self.pack[key]
-        if "errors." + key in self.pack:
-            return self.pack["errors." + key]
-        return self.composed(key)
-
-    def composed(self, text):
-        numbered = re.match(r"^(.+?) (\d+)$", text)
-        if numbered and numbered.group(1) in self.pack:
-            return self.pack[numbered.group(1)] + " " + numbered.group(2)
-        head, body, tail = "", text, ""
-        for source in self.sources:
-            if len(source) > len(body):
-                continue
-            if not head and body.startswith(source):
-                head, body = self.pack[source], body[len(source) :]
-            elif not tail and body.endswith(source):
-                tail, body = self.pack[source], body[: -len(source)]
-            if head and tail:
-                break
-        return head + body + tail
-
-    def diagnostic(self, text):
-        text = str(text or "")
-        if "errors." + text in self.pack:
-            return self.pack["errors." + text]
-        for source in self.sources:
-            if source in text and self.pack[source] != source:
-                text = text.replace(source, self.pack[source])
-        return text
+STATUS = {
+    "completed": "Completed",
+    "failed": "Failed",
+    "cancelled": "Cancelled",
+    "interrupted": "Interrupted",
+    "needs_input": "Input required",
+    "needs_selection": "Selection required",
+}
 
 
-def render_report(project, preferences, descriptors, messages, generated_at):
-    language = preferences["language"]
-    tr = Translator(messages)
+def tr(text):
+    """Report text is English; codes such as run states get a readable form."""
+    text = str(text or "")
+    return STATUS.get(text, text)
+
+
+def render_report(project, preferences, descriptors, generated_at):
 
     doc = project["document"]
     plugins = {p["id"]: p for p in descriptors}
@@ -157,48 +125,40 @@ def render_report(project, preferences, descriptors, messages, generated_at):
     selected = [n for n in doc["nodes"] if n.get("report") and n["type"] != "actor"]
     esc = html.escape
     parts = [
-        f"""<!doctype html><html lang="{esc(language)}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(project['title'])} – Report</title>"""
+        f"""<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(project['title'])} – Report</title>"""
         + '<link rel="stylesheet" href="/report.css"><div class="report-actions"><button id="print">'
-        + esc(tr("ui.print_save_as_pdf"))
+        + esc(tr("Print / Save as PDF"))
         + "</button><span>ARGUS · "
-        + esc(tr("ui.research_report"))
+        + esc(tr("Research report"))
         + '</span></div><script src="/print.js"></script><main class="report-sheet">',
-        f"<h1>{esc(project['title'])}</h1><p>Argus · {esc(tr('ui.research_report'))} · {esc(generated_at)}</p><p>{esc(doc.get('report_notes', ''))}</p>",
+        f"<h1>{esc(project['title'])}</h1><p>Argus · {esc(tr("Research report"))} · {esc(generated_at)}</p><p>{esc(doc.get('report_notes', ''))}</p>",
     ]
     if not selected:
         parts.append(
             "<p>"
             + esc(
                 tr(
-                    "ui.no_findings_selected_for_the_report_select_nodes_in_the_graph_and"
+                    "No findings selected for the report. Select nodes in the graph and enable Include in report."
                 )
             )
             + "</p>"
         )
 
-    def plugin_tr(plugin, key):
-        return (plugin or {}).get("translations", {}).get(language, {}).get(key) or tr(
-            key
-        )
-
     def group_title(group):
         if group.get("label_key"):
-            return plugin_tr(plugins.get(group.get("plugin")), group["label_key"])
+            return tr(group["label_key"])
         if group.get("run_id") and not group.get("label_custom"):
-            return plugin_tr(plugins.get(group.get("plugin")), group["label"])
+            return tr(group["label"])
         return group["label"]
 
     def node_title(node):
-        plugin = plugins.get(
-            node.get("evidence", {}).get("plugin")
-        ) or data_plugins.get(node["type"], {})
         title = node.get("evidence", {}).get("label_key") or node["label"]
         if node.get("evidence", {}).get("label_custom"):
             return node["label"]
         if node.get("evidence", {}).get("run_id") or node.get("evidence", {}).get(
             "label_key"
         ):
-            return plugin_tr(plugin, title)
+            return tr(title)
         return title
 
     def type_label(node_type):
@@ -207,7 +167,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             (n for n in (plugin or {}).get("nodes", []) if n.get("type") == node_type),
             None,
         )
-        return plugin_tr(plugin, spec["name"]) if spec else tr(node_type)
+        return tr(spec["name"]) if spec else tr(node_type)
 
     def action_label(run):
         plugin = plugins.get(run.get("plugin"))
@@ -220,16 +180,14 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             None,
         )
         if action:
-            return plugin_tr(plugin, action["name"])
+            return tr(action["name"])
         return run.get("action", "")
 
     def evidence_view(evidence):
         evidence = copy.deepcopy(evidence)
         plugin = plugins.get(evidence.get("plugin"))
         if plugin:
-            evidence["plugin"] = plugin_tr(
-                plugin, plugin.get("name", evidence["plugin"])
-            )
+            evidence["plugin"] = tr(plugin.get("name", evidence["plugin"]))
         if evidence.get("origin"):
             evidence["origin"] = tr(evidence["origin"])
         return evidence
@@ -249,12 +207,6 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             group_title(group_by_id[ident])
             for ident in sorted(group_ids, key=lambda id: depths.get(id, 0))
         ]
-        plugin = plugins.get(
-            node.get("evidence", {}).get("plugin")
-        ) or data_plugins.get(node["type"], {})
-
-        def node_tr(key):
-            return plugin.get("translations", {}).get(language, {}).get(key, tr(key))
 
         title = node_title(node)
         parts.append(
@@ -269,7 +221,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
                 '<p><a href="/api/files/'
                 + esc(node["data"]["file_id"])
                 + '" target="_blank" rel="noopener noreferrer">'
-                + esc(tr("ui.open_file"))
+                + esc(tr("Open file"))
                 + "</a></p>"
             )
         report_data = copy.deepcopy(node["data"])
@@ -281,13 +233,13 @@ def render_report(project, preferences, descriptors, messages, generated_at):
             # Failure and partial-result nodes carry generated text, not findings.
             for key in ("title", "message"):
                 if report_data.get(key):
-                    report_data[key] = tr.diagnostic(report_data[key])
-        parts.append(facts_html(report_data, node_tr))
+                    report_data[key] = tr(report_data[key])
+        parts.append(facts_html(report_data, tr))
         review = {
-            "unverified": "Unverifiziert",
-            "unclear": "Unklar",
-            "verified": "Verifiziert",
-        }.get(node.get("verification", "unverified"), "Unverifiziert")
+            "unverified": "Unverified",
+            "unclear": "Unclear",
+            "verified": "Verified",
+        }.get(node.get("verification", "unverified"), "Unverified")
         tag_names = [
             tag["name"]
             for tag in preferences.get("tags", [])
@@ -295,7 +247,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         ]
         parts.append(
             "<p>"
-            + esc(tr("ui.verification"))
+            + esc(tr("Verification"))
             + ": "
             + esc(tr(review))
             + (" · " + esc(", ".join(tag_names)) if tag_names else "")
@@ -303,7 +255,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         )
         parts.append(
             "<h3>"
-            + esc(tr("ui.source_origin"))
+            + esc(tr("Source / Origin"))
             + "</h3>"
             + facts_html(evidence_view(node.get("evidence", {"origin": "manual"})), tr)
             + "</section>"
@@ -316,7 +268,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         if e["source"] in selected_ids and e["target"] in selected_ids
     ]
     if relations:
-        parts.append("<h2>" + esc(tr("ui.relationships")) + "</h2><ul>")
+        parts.append("<h2>" + esc(tr("Relationships")) + "</h2><ul>")
         for edge in relations:
             parts.append(
                 "<li>"
@@ -330,7 +282,7 @@ def render_report(project, preferences, descriptors, messages, generated_at):
         parts.append("</ul>")
     parts.append(
         "<h2>"
-        + esc(tr("ui.research_history"))
+        + esc(tr("Research history"))
         + "</h2>"
         + facts_html(
             [
@@ -339,11 +291,10 @@ def render_report(project, preferences, descriptors, messages, generated_at):
                     for k, value in (
                         (
                             "plugin",
-                            plugin_tr(
-                                plugins.get(run.get("plugin")),
+                            tr(
                                 plugins.get(run.get("plugin"), {}).get(
                                     "name", run.get("plugin", "")
-                                ),
+                                )
                             ),
                         ),
                         ("action", action_label(run)),
@@ -352,11 +303,11 @@ def render_report(project, preferences, descriptors, messages, generated_at):
                         ("status", tr(run["status"]) if run.get("status") else None),
                         (
                             "warnings",
-                            [tr.diagnostic(w) for w in run.get("warnings") or []],
+                            [tr(w) for w in run.get("warnings") or []],
                         ),
                         (
                             "error",
-                            tr.diagnostic(run["error"]) if run.get("error") else None,
+                            tr(run["error"]) if run.get("error") else None,
                         ),
                     )
                     if value

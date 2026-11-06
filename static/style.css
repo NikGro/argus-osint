@@ -983,6 +983,19 @@ main:not(#workspace) {
   flex: 0 1 220px;
   margin-bottom: 0;
 }
+.plugin-attention {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.plugin-attention p {
+  margin: 0;
+}
 .audio-preview {
   display: block;
   width: 100%;

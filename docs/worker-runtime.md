@@ -16,8 +16,11 @@ plugins of every community repository you added. **Install** downloads:
    installation fails and nothing changes.
 2. The research tools the plugin declares (for example Sherlock, Maigret,
    DeepFace or the FlareSolverr browser). Each tool gets its own Python
-   environment or binary under `DATA_DIR/tools/<tool>`, pinned to an exact
-   version, commit or checksum in `core/tools.py`.
+   environment or binary under `DATA_DIR/tools/<tool>`. Python tools install
+   only the packages in `core/tool_locks/<tool>.txt`, each verified by
+   SHA-256 (`pip --require-hashes`); sources from GitHub are pinned to a commit
+   and binaries to the publisher's checksum. `scripts/lock_tools.py`
+   regenerates the locks after a version change.
 3. The website catalogues built from the installed tools.
 
 Installation runs in the background; the library shows the current step and,

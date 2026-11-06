@@ -41,19 +41,19 @@ def plans(kind, provider, params):
         return [params]
     selections = params.get("search_profiles", {})
     if not isinstance(selections, dict):
-        raise ValueError("Suchprofile müssen je Anbieter hinterlegt sein.")
+        raise ValueError("Search profiles must be configured per provider.")
     # Keep earlier explicit website restrictions until this provider is first saved.
     legacy = params.get(SITE_FIELDS.get(provider, ""), [])
     rows = selections.get(
         provider, [{"id": "custom", "sites": legacy}] if legacy else []
     )
     if not isinstance(rows, list) or len(rows) > 20:
-        raise ValueError("Je Anbieter sind höchstens 20 Suchprofile möglich.")
+        raise ValueError("Each provider supports at most 20 search profiles.")
     presets = {entry["id"]: entry for entry in available[provider]}
     result = []
     for row in rows or [{"id": "all"}]:
         if not isinstance(row, dict) or not isinstance(row.get("id"), str):
-            raise ValueError("Ungültiges Suchprofil.")
+            raise ValueError("Invalid search profile.")
         ident = row["id"]
         scoped = copy.deepcopy(params)
         scoped.update(
@@ -75,9 +75,7 @@ def plans(kind, provider, params):
                     for s in sites
                 )
             ):
-                raise ValueError(
-                    "Eigene Websites: 1–50 Namen, jeweils eine Website pro Zeile."
-                )
+                raise ValueError("Custom websites: 1–50 names, one website per line.")
             scoped["_profile_sites"] = [s.strip() for s in sites]
             if provider == "ignorant":
                 scoped["sites"] = scoped["_profile_sites"]
@@ -93,10 +91,8 @@ def plans(kind, provider, params):
             elif "tag" in preset:
                 scoped["_profile_tags"] = [preset["tag"]]
             else:
-                raise ValueError("Suchprofil besitzt keinen unterstützten Filter.")
+                raise ValueError("The search profile has no supported filter.")
         else:
-            raise ValueError(
-                "Suchprofil ist für diesen Anbieter nicht verfügbar: " + ident
-            )
+            raise ValueError("Search profile unavailable for this provider: " + ident)
         result.append(scoped)
     return result

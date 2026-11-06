@@ -6,7 +6,7 @@ Actor plugins declare `actions` with accepted input types, default params and op
 
 Profiles contain a canonical provider ID and at least one usable URL/identifier. Use `provider_registry` and shared profile helpers; do not invent per-plugin provider aliases. Platform-specific actions declare `providers`; generic profile research declares `generic_profile`. The UI suggests compatibility and the backend enforces it.
 
-UI metadata supports `parameter_sections`, `settings_only`, `auth_fields`, `connection_action`, input prompts and translations keyed by language. New features should extend this contract rather than add provider-specific conditionals to generic UI. Keep credentials in settings-only fields; secrets/transient auth codes do not belong in graph params. Verification remains a user decision, not a claim derived from a successful HTTP response.
+UI metadata supports `parameter_sections`, `settings_only`, `auth_fields`, `connection_action`, input prompts, and per-parameter `label`/`labels` in `parameter_schema`. All text is English. New features should extend this contract rather than add provider-specific conditionals to generic UI. Keep credentials in settings-only fields; secrets/transient auth codes do not belong in graph params. Verification remains a user decision, not a claim derived from a successful HTTP response.
 
 Community repositories use `argus-repository.json`, a pinned upstream commit and SHA-256 for Python source. Installation is explicit. See `examples/community-plugin/` and `examples/data-plugin/`. Community subprocesses are resource-limited trusted code, not untrusted-code sandboxes. Locale packs and descriptors are validated before installation.
 

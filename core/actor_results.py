@@ -201,9 +201,7 @@ class _Materialization:
                 200,
                 min(
                     520,
-                    max(
-                        len(str(o.get("relation", "Ergebnis"))) * 7 + 115 for o in unit
-                    ),
+                    max(len(str(o.get("relation", "Result"))) * 7 + 115 for o in unit),
                 ),
             )
             x = actor_x + actor_width + gap
@@ -293,7 +291,7 @@ class _Materialization:
                     "id": uuid4().hex,
                     "source": self.actor["id"],
                     "target": node_id,
-                    "label": output.get("relation", "Ergebnis"),
+                    "label": output.get("relation", "Result"),
                     "run_id": self.run_id,
                 }
             )
@@ -360,7 +358,7 @@ class _Materialization:
                 and types[nid] != "profile"
             ]
             if len(remaining) > 1:
-                self._add_group("Suchprotokoll", remaining, collapsed=False)
+                self._add_group("Search record", remaining, collapsed=False)
         elif (
             not nested_members
             and len(self.members) > 1

@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { t } from '../i18n.js';
 import { BrowserVideo } from '../react/ui/layout.jsx';
 import { Icon } from '../react/ui/controls.jsx';
 
@@ -99,11 +98,9 @@ export function MediaEditor({ node, source, onChange }) {
       h(
         'p',
         null,
-        t(
-          video
-            ? 'Connect a video to select its time range and crop.'
-            : 'Connect an image to select its crop.'
-        )
+        video
+          ? 'Connect a video to select its time range and crop.'
+          : 'Connect an image to select its crop.'
       )
     );
   const url = '/api/files/' + source.data.file_id;
@@ -128,7 +125,7 @@ export function MediaEditor({ node, source, onChange }) {
         h('button', {
           type: 'button',
           className: 'media-crop-handle',
-          'aria-label': t('ui.resize_crop'),
+          'aria-label': 'Resize crop',
           onPointerDown: (event) => pointerDown(event, 'resize'),
           onPointerMove: pointerMove,
           onPointerUp: pointerUp,
@@ -138,8 +135,8 @@ export function MediaEditor({ node, source, onChange }) {
     : null;
   return h(
     'section',
-    { className: 'media-editor', 'aria-label': t('ui.media_crop_editor') },
-    h('h3', null, t(video ? 'Time range & crop' : 'Photo crop')),
+    { className: 'media-editor', 'aria-label': 'Media crop editor' },
+    h('h3', null, video ? 'Time range & crop' : 'Photo crop'),
     h(
       'div',
       { className: 'media-crop-stage' },
@@ -154,7 +151,7 @@ export function MediaEditor({ node, source, onChange }) {
         onPlay: () => setPlaying(true),
         onPause: () => setPlaying(false),
         playsInline: video ? true : undefined,
-        onError: () => setError(t('ui.media_preview_unavailable_open_the_original_file'))
+        onError: () => setError('Media preview unavailable. Open the original file.')
       }),
       rectangle
     ),
@@ -171,21 +168,19 @@ export function MediaEditor({ node, source, onChange }) {
             {
               type: 'button',
               className: 'icon-only',
-              'aria-label': t(playing ? 'Pause' : 'Play'),
+              'aria-label': playing ? 'Pause' : 'Play',
               onClick: () => {
                 const player = media.current;
                 if (player.paused)
                   player
                     .play()
-                    .catch(() =>
-                      setError(t('ui.media_preview_unavailable_open_the_original_file'))
-                    );
+                    .catch(() => setError('Media preview unavailable. Open the original file.'));
                 else player.pause();
               }
             },
             h(Icon, { name: playing ? 'pause' : 'play' })
           ),
-          h('a', { href: url, target: '_blank', rel: 'noopener' }, t('ui.open_in_new_tab'))
+          h('a', { href: url, target: '_blank', rel: 'noopener' }, 'Open in new tab')
         ),
         h(
           'div',
@@ -208,7 +203,7 @@ export function MediaEditor({ node, source, onChange }) {
               step: 0.01,
               value: params.start_seconds,
               disabled: !duration,
-              'aria-label': t('ui.start'),
+              'aria-label': 'Start',
               onChange: (event) => setStart(Number(event.target.value))
             }),
             h('input', {
@@ -218,7 +213,7 @@ export function MediaEditor({ node, source, onChange }) {
               step: 0.01,
               value: params.end_seconds,
               disabled: !duration,
-              'aria-label': t('ui.end'),
+              'aria-label': 'End',
               onChange: (event) => setEnd(Number(event.target.value))
             })
           ),
@@ -232,7 +227,7 @@ export function MediaEditor({ node, source, onChange }) {
                 disabled: !duration,
                 onClick: () => setStart(media.current.currentTime)
               },
-              t('ui.set_start_here')
+              'Set start here'
             ),
             h(
               'button',
@@ -241,7 +236,7 @@ export function MediaEditor({ node, source, onChange }) {
                 disabled: !duration,
                 onClick: () => setEnd(media.current.currentTime)
               },
-              t('ui.set_end_here')
+              'Set end here'
             )
           )
         )
@@ -257,7 +252,7 @@ export function MediaEditor({ node, source, onChange }) {
           checked: params.crop_enabled,
           onChange: (event) => update({ crop_enabled: event.target.checked })
         }),
-        t('ui.crop_image_area')
+        'Crop image area'
       ),
       params.crop_enabled &&
         h(
@@ -266,7 +261,7 @@ export function MediaEditor({ node, source, onChange }) {
           h(
             'p',
             { className: 'help' },
-            t('ui.move_the_crop_with_the_mouse_or_resize_its_lower_right_corner')
+            'Move the crop with the mouse or resize its lower-right corner.'
           ),
           h(
             'button',
@@ -274,7 +269,7 @@ export function MediaEditor({ node, source, onChange }) {
               type: 'button',
               onClick: () => update({ crop_x: 0, crop_y: 0, crop_width: 1, crop_height: 1 })
             },
-            t('ui.reset_crop')
+            'Reset crop'
           )
         )
     )

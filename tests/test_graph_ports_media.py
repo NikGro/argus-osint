@@ -1,6 +1,5 @@
 """Synthetic contracts only: no VPN connection or face inference."""
 
-import json
 from pathlib import Path
 import unittest
 from core.graph import GraphSchema, NODE_DEFAULTS
@@ -41,16 +40,11 @@ class GraphPortContracts(unittest.TestCase):
         docker = (ROOT / "Dockerfile").read_text()
         for package in ("openvpn", "wireguard-tools", "chromium", "iptables"):
             self.assertIn(package, docker)
-        self.assertNotIn("service:vpn", (ROOT / "compose.standalone.yaml").read_text())
+        self.assertNotIn("service:vpn", (ROOT / "compose.yaml").read_text())
 
-    def test_mobile_and_log_controls_have_english_translations(self):
-        en = json.loads((ROOT / "static/locales/en.json").read_text(encoding="utf-8"))[
-            "messages"
-        ]
-        for text in (
-            "Automatisch aktualisieren",
-            "Automatisch nach unten scrollen",
-            "ARGUS ist für den Desktop gemacht",
-        ):
-            self.assertIn(text, en)
-            self.assertNotEqual(text, en[text])
+    def test_mobile_and_log_controls_are_english(self):
+        page = (ROOT / "static/index.html").read_text(encoding="utf-8")
+        self.assertIn("ARGUS is designed for desktop", page)
+        settings = (ROOT / "static/react/settings.jsx").read_text(encoding="utf-8")
+        for text in ("Auto refresh", "Auto scroll to bottom"):
+            self.assertIn(text, settings)

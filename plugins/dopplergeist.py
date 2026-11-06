@@ -31,22 +31,22 @@ SUFFIXES = {
 # one, so a year stands in for "until finished or cancelled".
 NO_TIME_LIMIT = str(365 * 24 * 3600)
 MESSAGES = {
-    "needs_input": "Dopplergeist braucht weitere Angaben: {detail}",
-    "inconclusive": "Kein belastbarer Ort gefunden: {detail}",
-    "failed": "Dopplergeist ist fehlgeschlagen: {detail}",
+    "needs_input": "Dopplergeist needs more input: {detail}",
+    "inconclusive": "No reliable location found: {detail}",
+    "failed": "Dopplergeist failed: {detail}",
 }
 
 PLUGIN = {
     "id": "dopplergeist",
     "tools": ["dopplergeist"],
-    "name": "Audio mit Dopplergeist verorten",
+    "name": "Locate audio with Dopplergeist",
     "icon": "audio-location",
-    "category": "Medien",
-    "description": "Aufnahmeort einer Audiodatei aus den Doppler-Verläufen überfliegender Flugzeuge und historischen ADS-B-Flugspuren schätzen. Nur für private, nicht kommerzielle Nutzung (PolyForm Noncommercial).",
+    "category": "Media",
+    "description": "Estimate where an audio recording was made from the Doppler shifts of passing aircraft and historical ADS-B flight tracks. Private, noncommercial use only (PolyForm Noncommercial).",
     "actions": [
         {
             "id": "locate",
-            "name": "Aufnahmeort schätzen",
+            "name": "Estimate recording location",
             "icon": "audio-location",
             "inputs": ["audio", "datetime"],
             "min_inputs": 1,
@@ -61,20 +61,25 @@ PLUGIN = {
                 "download_data": True,
                 "max_candidates": 5,
             },
-            "parameter_help": "Aufnahmebeginn als 2026-11-05 14:30 eintragen oder einen Datum-/Zeit-Node verbinden. Suchgebiet optional als West, Süd, Ost, Nord in Dezimalgrad. Das Herunterladen der Flugdaten kann viele Gigabyte und Stunden brauchen; geladene Daten bleiben gespeichert, bis das Plugin entfernt wird.",
+            "parameter_help": "Enter the recording start as 2026-11-05 14:30 or connect a date/time node. Optional search area as west, south, east, north in decimal degrees. Downloading the flight data can take many gigabytes and hours; downloaded data stays cached until the plugin is removed.",
             "parameter_schema": {
-                "recording_start": {"secret": False},
-                "timezone": {"secret": False},
+                "recording_start": {"label": "Recording start"},
+                "timezone": {"label": "Time zone"},
                 "start_uncertainty_minutes": {
-                    "secret": False,
+                    "label": "Latest start (+ minutes)",
                     "min": 0,
                     "max": 720,
                     "step": 1,
                 },
-                "country": {"secret": False, "enum": COUNTRIES},
-                "bounds": {"secret": False},
-                "download_data": {"secret": False},
-                "max_candidates": {"secret": False, "min": 1, "max": 20, "step": 1},
+                "country": {"label": "Country", "enum": COUNTRIES},
+                "bounds": {"label": "Search area (optional)"},
+                "download_data": {"label": "Download flight data"},
+                "max_candidates": {
+                    "label": "Maximum location candidates",
+                    "min": 1,
+                    "max": 20,
+                    "step": 1,
+                },
             },
         }
     ],
@@ -94,24 +99,24 @@ def recording_window(inputs, params):
         zone = str(params.get("timezone") or "UTC").strip()
     if not text:
         raise ValueError(
-            "Aufnahmebeginn fehlt: Datum-/Zeit-Node verbinden oder Aufnahmebeginn eintragen."
+            "Recording start missing: connect a date/time node or enter the recording start."
         )
     try:
         start = datetime.fromisoformat(text.replace(" ", "T", 1))
     except ValueError:
         raise ValueError(
-            "Aufnahmebeginn nicht lesbar. Format: 2026-11-05 14:30"
+            "Recording start not readable. Format: 2026-11-05 14:30"
         ) from None
     if start.tzinfo is None:
         try:
             start = start.replace(tzinfo=ZoneInfo(zone))
         except (ZoneInfoNotFoundError, ValueError):
-            raise ValueError("Unbekannte Zeitzone: " + zone) from None
+            raise ValueError("Unknown time zone: " + zone) from None
     minutes = params.get("start_uncertainty_minutes", 0)
     if isinstance(minutes, bool) or not isinstance(minutes, (int, float)):
-        raise ValueError("Unsicherheit des Aufnahmebeginns: 0–720 Minuten.")
+        raise ValueError("Recording start uncertainty: 0–720 minutes.")
     if not 0 <= minutes <= 720:
-        raise ValueError("Unsicherheit des Aufnahmebeginns: 0–720 Minuten.")
+        raise ValueError("Recording start uncertainty: 0–720 minutes.")
     start = start.astimezone(timezone.utc)
     end = start + timedelta(minutes=minutes)
     return start.isoformat(), end.isoformat()
@@ -132,7 +137,7 @@ def search_bounds(value):
         or not (-90 <= numbers[1] < numbers[3] <= 90)
     ):
         raise ValueError(
-            "Suchgebiet: vier Zahlen West, Süd, Ost, Nord, z. B. 13.0, 52.3, 13.8, 52.7."
+            "Search area: four numbers west, south, east, north, e.g. 13.0, 52.3, 13.8, 52.7."
         )
     return [str(n) for n in numbers]
 
@@ -140,7 +145,7 @@ def search_bounds(value):
 def command(audio, jobs, config, start, end, params):
     country = params.get("country", "DE")
     if country not in COUNTRIES:
-        raise ValueError("Land wird von Dopplergeist nicht unterstützt.")
+        raise ValueError("Dopplergeist does not support this country.")
     args = [
         tools.executable("dopplergeist", "dopplergeist"),
         "analyze",
@@ -198,7 +203,7 @@ def candidate_nodes(result, node, limit):
         outputs.append(
             {
                 "type": "location",
-                "label": "Kandidat {}: {:.5f}, {:.5f}".format(rank, lat, lon),
+                "label": "Candidate {}: {:.5f}, {:.5f}".format(rank, lat, lon),
                 "data": {
                     "latitude": round(lat, 6),
                     "longitude": round(lon, 6),
@@ -209,7 +214,7 @@ def candidate_nodes(result, node, limit):
                 "source_input": node["id"],
                 "group": "Dopplergeist · " + str(node.get("label") or "Audio"),
                 "group_id": node["id"],
-                "relation": "Möglicher Aufnahmeort",
+                "relation": "Possible recording location",
                 "source": {
                     "tool": "Dopplergeist",
                     "rank": rank,
@@ -235,10 +240,10 @@ def explanation(result):
 
 def run(action, inputs, params, context):
     if action != "locate":
-        raise ValueError("Unbekannte Dopplergeist-Aktion.")
+        raise ValueError("Unknown Dopplergeist action.")
     audio_nodes = [n for n in inputs if n["type"] == "audio"]
     if len(audio_nodes) != 1:
-        raise ValueError("Genau einen Audio-Node verbinden.")
+        raise ValueError("Connect exactly one audio node.")
     node = audio_nodes[0]
     source = Path(context["resolve_file"](node["data"].get("file_id", "")))
     start, end = recording_window(inputs, params)
@@ -267,7 +272,7 @@ def run(action, inputs, params, context):
             error = problem
         result = outcome(jobs, stdout)
     if result is None:
-        raise error or ValueError("Dopplergeist hat kein Ergebnis geliefert.")
+        raise error or ValueError("Dopplergeist returned no result.")
     outputs = candidate_nodes(result, node, limit)
     warnings = []
     coverage = result.get("coverage") or {}
@@ -276,13 +281,13 @@ def run(action, inputs, params, context):
         outputs.append(
             {
                 "type": "error",
-                "label": "Dopplergeist: kein Ort",
+                "label": "Dopplergeist: no location",
                 "data": {
-                    "title": "Dopplergeist: kein Ort",
+                    "title": "Dopplergeist: no location",
                     "message": explanation(result),
                 },
                 "source_input": node["id"],
-                "relation": "Ergebnis",
+                "relation": "Result",
                 "source": {"tool": "Dopplergeist", "status": result.get("status")},
             }
         )

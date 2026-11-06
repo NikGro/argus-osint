@@ -69,7 +69,7 @@ class RequestIdentity(unittest.TestCase):
         opener = Mock()
         opener.open.return_value = io.BytesIO(b"{}")
         with patch(
-            "core.plugin_manager.urllib.request.build_opener", return_value=opener
+            "core.community_repos.urllib.request.build_opener", return_value=opener
         ):
             self.assertEqual(
                 Manager.fetch("https://api.github.com/repos/example/fixture"), b"{}"
@@ -319,12 +319,12 @@ class RecoveryBoundaries(unittest.TestCase):
         handler.path = "/api/map-preview?lat=53.5&lon=10"
         maps = Mock()
         handler.server = SimpleNamespace(
-            app=SimpleNamespace(MAPS=maps, settings=lambda: {"language": "en"})
+            app=SimpleNamespace(MAPS=maps, settings=lambda: {})
         )
         handler.send = Mock()
         maps.preview.side_effect = AppError("location_required", 422)
         handler.get_map("/api/map-preview")
-        maps.unavailable.assert_called_once_with("en")
+        maps.unavailable.assert_called_once_with()
         maps.unavailable.reset_mock()
         maps.preview.side_effect = RuntimeError("fixture defect")
         with self.assertRaises(RuntimeError):

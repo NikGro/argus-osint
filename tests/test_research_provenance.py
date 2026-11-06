@@ -41,7 +41,7 @@ class RevisionSources(unittest.TestCase):
             "label": "example · registration",
             "data": {"value": value},
             "source": {"tool": tool, "service": "example"},
-            "relation": "Benutzername gefunden",
+            "relation": "Username found",
         }
 
     def project(self, kind="value", plugin="transform", action="code"):
@@ -133,7 +133,7 @@ class RevisionSources(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 research.aggregate("username", {"a": failed}, [self.node()], params, {})
-        with self.assertRaisesRegex(ValueError, "Alle Recherchequellen"):
+        with self.assertRaisesRegex(ValueError, "All research sources failed"):
             research.aggregate("username", {"a": failed}, [self.node()], {}, {})
 
     def test_dedup_preserves_different_facts_queries_and_provenance(self):

@@ -1,6 +1,5 @@
 """HTTP transport adapter for an explicit application instance."""
 
-from core.messages import text as localized
 from core.http_routes import dispatch
 import json
 import mimetypes
@@ -350,12 +349,9 @@ class Handler(BaseHTTPRequestHandler):
                 query.get("lon", [""])[0],
                 query.get("q", [""])[0],
                 query.get("provider", ["osm"])[0],
-                self.app.settings().get("language", "en"),
             )
         except (AppError, OSError, ValueError, KeyError, TypeError):
-            preview = self.app.MAPS.unavailable(
-                self.app.settings().get("language", "en")
-            )
+            preview = self.app.MAPS.unavailable()
         return self.send(200, preview, "text/html; charset=utf-8")
 
     def get_media(self, path):
@@ -392,9 +388,7 @@ class Handler(BaseHTTPRequestHandler):
         )
 
     def get_settings(self, path):
-        return self.send(
-            200, {"settings": self.app.settings(), "languages": self.app.languages()}
-        )
+        return self.send(200, {"settings": self.app.settings()})
 
     def get_system_logs(self, path):
         from urllib.parse import parse_qs
@@ -541,7 +535,7 @@ class Handler(BaseHTTPRequestHandler):
             self.app.FILES.upload_stream(
                 self.rfile,
                 length,
-                self.headers.get("X-File-Name", "Datei"),
+                self.headers.get("X-File-Name", "File"),
                 project_id=project_id,
             ),
         )
@@ -628,11 +622,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_create_project(self, path):
         body = self.body()
-        title = str(
-            body.get(
-                "title", localized(self.app.settings()["language"], "ui.new_project")
-            )
-        )[:200]
+        title = str(body.get("title", "New project"))[:200]
         doc = body.get(
             "document",
             {"nodes": [], "edges": [], "groups": [], "runs": [], "report_notes": ""},

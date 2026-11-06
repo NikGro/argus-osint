@@ -1,4 +1,3 @@
-import { t } from './i18n.js';
 let csrf = null;
 let authentication = null;
 
@@ -10,7 +9,7 @@ async function login() {
     headers: { 'Content-Type': 'application/json', 'X-Argus-Client': 'web' },
     body: '{}'
   });
-  if (!response.ok) throw Error(t('ui.could_not_connect_to_argus'));
+  if (!response.ok) throw Error('Could not connect to ARGUS.');
   csrf = (await response.json()).csrf_token;
 }
 

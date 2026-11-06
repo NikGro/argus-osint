@@ -44,7 +44,7 @@ class ProfileTests(unittest.TestCase):
         outputs, warnings = profiles.parse_csv(csv, NODE, 1)
         self.assertEqual(len([o for o in outputs if o["type"] == "url"]), 1)
         self.assertEqual(outputs[-1]["source"]["counts"]["found"], 2)
-        self.assertTrue(any(("begrenzt" in warning for warning in warnings)))
+        self.assertTrue(any(("showing the first" in warning for warning in warnings)))
 
     def test_invalid_username_never_runs_subprocess(self):
         with patch.object(profiles, "bounded_run") as process:
@@ -109,7 +109,7 @@ class ProfileTests(unittest.TestCase):
         )
         self.assertEqual(result["document"]["runs"][0]["status"], "completed")
 
-    @unittest.skipUnless(tool_stubs.real("sherlock"), "Sherlock-CLI nicht installiert")
+    @unittest.skipUnless(tool_stubs.real("sherlock"), "Sherlock CLI not installed")
     def test_real_cli_against_controlled_local_websites(self):
 
         class Fixture(BaseHTTPRequestHandler):

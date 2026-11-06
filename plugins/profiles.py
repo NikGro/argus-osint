@@ -12,15 +12,15 @@ from urllib.parse import urlparse
 
 PLUGIN = {
     "id": "profiles",
-    "name": "Profile suchen - Sherlock",
-    "description": "Breite Benutzernamensuche; Treffer als URL und Value in Anbietergruppen.",
+    "name": "Find profiles - Sherlock",
+    "description": "Broad username search; results are URLs and values grouped by provider.",
     "actions": [
         {
             "id": "search",
-            "name": "Profile zum Benutzernamen suchen",
+            "name": "Find profiles for username",
             "inputs": ["username"],
             "external": True,
-            "external_notice": "Der Benutzername wird an die ausgewählten Websites gesendet. Gleiche Benutzernamen beweisen keine gemeinsame Identität.",
+            "external_notice": "The username is sent to the selected websites. Matching usernames do not prove a shared identity.",
             "default_params": {
                 "sites": [],
                 "request_timeout": 10,
@@ -36,9 +36,7 @@ def parse_csv(text, node, max_results):
     reader = csv.DictReader(io.StringIO(text))
     required = {"name", "url_user", "exists"}
     if not reader.fieldnames or not required.issubset(reader.fieldnames):
-        raise ValueError(
-            "Sherlock-Ergebnisformat nicht unterstützt: CSV-Spalten fehlen."
-        )
+        raise ValueError("Unsupported Sherlock result format: CSV columns missing.")
     outputs, warnings, seen = [], [], set()
     counts = {"found": 0, "not_found": 0, "inconclusive": 0}
     rows = list(reader)
@@ -77,23 +75,23 @@ def parse_csv(text, node, max_results):
                 "status": row["exists"],
                 "http_status": row.get("http_status"),
             },
-            "relation": "Benutzername gefunden",
+            "relation": "Username found",
         }
         outputs.append(
             {
                 **common,
                 "type": "url",
-                "label": row["name"] + " · Profiladresse",
+                "label": row["name"] + " · Profile URL",
                 "data": {"value": url},
             }
         )
     if counts["inconclusive"]:
         warnings.append(
-            f"{counts['inconclusive']} Prüfungen ohne eindeutiges Ergebnis; nicht als 'kein Treffer' bewertet."
+            f"{counts['inconclusive']} checks without a conclusive result; not counted as 'no match'."
         )
     if counts["found"] > max_results:
         warnings.append(
-            f"{counts['found']} Treffer; Anzeige auf {max_results} Treffer begrenzt. Alle Prüfungen bleiben im Suchbefund erhalten."
+            f"{counts['found']} matches; showing the first {max_results}. All checks remain in the search record."
         )
 
     for output in outputs:
@@ -109,21 +107,17 @@ def search(username, params):
         or username.startswith("-")
         or username in (".", "..")
     ):
-        raise ValueError(
-            "Benutzername enthält nicht unterstützte Zeichen oder ist zu lang."
-        )
+        raise ValueError("Username contains unsupported characters or is too long.")
     sites = params.get("sites", [])
     if (
         not isinstance(sites, list)
         or len(sites) > 50
         or any(not isinstance(s, str) or not s.strip() or len(s) > 100 for s in sites)
     ):
-        raise ValueError(
-            "sites muss eine Liste von höchstens 50 Sherlock-Anbieternamen sein."
-        )
+        raise ValueError("sites must list at most 50 Sherlock site names.")
     request_timeout = int(params.get("request_timeout", 10))
     if not 1 <= request_timeout <= 30:
-        raise ValueError("request_timeout: 1–30 Sekunden.")
+        raise ValueError("Request timeout: 1–30 seconds.")
     with tempfile.TemporaryDirectory(prefix="trace-sherlock-") as directory:
         args = [
             executable,
@@ -144,34 +138,32 @@ def search(username, params):
         report = Path(directory) / (username + ".csv")
         if not report.is_file():
             raise ValueError(
-                "Sherlock lieferte kein auswertbares Ergebnis. Installation, Netzwerk und sites-Auswahl prüfen."
+                "Sherlock returned no usable result. Check installation, network and selected sites."
             )
         if report.stat().st_size > 4 * 1024 * 1024:
-            raise ValueError("Sherlock-Ergebnis überschreitet 4 MiB.")
+            raise ValueError("Sherlock result exceeds 4 MiB.")
         return report.read_text(encoding="utf-8-sig")
 
 
 def run(action, inputs, params, context):
     if action != "search":
-        raise ValueError("Unbekannte Profilsuchaktion.")
+        raise ValueError("Unknown profile search action.")
     if len(inputs) != 1:
-        raise ValueError("Pro Suchlauf genau einen Benutzername-Knoten anschließen.")
+        raise ValueError("Connect exactly one username node per search.")
     node = inputs[0]
     username = node["data"].get("value")
     if not isinstance(username, str) or not username:
-        raise ValueError("Benutzername im Feld data.value fehlt.")
+        raise ValueError("Username is missing in data.value.")
     max_results = int(params.get("max_results", 100))
     if not 1 <= max_results <= 400:
-        raise ValueError("max_results muss zwischen 1 und 400 liegen.")
+        raise ValueError("max_results must be between 1 and 400.")
     if not _search_lock.acquire(blocking=False):
-        raise ValueError(
-            "Es läuft bereits eine Profilsuche. Bitte deren Abschluss abwarten."
-        )
+        raise ValueError("A profile search is already running. Wait for it to finish.")
     try:
         text = search(username, params)
         outputs, warnings = parse_csv(text, node, max_results)
         warnings.append(
-            "Treffer beruhen auf Sherlock-Prüfungen und müssen geprüft werden; gleiche Benutzernamen belegen keine gemeinsame Person."
+            "Results are based on Sherlock checks and require review; matching usernames do not prove a shared identity."
         )
         return {
             "outputs": outputs,

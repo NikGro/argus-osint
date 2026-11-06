@@ -36,20 +36,3 @@ def real(tool):
     marker = tools.directory(tool) / tools.MARKER
     return not json.loads(marker.read_text()).get("stub")
 
-
-# Test managers prune tools they do not need; stubs are shared by all tests,
-# so removing them would break later tests that rely on the stub.
-_remove = tools.remove
-
-
-def _keep_stubs(tool):
-    marker = tools.directory(tool) / tools.MARKER
-    try:
-        if json.loads(marker.read_text()).get("stub"):
-            return
-    except (OSError, ValueError):
-        pass
-    _remove(tool)
-
-
-tools.remove = _keep_stubs

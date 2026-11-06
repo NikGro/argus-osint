@@ -1,6 +1,5 @@
 import React from 'react';
 import { ICON_PATHS } from '../../icons.js';
-import { t } from '../../i18n.js';
 
 export function Icon({ name, ...props }) {
   return (
@@ -56,15 +55,7 @@ export function SaveState({ pending, saving, error }) {
       data-state={error ? 'error' : saving ? 'saving' : pending ? 'pending' : 'saved'}
     >
       <Icon name={saving ? 'spinner' : error ? 'logs' : pending ? 'save' : 'check'} />
-      {t(
-        error
-          ? 'Speichern fehlgeschlagen'
-          : saving
-            ? 'Speichert …'
-            : pending
-              ? 'Noch zu speichern'
-              : 'Gespeichert'
-      )}
+      {error ? 'Save failed' : saving ? 'Saving …' : pending ? 'Pending save' : 'Saved'}
     </span>
   );
 }

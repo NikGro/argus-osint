@@ -8,7 +8,6 @@ import threading
 import unittest
 from unittest.mock import patch
 from uuid import uuid4
-from core.application import get_default_application
 from core import graph
 from runtime_fixture import app
 from plugins import location
@@ -183,20 +182,8 @@ class UpdatesTests(unittest.TestCase):
             result[0]["document"]["nodes"][0]["data"]["country"], "Germany"
         )
 
-    def test_language_packs_and_report(self):
-        packs = [
-            json.loads(
-                (app.ROOT / "static" / "locales" / (c + ".json")).read_text(
-                    encoding="utf-8"
-                )
-            )["messages"]
-            for c in ("de", "en")
-        ]
-        self.assertEqual(set(packs[0]), set(packs[1]))
-        with patch.object(
-            get_default_application(), "settings", return_value={"language": "en"}
-        ):
-            output = app.report(self.project()).decode()
+    def test_report_is_english(self):
+        output = app.report(self.project()).decode()
         self.assertIn("Research report", output)
         self.assertIn("Print / Save as PDF", output)
 

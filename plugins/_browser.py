@@ -40,12 +40,12 @@ def run_browser(browser, payload):
         check=False,
     )
     if completed.returncode:
-        raise ValueError("Browserabruf fehlgeschlagen.")
+        raise ValueError("Browser request failed.")
     return json.loads(completed.stdout)
 
 
 def fetch(payload):
     browser = browser_command()
     if browser is None:
-        raise ValueError("Browser nicht installiert.")
+        raise ValueError("Browser not installed.")
     return run_browser(browser, payload)

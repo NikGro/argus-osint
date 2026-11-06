@@ -1,4 +1,3 @@
-import { t } from '../i18n.js';
 var palette_default = {
   name: 'palette',
   dependencies: [
@@ -30,17 +29,17 @@ var palette_default = {
     function dataCategory(type) {
       return (
         {
-          email: 'Kennungen',
-          username: 'Kennungen',
-          phone: 'Kennungen',
-          url: 'Kennungen',
-          location: 'Orte und Zeit',
-          datetime: 'Orte und Zeit',
-          image: 'Medien',
-          file: 'Medien',
-          note: 'Eigene Angaben',
-          value: 'Eigene Angaben'
-        }[type] || 'Weitere'
+          email: 'Identifiers',
+          username: 'Identifiers',
+          phone: 'Identifiers',
+          url: 'Identifiers',
+          location: 'Places and time',
+          datetime: 'Places and time',
+          image: 'Media',
+          file: 'Media',
+          note: 'Custom data',
+          value: 'Custom data'
+        }[type] || 'Other'
       );
     }
     function actionCategory(plugin, action) {
@@ -48,11 +47,11 @@ var palette_default = {
         action.category ||
         plugin.category ||
         {
-          location: 'Orte und Zeit',
-          metadata: 'Medien',
-          transform: 'Datenbearbeitung'
+          location: 'Places and time',
+          metadata: 'Media',
+          transform: 'Data processing'
         }[plugin.id] ||
-        'Weitere'
+        'Other'
       );
     }
     async function dropPalette(event) {
@@ -77,10 +76,10 @@ var palette_default = {
         else if (payload.kind === 'actor') {
           const plugin = pluginsState.catalog.find((p) => p.id === payload.plugin),
             action = plugin?.actions.find((a) => a.id === payload.action);
-          if (!action) throw Error(t('ui.tool_unavailable'));
+          if (!action) throw Error('Tool unavailable.');
           const targetId = event.target.closest('.node')?.dataset.id,
             target = workspaceState.project.document.nodes.find((n) => n.id === targetId);
-          if (target?.type === 'actor') throw Error(t('ui.tools_require_a_data_node_as_input'));
+          if (target?.type === 'actor') throw Error('Tools require a data node as input.');
           const selected = selectedData();
           const inputs = target
             ? selected.some((node) => node.id === target.id)

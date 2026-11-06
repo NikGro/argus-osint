@@ -1,4 +1,3 @@
-import { t } from '../i18n.js';
 var tags_default = {
   name: 'tags',
   dependencies: ['measureEdgeText'],
@@ -10,15 +9,15 @@ var tags_default = {
           : 'unverified',
         states = {
           unverified: {
-            name: t('ui.unverified'),
+            name: 'Unverified',
             color: '#e66a78'
           },
           unclear: {
-            name: t('ui.unclear'),
+            name: 'Unclear',
             color: '#eab65c'
           },
           verified: {
-            name: t('ui.verified'),
+            name: 'Verified',
             color: '#6fc58c'
           }
         },

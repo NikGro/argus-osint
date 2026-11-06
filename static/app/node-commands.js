@@ -1,4 +1,3 @@
-import { t } from '../i18n.js';
 import { transformExample } from './labels.js';
 var node_commands_default = {
   name: 'node-commands',
@@ -13,7 +12,6 @@ var node_commands_default = {
     'inspect',
     'newNodeLabel',
     'nodeRect',
-    'pluginText',
     'pruneGroups',
     'render',
     'uid'
@@ -36,7 +34,6 @@ var node_commands_default = {
     inspect,
     newNodeLabel,
     nodeRect,
-    pluginText,
     pruneGroups,
     render,
     uid
@@ -105,12 +102,12 @@ var node_commands_default = {
       if (selectionState.selectedGroup && !inputOverride)
         inputs = inputs.filter((n) => actionAcceptsNode(action, n));
       if (actorIncompatible(action, inputs, true))
-        throw Error(t('ui.the_selected_data_is_incompatible_with_this_tool'));
+        throw Error('The selected data is incompatible with this tool.');
       const x = inputs.length ? Math.max(...inputs.map((n) => n.x + nodeRect(n).w)) + 200 : void 0,
         y = inputs[0] ? inputs[0].y + (nodeRect(inputs[0]).h - 76) / 2 : void 0;
       const actor = newNode(
         'actor',
-        pluginText(plugin, action.name),
+        action.name,
         {
           plugin: plugin.id,
           action: action.id,
@@ -139,7 +136,7 @@ var node_commands_default = {
           target: actor.id,
           source_port: 'right',
           target_port: `left:${index}:${Math.max(1, action.min_inputs || 1)}`,
-          label: t('ui.input')
+          label: 'Input'
         });
       change(actor.id);
       render();

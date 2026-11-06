@@ -86,13 +86,11 @@ def collect(payload, core=None, requests_module=None):
                     result["profile"] = info["user"]
                 else:
                     result["warnings"].append(
-                        "Toutatis: Profilergänzung nicht verfügbar."
+                        "Toutatis: profile enrichment unavailable."
                     )
             except Exception as exc:
                 result["warnings"].append(
-                    "Toutatis: Profilergänzung fehlgeschlagen ("
-                    + type(exc).__name__
-                    + ")."
+                    "Toutatis: profile enrichment failed (" + type(exc).__name__ + ")."
                 )
         if payload.get("recovery"):
             try:
@@ -111,11 +109,11 @@ def collect(payload, core=None, requests_module=None):
                 fields(response)
                 if not result["recovery"]:
                     result["warnings"].append(
-                        "Toutatis: Keine maskierten Wiederherstellungsangaben verfügbar; Instagram kann den Abruf begrenzen."
+                        "Toutatis: no masked recovery information available; Instagram may restrict retrieval."
                     )
             except Exception as exc:
                 result["warnings"].append(
-                    "Toutatis: Wiederherstellungsangaben nicht verfügbar ("
+                    "Toutatis: recovery information unavailable ("
                     + type(exc).__name__
                     + ")."
                 )
@@ -133,8 +131,6 @@ if __name__ == "__main__":
         result = {
             "profile": {},
             "recovery": {},
-            "warnings": [
-                "Toutatis konnte nicht geladen werden (" + type(exc).__name__ + ")."
-            ],
+            "warnings": ["Toutatis could not be loaded (" + type(exc).__name__ + ")."],
         }
     json.dump(result, sys.stdout, ensure_ascii=False)

@@ -1,4 +1,3 @@
-import { t } from '../i18n.js';
 var resources_default = {
   name: 'resources',
   dependencies: ['toast'],
@@ -14,7 +13,7 @@ var resources_default = {
     function openLink(node) {
       const link = safeLink(node.data.value);
       if (link) window.open(link, '_blank', 'noopener,noreferrer');
-      else toast(t('ui.invalid_url'));
+      else toast('Invalid URL');
     }
     function mapSources(kind) {
       const entry = pluginsState.dataTypes.get('location'),
@@ -27,19 +26,19 @@ var resources_default = {
         const actions = {
           google: {
             key: 'mapsButton',
-            label: 'In Google Maps \xF6ffnen',
+            label: 'Open in Google Maps',
             icon: 'map',
             provider: 'google'
           },
           apple: {
             key: 'appleMapsButton',
-            label: 'In Apple Maps \xF6ffnen',
+            label: 'Open in Apple Maps',
             icon: 'map',
             provider: 'apple'
           },
           osm: {
             key: 'osmButton',
-            label: 'In OpenStreetMap \xF6ffnen',
+            label: 'Open in OpenStreetMap',
             icon: 'map',
             provider: 'osm'
           }
@@ -49,12 +48,12 @@ var resources_default = {
           .filter(Boolean);
       }
       if (node.type === 'video')
-        return [{ key: 'videoButton', label: 'Video öffnen', icon: 'video' }];
+        return [{ key: 'videoButton', label: 'Open video', icon: 'video' }];
       return ['url', 'profile'].includes(node.type)
         ? [
             {
               key: 'openButton',
-              label: 'Link \xF6ffnen',
+              label: 'Open link',
               icon: 'external'
             }
           ]
@@ -62,7 +61,7 @@ var resources_default = {
           ? [
               {
                 key: 'imageButton',
-                label: 'Bild anzeigen',
+                label: 'View image',
                 icon: 'image'
               }
             ]
@@ -70,7 +69,7 @@ var resources_default = {
             ? [
                 {
                   key: 'fileButton',
-                  label: 'Datei \xF6ffnen',
+                  label: 'Open file',
                   icon: 'file'
                 }
               ]
@@ -148,7 +147,7 @@ var resources_default = {
               value: node.data.url
             }
           });
-        else toast(t('ui.no_public_profile_url'));
+        else toast('No public profile URL');
         return;
       }
       if (node.type === 'image' && !node.data.file_id && safeResourceUrl(node.data.url)) {
@@ -166,7 +165,7 @@ var resources_default = {
             ? mapsUrl(node, false, provider)
             : null;
       if (url) window.open(url, '_blank', 'noopener,noreferrer');
-      else toast(t('ui.no_displayable_data_yet'));
+      else toast('No displayable data yet.');
     }
     function safeResourceUrl(value) {
       try {

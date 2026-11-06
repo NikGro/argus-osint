@@ -1,6 +1,4 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
-import { language } from '../i18n.js';
-import { t, diagnostic } from '../i18n.js';
 import { Icon, MediaFrame, MapPreview } from './ui/index.jsx';
 
 export function Canvas({ app }) {
@@ -143,7 +141,7 @@ export function Canvas({ app }) {
               .map((group) => model.rects.get(group.id))
           ]);
         const obstacles = contextObstacles.get(visual.context);
-        const label = t(edge.label || '');
+        const label = edge.label || '';
         const route = c.routeConnection(
           visual.a.rect,
           visual.b.rect,
@@ -175,8 +173,7 @@ export function Canvas({ app }) {
     s.persistenceState.changeVersion,
     s.workspaceState.project?.revision,
     s.pluginsState.catalog,
-    s.preferencesState.appSettings.tags,
-    language
+    s.preferencesState.appSettings.tags
   ]);
   const selectedNodeIds = new Set(s.selectionState.selected);
   for (const group of doc?.groups || [])
@@ -206,7 +203,7 @@ export function Canvas({ app }) {
       id="graph"
       tabIndex={0}
       role="application"
-      aria-label={t('ui.graph_workspace')}
+      aria-label={'Graph workspace'}
       onPointerDown={(event) => {
         if (!event.target.closest('video,textarea,input')) c.canvasPointerDown(event.nativeEvent);
       }}
@@ -294,7 +291,7 @@ function Edge({ app, edge, route, label, highlighted }) {
   }
   const edit = () =>
     app.safely(async () => {
-      const next = await c.askText(t('ui.edit_connection'), t('ui.label'), edge.label || '');
+      const next = await c.askText('Edit connection', 'Label', edge.label || '');
       if (next !== null) {
         edge.label = next;
         c.change();
@@ -346,7 +343,7 @@ function Edge({ app, edge, route, label, highlighted }) {
         data-edge-hit={edge.id}
         tabIndex={0}
         role="button"
-        aria-label={t('ui.select_connection')}
+        aria-label={'Select connection'}
         onPointerDown={select}
         onKeyDown={(event) => {
           if (event.key === 'Enter') select(event);
@@ -383,7 +380,7 @@ function Edge({ app, edge, route, label, highlighted }) {
           className="edge-edit"
           role="button"
           tabIndex={0}
-          aria-label={t('ui.edit_connection')}
+          aria-label={'Edit connection'}
           onClick={edit}
           onKeyDown={(event) => {
             if (event.key === 'Enter') edit();
@@ -408,7 +405,7 @@ function Edge({ app, edge, route, label, highlighted }) {
           className="edge-delete"
           role="button"
           tabIndex={0}
-          aria-label={t('ui.delete_connection')}
+          aria-label={'Delete connection'}
           onClick={() => c.deleteEdges(c.edgeBundleIds(edge.id))}
           onKeyDown={(event) => {
             if (event.key === 'Enter') c.deleteEdges(c.edgeBundleIds(edge.id));
@@ -453,7 +450,7 @@ function Group({ app, group, bounds: b }) {
         className="group-toggle"
         role="button"
         tabIndex={0}
-        aria-label={t(group.collapsed ? 'Aufklappen' : 'Einklappen')}
+        aria-label={group.collapsed ? 'Expand' : 'Collapse'}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => {
           event.stopPropagation();
@@ -478,7 +475,7 @@ function Group({ app, group, bounds: b }) {
       </g>
       {group.collapsed && (
         <text x="12" y="55" fill="#95a9c1" fontSize="11">
-          {c.groupNodeIds(group).size} {t('ui.nodes')}
+          {c.groupNodeIds(group).size} {'Nodes'}
         </text>
       )}
     </g>
@@ -614,7 +611,7 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
             className="note-resize"
             role="button"
             tabIndex={0}
-            aria-label={t('ui.resize_note')}
+            aria-label={'Resize note'}
             onPointerDown={(event) => {
               event.stopPropagation();
               event.preventDefault();
@@ -665,7 +662,7 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
           </text>
           {node.type !== 'location' && (
             <text x="12" y="60" fill="#95a9c1" fontSize="10">
-              {c.short(node.type === 'error' ? diagnostic(node.data.message) : c.summary(node), 42)}
+              {c.short(node.type === 'error' ? node.data.message : c.summary(node), 42)}
             </text>
           )}
           {node.type === 'location' &&
@@ -752,7 +749,7 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
             textAnchor="middle"
             fontSize="11"
           >
-            {t(action.label)}
+            {action.label}
           </text>
         </g>
       ))}

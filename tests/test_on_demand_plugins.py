@@ -24,9 +24,10 @@ class ToolRegistry(unittest.TestCase):
     def setUp(self):
         self.folder = tempfile.TemporaryDirectory()
         self.addCleanup(self.folder.cleanup)
-        patcher = patch.object(tools, "_root", Path(self.folder.name))
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        for name, value in (("_root", Path(self.folder.name)), ("_owned", True)):
+            patcher = patch.object(tools, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
     def recipe(self, fail=False):
         def steps(job):
@@ -55,6 +56,13 @@ class ToolRegistry(unittest.TestCase):
                 tools.install("fixture")
             self.assertFalse(tools.directory("fixture").exists())
             self.assertFalse(tools.installed("fixture"))
+
+    def test_external_tool_directory_is_never_deleted(self):
+        with patch.dict(tools.RECIPES, {"fixture": self.recipe()}):
+            tools.install("fixture")
+            with patch.object(tools, "_owned", False):
+                tools.remove("fixture")
+            self.assertTrue(tools.installed("fixture"))
 
     def test_outdated_recipe_counts_as_missing(self):
         with patch.dict(tools.RECIPES, {"fixture": self.recipe()}):

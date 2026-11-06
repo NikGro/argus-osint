@@ -12,14 +12,14 @@ from urllib.parse import urlsplit
 def public_url(url):
     p = urlsplit(url)
     if p.scheme not in ("http", "https") or not p.hostname or p.username or p.password:
-        raise ValueError("Öffentliche HTTP(S)-Profil-URL erforderlich.")
+        raise ValueError("A public HTTP(S) profile URL is required.")
     for entry in socket.getaddrinfo(
         p.hostname,
         p.port or (443 if p.scheme == "https" else 80),
         type=socket.SOCK_STREAM,
     ):
         if not ipaddress.ip_address(entry[4][0]).is_global:
-            raise ValueError("Interne Adressen sind keine öffentlichen Profilseiten.")
+            raise ValueError("Internal addresses are not public profile pages.")
     return url
 
 
@@ -58,7 +58,7 @@ def extract_one(payload):
             ) as response:
                 content = response.read(4 * 1024 * 1024 + 1)
                 if len(content) > 4 * 1024 * 1024:
-                    raise ValueError("Profilseite größer als 4 MiB.")
+                    raise ValueError("Profile page exceeds 4 MiB.")
                 page = content.decode(
                     response.headers.get_content_charset() or "utf-8", errors="replace"
                 )

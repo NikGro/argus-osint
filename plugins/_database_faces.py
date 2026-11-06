@@ -11,16 +11,16 @@ def search(inputs, params, context, verify):
     source, database = connected_database(inputs, context)
     reference = next((n for n in inputs if n["type"] == "image"), None)
     if len(inputs) != 2 or not reference:
-        raise ValueError("Eine Datenbank und ein Referenzbild verbinden.")
+        raise ValueError("Connect a database and one reference image.")
     fields = [f for f in database["fields"] if f["type"] == "image"]
     if not fields:
-        raise ValueError("Die Datenbank enthält keine Bildspalte.")
+        raise ValueError("The database has no image column.")
     field = next((f for f in fields if f["id"] == params.get("column_id")), None)
     if not field:
         return column_prompt(database, images=True)
     limit = params.get("max_comparisons", 100)
     if type(limit) is not int or not 1 <= limit <= 1000:
-        raise ValueError("Ungültiges Vergleichslimit.")
+        raise ValueError("Invalid comparison limit.")
     outputs = []
     warnings = []
     compared = 0
@@ -31,7 +31,7 @@ def search(inputs, params, context, verify):
         return {
             "outputs": [],
             "warnings": [
-                "Vergleichslimit erreicht; die Datenbank wurde nicht vollständig durchsucht."
+                "Comparison limit reached; the database was not searched completely."
             ],
         }
     exhausted = False
@@ -124,17 +124,17 @@ def search(inputs, params, context, verify):
             break
     if exhausted:
         warnings.append(
-            "Vergleichslimit erreicht; die Datenbank wurde nicht vollständig durchsucht."
+            "Comparison limit reached; the database was not searched completely."
         )
     if failed:
         warnings.append(
-            "Einige Datenbankbilder konnten nicht verglichen werden. Die Ergebnisse sind unvollständig."
+            "Some database images could not be compared. Results are incomplete."
         )
     if not outputs:
         outputs = [
             {
                 "type": "value",
-                "label": "Treffer",
+                "label": "Matches",
                 "data": {"value": str(matches)},
                 "source_input": source["id"],
                 "source": {

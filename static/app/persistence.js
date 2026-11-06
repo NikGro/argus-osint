@@ -26,7 +26,7 @@ var persistence_default = {
     function change(nodeId, scope) {
       if (workspaceState.project?.archived_at) {
         workspaceState.project.document = structuredClone(workspaceState.lastServerSnapshot);
-        toast('Archiviertes Projekt: zum Bearbeiten wiederherstellen.');
+        toast('Archived project: restore it to edit.');
         return;
       }
       canvasState.groupBoundsCache = null;

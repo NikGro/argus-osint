@@ -44,7 +44,7 @@ Connect a Database node and a reference value to Search database for complete-re
 
 ## Make it your workspace
 
-Create, rename and archive projects. Keep files with their project, group related findings and choose what goes into a report. ARGUS includes German and English interfaces, themed date/time/color controls, searchable selectors and resizable sidebars.
+Create, rename and archive projects. Keep files with their project, group related findings and choose what goes into a report. The interface is in English, with themed date/time/color controls, searchable selectors and resizable sidebars.
 
 | Projects | Plugins |
 | --- | --- |

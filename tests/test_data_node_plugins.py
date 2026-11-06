@@ -28,13 +28,13 @@ class NewPluginTests(unittest.TestCase):
             all(
                 (
                     output.get("source", {}).get("service") == "found"
-                    or "Suchprotokoll" in output["label"]
+                    or "Search record" in output["label"]
                     for output in result["outputs"]
                 )
             )
         )
-        self.assertEqual(result["outputs"][0]["label"], "Konto besteht?")
-        self.assertEqual(result["outputs"][0]["data"]["value"], "Ja")
+        self.assertEqual(result["outputs"][0]["label"], "Account exists?")
+        self.assertEqual(result["outputs"][0]["data"]["value"], "Yes")
         self.assertTrue(
             all((set(output["data"]) == {"value"} for output in result["outputs"]))
         )
@@ -166,8 +166,8 @@ class NewPluginTests(unittest.TestCase):
             next((row for row in rows if row["name"] == "failed"))["exists"]
         )
 
-    def test_language_setting_and_backend_health_are_actual_api_responses(self):
-        app.save_settings({"language": "en"})
-        self.assertEqual(app.settings()["language"], "en")
+    def test_settings_and_backend_health_are_actual_api_responses(self):
+        # Old clients may still send a language; ARGUS ignores it.
         app.save_settings({"language": "de"})
+        self.assertNotIn("language", app.settings())
         self.assertTrue(app.settings()["geocoder_enabled"])

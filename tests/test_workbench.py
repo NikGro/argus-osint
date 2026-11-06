@@ -241,12 +241,6 @@ class APITests(unittest.TestCase):
         self.assertEqual(result["document"]["nodes"][-1]["type"], "error")
         self.assertEqual(result["document"]["runs"][0]["status"], "failed")
 
-    def test_language_packs_are_served_as_json(self):
-        for code in ("de", "en"):
-            pack = self.call("/locales/" + code + ".json")
-            self.assertEqual(pack["_meta"]["code"], code)
-            self.assertIn("Einstellungen", pack["messages"])
-
     def test_report_escapes_input(self):
         p = self.project()
         with urllib.request.urlopen(

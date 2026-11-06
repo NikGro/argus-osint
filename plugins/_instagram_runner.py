@@ -27,7 +27,7 @@ def plain(value):
 
 def text(value):
     if isinstance(value, bool):
-        return "Ja" if value else "Nein"
+        return "Yes" if value else "No"
     if isinstance(value, (dict, list)):
         return json.dumps(value, ensure_ascii=False)
     return str(value)
@@ -121,7 +121,7 @@ class InstagramCollector:
             raise _Completed(
                 {
                     "outputs": [],
-                    "warnings": ["Anmeldung: " + self.safe_error(self.exc)],
+                    "warnings": ["Login: " + self.safe_error(self.exc)],
                     "failed": True,
                     "authenticated": False,
                 }
@@ -140,7 +140,7 @@ class InstagramCollector:
             self.info = self.profile_info()
         except Exception as _caught_2:
             self.exc = _caught_2
-            self.error("Profil", self.exc)
+            self.error("Profile", self.exc)
             if not (
                 self.config.get("use_toutatis", True) and self.payload.get("username")
             ):
@@ -161,7 +161,7 @@ class InstagramCollector:
                     self.info = {**self.info, **self.raw["user"]}
             except Exception as _caught_3:
                 self.exc = _caught_3
-                self.warnings.append("Kontaktdaten: " + self.safe_error(self.exc))
+                self.warnings.append("Contact details: " + self.safe_error(self.exc))
         self.username = str(
             self.info.get("username") or self.payload.get("username") or ""
         )
@@ -224,34 +224,32 @@ class InstagramCollector:
             except Exception as _caught_4:
                 self.exc = _caught_4
                 self.warnings.append(
-                    "Toutatis-Ergänzung nicht verfügbar ("
-                    + type(self.exc).__name__
-                    + ")."
+                    "Toutatis enrichment unavailable (" + type(self.exc).__name__ + ")."
                 )
 
     def collect_sections(self):
         try:
             for self.key, self.label, self.fn in [
-                ("profile", "Allgemeine Profilinfos", self.profile),
-                ("contacts", "Kontaktdaten", self.contacts),
+                ("profile", "General profile information", self.profile),
+                ("contacts", "Contact details", self.contacts),
                 (
                     "recovery",
-                    "Maskierte Wiederherstellungsangaben",
+                    "Masked account recovery details",
                     self.recovery,
                 ),
                 (
                     "followers",
-                    "Follower",
-                    lambda: self.accounts("followers", "Follower"),
+                    "Followers",
+                    lambda: self.accounts("followers", "Followers"),
                 ),
                 (
                     "following",
-                    "Gefolgte Konten",
-                    lambda: self.accounts("following", "Gefolgte Konten"),
+                    "Following",
+                    lambda: self.accounts("following", "Following"),
                 ),
-                ("posts", "Beiträge", self.posts),
-                ("highlights", "Highlight-Stories", self.highlights),
-                ("stories", "Aktuelle Stories", self.stories),
+                ("posts", "Posts", self.posts),
+                ("highlights", "Highlight stories", self.highlights),
+                ("stories", "Current stories", self.stories),
             ]:
                 if self.config["include_" + self.key]:
                     self.call_section(self.label, self.fn)
@@ -262,9 +260,9 @@ class InstagramCollector:
                 self.outputs.append(
                     {
                         "type": "error",
-                        "label": "Teilabruf",
-                        "data": {"title": "Teilabruf", "message": str(self.exc)},
-                        "relation": "Recherchehinweis",
+                        "label": "Partial result",
+                        "data": {"title": "Partial result", "message": str(self.exc)},
+                        "relation": "Research information",
                         "source": {"tool": "Argus Instagram"},
                     }
                 )
@@ -273,7 +271,7 @@ class InstagramCollector:
 
     def safe_error(self, exc):
         if str(exc) == "no_user_id":
-            return "Instagram lieferte keine Profil-ID. Dieser Bereich benötigt eine zugängliche Profilantwort oder gültige Sitzung."
+            return "Instagram returned no profile ID. This section needs an accessible profile response or valid session."
         name = type(exc).__name__
         if any(
             (
@@ -288,14 +286,14 @@ class InstagramCollector:
                 )
             )
         ):
-            return "Anmeldung oder manuelle Bestätigung bei Instagram erforderlich. Sitzung im Plugin erneuern."
+            return "Instagram login or manual confirmation required. Renew the session in plugin settings."
         if any((word in name.lower() for word in ("wait", "ratelimit", "throttl"))):
-            return "Instagram begrenzt die Abfragen. Später erneut versuchen."
+            return "Instagram is rate limiting requests. Try again later."
         if "notfound" in name.lower():
-            return "Profil oder Inhalt nicht gefunden bzw. für diese Sitzung nicht sichtbar."
+            return "Profile or content not found or not visible to this session."
         if "private" in name.lower():
-            return "Inhalt ist für diese Sitzung nicht zugänglich."
-        return "Abruf nicht verfügbar (" + name + ")."
+            return "Content is unavailable to this session."
+        return "Retrieval unavailable (" + name + ")."
 
     def result(self):
         return {
@@ -312,7 +310,7 @@ class InstagramCollector:
     def tick(self):
         if len(self.outputs) >= self.node_budget:
             raise StopCollection(
-                "Projektlimit erreicht; Teilergebnisse gespeichert. 0 hebt nur das Bereichslimit auf."
+                "Project limit reached; partial results saved. 0 only removes the section limit."
             )
 
     def path(self, *parts):
@@ -324,7 +322,7 @@ class InstagramCollector:
         label,
         value,
         groups,
-        relation="Instagram-Angabe",
+        relation="Instagram detail",
         source_url="",
     ):
         self.tick()
@@ -377,21 +375,21 @@ class InstagramCollector:
         message = self.safe_error(exc) if isinstance(exc, Exception) else str(exc)
         self.warnings.append(section + ": " + message)
         section_key = {
-            "Allgemeine Profilinfos": "profile",
-            "Kontaktdaten": "contacts",
-            "Maskierte Wiederherstellungsangaben": "recovery",
-            "Follower": "followers",
-            "Gefolgte Konten": "following",
-            "Beiträge": "posts",
-            "Highlight-Stories": "highlights",
-            "Aktuelle Stories": "stories",
+            "General profile information": "profile",
+            "Contact details": "contacts",
+            "Masked account recovery details": "recovery",
+            "Followers": "followers",
+            "Following": "following",
+            "Posts": "posts",
+            "Highlight stories": "highlights",
+            "Current stories": "stories",
         }.get(section, section)
         self.emit(
             "error",
             section,
             message,
             self.path((section_key, section)),
-            "Recherchehinweis",
+            "Research information",
         )
         self.save()
 
@@ -523,9 +521,9 @@ class InstagramCollector:
                 )
             ):
                 self.warnings.append(
-                    "Browser: Instagram zeigt eine Login- oder Bestätigungsseite; nur erkennbare öffentliche Metadaten verfügbar."
+                    "Browser: Instagram shows a login or confirmation page; only visible public metadata are available."
                 )
-            document_title = str(facts.get("Seitentitel", "")).casefold()
+            document_title = str(facts.get("Page title", "")).casefold()
             if not facts or self.payload["username"].casefold() not in document_title:
                 raise primary
             return {"username": self.payload["username"], "_web_facts": facts}
@@ -536,34 +534,34 @@ class InstagramCollector:
             self.emit(kind, label, value, groups)
 
     def profile(self):
-        groups = self.path(("profile", "Allgemeine Profilinfos"))
+        groups = self.path(("profile", "General profile information"))
         for key, label in [
-            ("username", "Benutzername"),
+            ("username", "Username"),
             ("full_name", "Name"),
-            ("nickname", "Spitzname"),
-            ("biography", "Biografie"),
-            ("pronouns", "Pronomen"),
-            ("follower_count", "Follower-Anzahl"),
-            ("following_count", "Gefolgte-Anzahl"),
-            ("media_count", "Beitragsanzahl"),
-            ("is_private", "Privates Konto"),
-            ("is_verified", "Instagram-verifiziert"),
-            ("is_business", "Geschäftskonto"),
-            ("category", "Kategorie"),
-            ("account_type", "Kontotyp"),
-            ("is_memorialized", "Gedenkkonto"),
+            ("nickname", "Nickname"),
+            ("biography", "Biography"),
+            ("pronouns", "Pronouns"),
+            ("follower_count", "Follower count"),
+            ("following_count", "Following count"),
+            ("media_count", "Post count"),
+            ("is_private", "Private account"),
+            ("is_verified", "Instagram verified"),
+            ("is_business", "Business account"),
+            ("category", "Category"),
+            ("account_type", "Account type"),
+            ("is_memorialized", "Memorial account"),
         ]:
             self.field(self.info, key, label, groups)
         if self.user_id:
-            self.emit("value", "Instagram-ID", self.user_id, groups)
-        self.emit("url", "Profil-URL", self.profile_url, groups)
+            self.emit("value", "Instagram ID", self.user_id, groups)
+        self.emit("url", "Profile URL", self.profile_url, groups)
         pic = (
             self.info.get("profile_pic_url_hd")
             or (self.info.get("hd_profile_pic_url_info") or {}).get("url")
             or self.info.get("profile_pic_url")
         )
         if pic:
-            self.emit("image", "Profilbild", pic, groups)
+            self.emit("image", "Profile image", pic, groups)
         for key in ("external_url", "bio_links"):
             value = self.info.get(key)
             if isinstance(value, list):
@@ -576,7 +574,7 @@ class InstagramCollector:
                             groups,
                         )
             elif value:
-                self.emit("url", "Profil-Link", value, groups)
+                self.emit("url", "Profile link", value, groups)
         aliases = {
             "follower_count": "edge_followed_by",
             "following_count": "edge_follow",
@@ -587,9 +585,9 @@ class InstagramCollector:
                 self.emit(
                     "value",
                     {
-                        "follower_count": "Follower-Anzahl",
-                        "following_count": "Gefolgte-Anzahl",
-                        "media_count": "Beitragsanzahl",
+                        "follower_count": "Follower count",
+                        "following_count": "Following count",
+                        "media_count": "Post count",
                     }[key],
                     self.info[alias].get("count"),
                     groups,
@@ -611,18 +609,18 @@ class InstagramCollector:
             )
 
     def contacts(self):
-        groups = self.path(("contacts", "Kontaktdaten"))
+        groups = self.path(("contacts", "Contact details"))
         before = len(self.outputs)
         for key, label in [
-            ("public_email", "Öffentliche E-Mail"),
-            ("business_email", "Geschäftliche E-Mail"),
+            ("public_email", "Public email"),
+            ("business_email", "Business email"),
         ]:
             if self.info.get(key):
                 self.emit("email", label, self.info[key], groups)
         for key, label in [
-            ("public_phone_number", "Öffentliche Telefonnummer"),
-            ("contact_phone_number", "Kontakttelefonnummer"),
-            ("business_phone_number", "Geschäftliche Telefonnummer"),
+            ("public_phone_number", "Public phone"),
+            ("contact_phone_number", "Contact phone number"),
+            ("business_phone_number", "Business phone"),
         ]:
             value = str(self.info.get(key) or "").strip()
             if value:
@@ -631,8 +629,8 @@ class InstagramCollector:
                     value = "+" + prefix + " " + value
                 self.emit("phone", label, value, groups)
         for key, label in [
-            ("business_contact_method", "Kontaktmethode"),
-            ("is_whatsapp_linked", "WhatsApp verknüpft"),
+            ("business_contact_method", "Contact method"),
+            ("is_whatsapp_linked", "WhatsApp linked"),
         ]:
             self.field(self.info, key, label, groups)
         bio = str(self.info.get("biography") or "")
@@ -644,22 +642,22 @@ class InstagramCollector:
                 )
             )
         ):
-            self.emit("email", "E-Mail in Biografie", email, groups)
+            self.emit("email", "Email in biography", email, groups)
         if len(self.outputs) == before:
             self.emit(
                 "error",
-                "Keine Kontaktdaten",
-                "Keine öffentlichen Kontaktdaten in der zugänglichen Profilantwort.",
+                "No contact details",
+                "No public contact details in the accessible profile response.",
                 groups,
-                "Recherchehinweis",
+                "Research information",
             )
 
     def recovery(self):
-        groups = self.path(("recovery", "Maskierte Wiederherstellungsangaben"))
+        groups = self.path(("recovery", "Masked account recovery details"))
         before = len(self.outputs)
         for key, label in [
-            ("obfuscated_email", "Maskierte Wiederherstellungs-E-Mail"),
-            ("obfuscated_phone", "Maskierte Wiederherstellungs-Telefonnummer"),
+            ("obfuscated_email", "Masked recovery email"),
+            ("obfuscated_phone", "Masked recovery phone number"),
         ]:
             if self.toutatis.get("recovery", {}).get(key):
                 self.emit("value", label, self.toutatis["recovery"][key], groups)
@@ -669,14 +667,14 @@ class InstagramCollector:
         if len(self.outputs) == before:
             self.emit(
                 "error",
-                "Wiederherstellungsangaben nicht verfügbar",
+                "Recovery information unavailable",
                 (
-                    "Toutatis lieferte keine maskierten Angaben."
+                    "Toutatis returned no masked details."
                     if self.config.get("use_toutatis", True)
-                    else "Toutatis ist in den Plugin-Einstellungen deaktiviert."
+                    else "Toutatis is disabled in the plugin settings."
                 ),
                 groups,
-                "Recherchehinweis",
+                "Research information",
             )
 
     def accounts(self, section, label):
@@ -709,8 +707,8 @@ class InstagramCollector:
                 (section, label), (section + ":" + (pk or name.casefold()), name)
             )
             url = "https://www.instagram.com/" + name + "/"
-            self.emit("username", "Benutzername", name, groups, source_url=url)
-            self.emit("url", "Profil-URL", url, groups, source_url=url)
+            self.emit("username", "Username", name, groups, source_url=url)
+            self.emit("url", "Profile URL", url, groups, source_url=url)
             count += 1
             if count % 10 == 0:
                 self.save()
@@ -721,23 +719,23 @@ class InstagramCollector:
             self.emit(
                 "error",
                 label,
-                "Keine Konten zurückgegeben. Dies bestätigt keine leere Liste; Sichtbarkeit und Anmeldung können den Abruf einschränken.",
+                "No accounts returned. This does not confirm an empty list; visibility and login permissions may restrict retrieval.",
                 self.path((section, label)),
-                "Recherchehinweis",
+                "Research information",
             )
 
     def media_fields(self, media, groups, url):
-        self.emit("url", "URL", url, groups, source_url=url)
+        self.emit("url", "Profile URL", url, groups, source_url=url)
         if media.get("caption_text"):
             self.emit(
-                "value", "Beschreibung", media["caption_text"], groups, source_url=url
+                "value", "Description", media["caption_text"], groups, source_url=url
             )
         stamp = media.get("taken_at") or media.get("taken_at_utc")
         if stamp:
-            self.emit("value", "Veröffentlicht", stamp, groups, source_url=url)
+            self.emit("value", "Published", stamp, groups, source_url=url)
         picture = media.get("thumbnail_url") or media.get("display_url")
         if picture:
-            self.emit("image", "Bild", picture, groups, source_url=url)
+            self.emit("image", "Image", picture, groups, source_url=url)
         if media.get("video_url"):
             self.emit("url", "Video", media["video_url"], groups, source_url=url)
         for index, resource in enumerate(media.get("resources") or []):
@@ -745,7 +743,7 @@ class InstagramCollector:
             if resource.get("thumbnail_url"):
                 self.emit(
                     "image",
-                    "Bild " + str(index + 1),
+                    "Image " + str(index + 1),
                     resource["thumbnail_url"],
                     groups,
                     source_url=url,
@@ -760,7 +758,7 @@ class InstagramCollector:
                 )
         for key, label in [
             ("like_count", "Likes"),
-            ("comment_count", "Kommentaranzahl"),
+            ("comment_count", "Comment count"),
         ]:
             self.field(media, key, label, groups)
 
@@ -794,7 +792,7 @@ class InstagramCollector:
                 else self.profile_url
             )
             groups = self.path(
-                ("posts", "Beiträge"), ("post:" + pk, code or "Beitrag " + pk)
+                ("posts", "Posts"), ("post:" + pk, code or "Beitrag " + pk)
             )
             self.media_fields(media, groups, url)
             if pk:
@@ -809,21 +807,21 @@ class InstagramCollector:
                         comment = plain(item)
                         cid = str(comment.get("pk") or comment_count)
                         cg = groups + [
-                            {"id": "comments:" + pk, "label": "Kommentare"},
-                            {"id": "comment:" + cid, "label": "Kommentar " + cid},
+                            {"id": "comments:" + pk, "label": "Comments"},
+                            {"id": "comment:" + cid, "label": "Comment " + cid},
                         ]
                         user = plain(comment.get("user") or {})
                         if user.get("username"):
                             self.emit(
                                 "username",
-                                "Benutzername",
+                                "Username",
                                 user["username"],
                                 cg,
                                 source_url=url,
                             )
                             self.emit(
                                 "url",
-                                "Profil-URL",
+                                "Profile URL",
                                 "https://www.instagram.com/" + user["username"] + "/",
                                 cg,
                                 source_url=url,
@@ -831,7 +829,7 @@ class InstagramCollector:
                         if comment.get("text"):
                             self.emit(
                                 "value",
-                                "Kommentar",
+                                "Comment",
                                 comment["text"],
                                 cg,
                                 source_url=url,
@@ -839,7 +837,7 @@ class InstagramCollector:
                         if comment.get("created_at_utc"):
                             self.emit(
                                 "value",
-                                "Zeitpunkt",
+                                "Time",
                                 comment["created_at_utc"],
                                 cg,
                                 source_url=url,
@@ -853,9 +851,9 @@ class InstagramCollector:
                     if not comment_count:
                         self.emit(
                             "value",
-                            "Kommentarabruf",
-                            "Keine Kommentare zurückgegeben.",
-                            groups + [{"id": "comments:" + pk, "label": "Kommentare"}],
+                            "Comment retrieval",
+                            "No comments returned.",
+                            groups + [{"id": "comments:" + pk, "label": "Comments"}],
                             source_url=url,
                         )
                 except StopCollection:
@@ -863,10 +861,10 @@ class InstagramCollector:
                 except Exception as exc:
                     self.emit(
                         "error",
-                        "Kommentare",
+                        "Comments",
                         self.safe_error(exc),
-                        groups + [{"id": "comments:" + pk, "label": "Kommentare"}],
-                        "Recherchehinweis",
+                        groups + [{"id": "comments:" + pk, "label": "Comments"}],
+                        "Research information",
                         url,
                     )
             self.save()
@@ -876,9 +874,9 @@ class InstagramCollector:
         if not count:
             self.emit(
                 "value",
-                "Beitragsabruf",
-                "Keine Beiträge zurückgegeben.",
-                self.path(("posts", "Beiträge")),
+                "Post retrieval",
+                "No posts returned.",
+                self.path(("posts", "Posts")),
             )
 
     def story_fields(self, model, groups):
@@ -916,7 +914,7 @@ class InstagramCollector:
             self.story_fields(
                 item,
                 self.path(
-                    ("stories", "Aktuelle Stories"), ("story:" + pk, "Story " + pk)
+                    ("stories", "Current stories"), ("story:" + pk, "Story " + pk)
                 ),
             )
             count += 1
@@ -927,9 +925,9 @@ class InstagramCollector:
         if not count:
             self.emit(
                 "value",
-                "Story-Abruf",
-                "Keine aktuellen Stories zurückgegeben.",
-                self.path(("stories", "Aktuelle Stories")),
+                "Story retrieval",
+                "No current stories returned.",
+                self.path(("stories", "Current stories")),
             )
 
     def highlights(self):
@@ -948,7 +946,7 @@ class InstagramCollector:
             highlight = plain(item)
             pk = str(highlight.get("pk") or highlight.get("id") or "")
             groups = self.path(
-                ("highlights", "Highlight-Stories"),
+                ("highlights", "Highlight stories"),
                 ("highlight:" + pk, highlight.get("title") or "Highlight " + pk),
             )
             self.emit(
@@ -985,9 +983,9 @@ class InstagramCollector:
         if not count:
             self.emit(
                 "value",
-                "Highlight-Abruf",
-                "Keine Highlights zurückgegeben.",
-                self.path(("highlights", "Highlight-Stories")),
+                "Highlight retrieval",
+                "No highlights returned.",
+                self.path(("highlights", "Highlight stories")),
             )
 
 
@@ -1009,7 +1007,7 @@ if __name__ == "__main__":
             {
                 "outputs": [],
                 "warnings": [
-                    "Instagram-Worker fehlgeschlagen. Sitzung und Plugin-Konfiguration prüfen."
+                    "Instagram worker failed. Check the session and plugin configuration."
                 ],
             },
             sys.stdout,

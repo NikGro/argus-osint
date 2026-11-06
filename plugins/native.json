@@ -26,12 +26,12 @@
               "use_user_scanner": false
             },
             "external": true,
-            "external_notice": "Die Eingabe wird an die aktivierten Recherchequellen gesendet.",
+            "external_notice": "The input is sent to the enabled research sources.",
             "id": "lookup",
             "inputs": [
               "username"
             ],
-            "name": "Username recherchieren",
+            "name": "Research username",
             "settings_only": [
               "consensus_sites",
               "sherlock_sites",
@@ -40,72 +40,13 @@
             ]
           }
         ],
-        "category": "Recherche",
-        "description": "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.",
+        "category": "Research",
+        "description": "Find profiles; retrieve additional information using Generic Deep Research.",
         "id": "username",
-        "name": "Username",
-        "translations": {
-          "de": {
-            "Anbieter": "Anbieter",
-            "Datum": "Datum",
-            "Die Eingabe wird an die aktivierten Recherchequellen gesendet.": "Die Eingabe wird an die aktivierten Recherchequellen gesendet.",
-            "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.": "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.",
-            "Ja": "Ja",
-            "Konto besteht?": "Konto besteht?",
-            "Maigret: Anzahl Top-Websites": "Maigret: Anzahl Top-Websites",
-            "Maigret: Websites (leer = Top-Auswahl)": "Maigret: Websites (leer = Top-Auswahl)",
-            "Nummer": "Nummer",
-            "Profiladresse": "Profiladresse",
-            "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.": "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.",
-            "Quelle: Blackbird": "Quelle: Blackbird",
-            "Quelle: Maigret": "Quelle: Maigret",
-            "Quelle: Sherlock": "Quelle: Sherlock",
-            "Quelle: User Scanner": "Quelle: User Scanner",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Sherlock: Websites (leer = alle)": "Sherlock: Websites (leer = alle)",
-            "Uhrzeit": "Uhrzeit",
-            "Username": "Benutzername",
-            "Username recherchieren": "Benutzername recherchieren",
-            "Zeitzone": "Zeitzone",
-            "max_results": "max_results",
-            "request_timeout": "request_timeout",
-            "run_timeout": "run_timeout",
-            "source_order": "source_order"
-          },
-          "en": {
-            "Anbieter": "Provider",
-            "Datum": "Date",
-            "Die Eingabe wird an die aktivierten Recherchequellen gesendet.": "The input is sent to the enabled research sources.",
-            "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.": "Combined research with selectable sources and deduplication.",
-            "Ja": "Yes",
-            "Konto besteht?": "Account exists?",
-            "Maigret: Anzahl Top-Websites": "Maigret: number of top websites",
-            "Maigret: Websites (leer = Top-Auswahl)": "Maigret: websites (empty = top selection)",
-            "Nummer": "Nummer",
-            "Profiladresse": "Profiladresse",
-            "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.": "Discover profiles; retrieve additional information with Generic Deep Research.",
-            "Quelle: Blackbird": "Source: Blackbird",
-            "Quelle: Maigret": "Source: Maigret",
-            "Quelle: Sherlock": "Source: Sherlock",
-            "Quelle: User Scanner": "Source: User Scanner",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Sherlock: Websites (leer = alle)": "Sherlock: websites (empty = all)",
-            "Uhrzeit": "Time",
-            "Username": "Username",
-            "Username recherchieren": "Research username",
-            "Zeitzone": "Time zone",
-            "max_results": "max_results",
-            "request_timeout": "request_timeout",
-            "run_timeout": "run_timeout",
-            "source_order": "source_order"
-          }
-        }
+        "name": "Username"
       },
       "files": {
-        "plugins/locales/username.json": "5c7becaa309b632fbbb3d2890fc94810f6cd013bbb15486c30bfca67848f80c9",
-        "plugins/username.py": "d51854f2711bb5b2b4c595a11f86ea2fc2d26a4a95309ea3f94188e88d00af79"
+        "plugins/username.py": "1aee6b429df150a5cdfa132200983671078e283f757acdbddceaa2a8f2d1eae6"
       },
       "id": "username",
       "module": "plugins/username.py",
@@ -139,78 +80,25 @@
               "use_user_scanner": false
             },
             "external": true,
-            "external_notice": "Die Eingabe wird an die aktivierten Recherchequellen gesendet.",
+            "external_notice": "The input is sent to the enabled research sources.",
             "id": "lookup",
             "inputs": [
               "email"
             ],
-            "name": "E-Mail recherchieren",
+            "name": "Research email",
             "settings_only": [
               "consensus_sites",
               "holehe_sites"
             ]
           }
         ],
-        "category": "Recherche",
-        "description": "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.",
+        "category": "Research",
+        "description": "Find profiles; retrieve additional information using Generic Deep Research.",
         "id": "email",
-        "name": "E-Mail",
-        "translations": {
-          "de": {
-            "Anbieter": "Anbieter",
-            "Datum": "Datum",
-            "Die Eingabe wird an die aktivierten Recherchequellen gesendet.": "Die Eingabe wird an die aktivierten Recherchequellen gesendet.",
-            "E-Mail": "E-Mail",
-            "E-Mail recherchieren": "E-Mail recherchieren",
-            "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.": "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.",
-            "Holehe: Anbieter (leer = alle)": "Holehe: Anbieter (leer = alle)",
-            "Ja": "Ja",
-            "Konto besteht?": "Konto besteht?",
-            "Nummer": "Nummer",
-            "Profiladresse": "Profiladresse",
-            "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.": "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.",
-            "Quelle: Blackbird": "Quelle: Blackbird",
-            "Quelle: Holehe": "Quelle: Holehe",
-            "Quelle: User Scanner": "Quelle: User Scanner",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Uhrzeit": "Uhrzeit",
-            "Zeitzone": "Zeitzone",
-            "max_results": "max_results",
-            "request_timeout": "request_timeout",
-            "run_timeout": "run_timeout",
-            "source_order": "source_order"
-          },
-          "en": {
-            "Anbieter": "Provider",
-            "Datum": "Date",
-            "Die Eingabe wird an die aktivierten Recherchequellen gesendet.": "The input is sent to the enabled research sources.",
-            "E-Mail": "Email",
-            "E-Mail recherchieren": "Research email",
-            "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.": "Combined research with selectable sources and deduplication.",
-            "Holehe: Anbieter (leer = alle)": "Holehe: providers (empty = all)",
-            "Ja": "Yes",
-            "Konto besteht?": "Account exists?",
-            "Nummer": "Nummer",
-            "Profiladresse": "Profiladresse",
-            "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.": "Discover profiles; retrieve additional information with Generic Deep Research.",
-            "Quelle: Blackbird": "Source: Blackbird",
-            "Quelle: Holehe": "Source: Holehe",
-            "Quelle: User Scanner": "Source: User Scanner",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Uhrzeit": "Time",
-            "Zeitzone": "Time zone",
-            "max_results": "max_results",
-            "request_timeout": "request_timeout",
-            "run_timeout": "run_timeout",
-            "source_order": "source_order"
-          }
-        }
+        "name": "Email"
       },
       "files": {
-        "plugins/email.py": "ee95412ae8e7e69348bba6a5d7150d5b228b4d34244a0355aeec59de03e36541",
-        "plugins/locales/email.json": "3abf724e9084968b0f353539a3a0729ba84fa55d6b47f8341cd0bb55891e6538"
+        "plugins/email.py": "f653fad5a83d4dfa937b4f1b3523cbae2e6a7b00dd17bad891bc4c1a994cbfea"
       },
       "id": "email",
       "module": "plugins/email.py",
@@ -245,13 +133,13 @@
               "use_phoneinfoga": true
             },
             "external": true,
-            "external_notice": "Die Eingabe wird an die aktivierten Recherchequellen gesendet.",
+            "external_notice": "The input is sent to the enabled research sources.",
             "id": "lookup",
             "inputs": [
               "phone",
               "value"
             ],
-            "name": "Telefonnummer recherchieren",
+            "name": "Research phone number",
             "settings_only": [
               "consensus_sites",
               "disabled_scanners",
@@ -261,70 +149,13 @@
             ]
           }
         ],
-        "category": "Recherche",
-        "description": "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.",
+        "category": "Research",
+        "description": "Combined research with selectable sources and deduplication.",
         "id": "phone",
-        "name": "Telefonnummer",
-        "translations": {
-          "de": {
-            "Anbieter": "Anbieter",
-            "Datum": "Datum",
-            "Deaktivierte Scanner (eine pro Zeile)": "Deaktivierte Scanner (eine pro Zeile)",
-            "Die Eingabe wird an die aktivierten Recherchequellen gesendet.": "Die Eingabe wird an die aktivierten Recherchequellen gesendet.",
-            "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.": "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.",
-            "Google API-Key": "Google API-Key",
-            "Google Suchmaschinen-ID": "Google Suchmaschinen-ID",
-            "Ja": "Ja",
-            "Konto besteht?": "Konto besteht?",
-            "Land für nationale Telefonnummern": "Land für nationale Telefonnummern",
-            "Nummer": "Nummer",
-            "Numverify API-Key": "Numverify API-Key",
-            "Profiladresse": "Profiladresse",
-            "Quelle: Ignorant": "Quelle: Ignorant",
-            "Quelle: PhoneInfoga": "Quelle: PhoneInfoga",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Telefonnummer": "Telefonnummer",
-            "Telefonnummer recherchieren": "Telefonnummer recherchieren",
-            "Uhrzeit": "Uhrzeit",
-            "Zeitzone": "Zeitzone",
-            "max_results": "max_results",
-            "request_timeout": "request_timeout",
-            "run_timeout": "run_timeout",
-            "source_order": "source_order"
-          },
-          "en": {
-            "Anbieter": "Provider",
-            "Datum": "Date",
-            "Deaktivierte Scanner (eine pro Zeile)": "Disabled scanners (one per line)",
-            "Die Eingabe wird an die aktivierten Recherchequellen gesendet.": "The input is sent to the enabled research sources.",
-            "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.": "Combined research with selectable sources and deduplication.",
-            "Google API-Key": "Google API key",
-            "Google Suchmaschinen-ID": "Google search engine ID",
-            "Ja": "Yes",
-            "Konto besteht?": "Account exists?",
-            "Land für nationale Telefonnummern": "Country for national phone numbers",
-            "Nummer": "Nummer",
-            "Numverify API-Key": "Numverify API key",
-            "Profiladresse": "Profiladresse",
-            "Quelle: Ignorant": "Source: Ignorant",
-            "Quelle: PhoneInfoga": "Source: PhoneInfoga",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Telefonnummer": "Phone number",
-            "Telefonnummer recherchieren": "Research phone number",
-            "Uhrzeit": "Time",
-            "Zeitzone": "Time zone",
-            "max_results": "max_results",
-            "request_timeout": "request_timeout",
-            "run_timeout": "run_timeout",
-            "source_order": "source_order"
-          }
-        }
+        "name": "Phone number"
       },
       "files": {
-        "plugins/locales/phone.json": "ea7d7b489b7ce51560e3206f8dd059b2318e6ae30d2f551faba4a4b741e3d5de",
-        "plugins/phone.py": "f0e87d249b97bbf7e1e669525b86651bbf1ed6c2876c76826932173176ead159"
+        "plugins/phone.py": "33b3fe0ef0bf6c85afad3261960acd55a22246f6e08546f3c26c2fb673510d45"
       },
       "id": "phone",
       "module": "plugins/phone.py",
@@ -360,7 +191,7 @@
               "use_user_scanner": true
             },
             "external": true,
-            "external_notice": "Die Profilkennung wird nur für den ausgewählten Anbieter an die aktivierten Quellen übergeben.",
+            "external_notice": "The profile identifier is sent to enabled sources for the selected provider only.",
             "generic_profile": true,
             "id": "lookup",
             "inputs": [
@@ -369,213 +200,14 @@
             "name": "Generic Deep Research"
           }
         ],
-        "category": "Recherche",
-        "description": "Zusatzangaben gezielt zu einem Profil abrufen und als einzelne Daten-Nodes gruppieren.",
+        "category": "Research",
+        "description": "Fetch additional information for one profile and group individual data nodes.",
         "icon": "argus",
         "id": "deep_research",
-        "name": "Generic Deep Research",
-        "translations": {
-          "de": {
-            "Adresse": "Adresse",
-            "Anbieter": "Anbieter",
-            "Anbieter auswählen": "Anbieter auswählen",
-            "Anbieter suchen …": "Anbieter suchen …",
-            "Andere / Custom": "Andere / Custom",
-            "Andere ID": "Andere ID",
-            "Automatisch": "Automatisch",
-            "Benutzername": "Benutzername",
-            "Beruf": "Beruf",
-            "Bild": "Bild",
-            "Biografie": "Biografie",
-            "Bitte auswählen": "Bitte auswählen",
-            "Browser-Zeitlimit (Sekunden)": "Browser-Zeitlimit (Sekunden)",
-            "Daten zusammenführen": "Daten zusammenführen",
-            "Die Profilkennung wird nur für den ausgewählten Anbieter an die aktivierten Quellen übergeben.": "Die Profilkennung wird nur für den ausgewählten Anbieter an die aktivierten Quellen übergeben.",
-            "Dokumentation": "Dokumentation",
-            "E-Mail": "E-Mail",
-            "Eigener Anbieter": "Eigener Anbieter",
-            "Ein Tag mit diesem Namen existiert bereits.": "Ein Tag mit diesem Namen existiert bereits.",
-            "Eingebauter Browser / Cloudflare-Prüfung": "Eingebauter Browser / Cloudflare-Prüfung",
-            "Fehler": "Fehler",
-            "Fehlerbezeichnung": "Fehlerbezeichnung",
-            "FlareSolverr-Endpunkt (optional)": "FlareSolverr-Endpunkt (optional)",
-            "Geburtsdatum": "Geburtsdatum",
-            "Geburtsland": "Geburtsland",
-            "Geburtsort": "Geburtsort",
-            "Generic Deep Research": "Generic Deep Research",
-            "Gesamtzeitlimit (Sekunden)": "Zeitlimit je Quelle (Sekunden)",
-            "Gleichartige Daten-Nodes zu einem neuen Node zusammenführen; Konflikte einzeln auswählen.": "Gleichartige Daten-Nodes zu einem neuen Node zusammenführen; Konflikte einzeln auswählen.",
-            "Globale Tags": "Globale Tags",
-            "Globale Tags in den Einstellungen anlegen.": "Globale Tags in den Einstellungen anlegen.",
-            "Identifier": "Identifier",
-            "Identifier-Typ": "Identifier-Typ",
-            "Information zum Fehler": "Information zum Fehler",
-            "Inhalt": "Inhalt",
-            "Ja": "Ja",
-            "Kategorie A–Z": "Kategorie A–Z",
-            "Kategorie Z–A": "Kategorie Z–A",
-            "Kein passender Anbieter.": "Kein passender Anbieter.",
-            "Keine Quelle aktiviert": "Keine Quelle aktiviert",
-            "Keine passende Quelle": "Keine passende Quelle",
-            "Keine passenden Optionen.": "Keine passenden Optionen.",
-            "Keine zusätzlichen Daten gefunden": "Keine zusätzlichen Daten gefunden",
-            "Konflikte beim Zusammenführen": "Konflikte beim Zusammenführen",
-            "Maximale Treffer": "Maximale Treffer",
-            "Nachname": "Nachname",
-            "Name": "Name",
-            "Nein": "Nein",
-            "Neue Person": "Neue Person",
-            "Neuer Fehler": "Neuer Fehler",
-            "Nicht angegeben": "Nicht angegeben",
-            "Optionen durchsuchen": "Optionen durchsuchen",
-            "Ort": "Ort",
-            "Person": "Person",
-            "Personen": "Personen",
-            "Profil gefunden": "Profil gefunden",
-            "Profil konnte nicht ausgelesen werden": "Profil konnte nicht ausgelesen werden",
-            "Profil-ID": "Profil-ID",
-            "Profil-URL": "Profil-URL",
-            "Profilangabe": "Profilangabe",
-            "Profilbild": "Profilbild",
-            "Quelle: Argus Web": "Quelle: Argus Web",
-            "Quelle: Blackbird": "Quelle: Blackbird",
-            "Quelle: Holehe": "Quelle: Holehe",
-            "Quelle: Ignorant": "Quelle: Ignorant",
-            "Quelle: Maigret": "Quelle: Maigret",
-            "Quelle: User Scanner": "Quelle: User Scanner",
-            "Recherche": "Recherche",
-            "Recherchehinweis": "Recherchehinweis",
-            "Seitenbeschreibung": "Seitenbeschreibung",
-            "Seitentitel": "Seitentitel",
-            "Sprachen": "Sprachen",
-            "Tag erstellen": "Tag erstellen",
-            "Tag hinzufügen": "Tag hinzufügen",
-            "Tag löschen": "Tag löschen",
-            "Tag-Farbe": "Tag-Farbe",
-            "Tag-Name": "Tag-Name",
-            "Telefonnummer": "Telefonnummer",
-            "Unklar": "Unklar",
-            "Unverifiziert": "Unverifiziert",
-            "Verbindung löschen": "Verbindung löschen",
-            "Verifiziert": "Verifiziert",
-            "Verifizierung": "Verifizierung",
-            "Verifizierung und Tags": "Verifizierung und Tags",
-            "Verknüpfte Profile": "Verknüpfte Profile",
-            "Vorname": "Vorname",
-            "Vorschaubild": "Vorschaubild",
-            "Weitere Anbieter über die Suche eingrenzen.": "Weitere Anbieter über die Suche eingrenzen.",
-            "Weitere Optionen über die Suche eingrenzen.": "Weitere Optionen über die Suche eingrenzen.",
-            "Wohnort": "Wohnort",
-            "Zeitlimit je Website (Sekunden)": "Zeitlimit je Website (Sekunden)",
-            "Zusammengeführt": "Zusammengeführt",
-            "Zusatzangaben gezielt zu einem Profil abrufen und als einzelne Daten-Nodes gruppieren.": "Zusatzangaben gezielt zu einem Profil abrufen und als einzelne Daten-Nodes gruppieren.",
-            "Zweitname": "Zweitname",
-            "message": "Information zum Fehler",
-            "title": "Fehlerbezeichnung"
-          },
-          "en": {
-            "Adresse": "Address",
-            "Anbieter": "Provider",
-            "Anbieter auswählen": "Select provider",
-            "Anbieter suchen …": "Search providers …",
-            "Andere / Custom": "Other / Custom",
-            "Andere ID": "Other ID",
-            "Automatisch": "Automatic",
-            "Benutzername": "Username",
-            "Beruf": "Occupation",
-            "Bild": "Image",
-            "Biografie": "Biography",
-            "Bitte auswählen": "Please select",
-            "Browser-Zeitlimit (Sekunden)": "Browser timeout (seconds)",
-            "Daten zusammenführen": "Merge data",
-            "Die Profilkennung wird nur für den ausgewählten Anbieter an die aktivierten Quellen übergeben.": "The profile identifier is sent to enabled sources only for the selected provider.",
-            "Dokumentation": "Documentation",
-            "E-Mail": "Email",
-            "Eigener Anbieter": "Custom provider",
-            "Ein Tag mit diesem Namen existiert bereits.": "A tag with this name already exists.",
-            "Eingebauter Browser / Cloudflare-Prüfung": "Built-in browser / Cloudflare challenge handling",
-            "Fehler": "Error",
-            "Fehlerbezeichnung": "Error title",
-            "FlareSolverr-Endpunkt (optional)": "FlareSolverr endpoint (optional)",
-            "Geburtsdatum": "Date of birth",
-            "Geburtsland": "Country of birth",
-            "Geburtsort": "Place of birth",
-            "Generic Deep Research": "Generic Deep Research",
-            "Gesamtzeitlimit (Sekunden)": "Timeout per source (seconds)",
-            "Gleichartige Daten-Nodes zu einem neuen Node zusammenführen; Konflikte einzeln auswählen.": "Combine data nodes of the same type into a new node; choose each conflicting field.",
-            "Globale Tags": "Global tags",
-            "Globale Tags in den Einstellungen anlegen.": "Create global tags in settings.",
-            "Identifier": "Identifier",
-            "Identifier-Typ": "Identifier type",
-            "Information zum Fehler": "Error information",
-            "Inhalt": "Value",
-            "Ja": "Yes",
-            "Kategorie A–Z": "Category A–Z",
-            "Kategorie Z–A": "Category Z–A",
-            "Kein passender Anbieter.": "No matching provider.",
-            "Keine Quelle aktiviert": "No source enabled",
-            "Keine passende Quelle": "No supported source",
-            "Keine passenden Optionen.": "No matching options.",
-            "Keine zusätzlichen Daten gefunden": "No additional data found",
-            "Konflikte beim Zusammenführen": "Resolve merge conflicts",
-            "Maximale Treffer": "Maximum results",
-            "Nachname": "Last name",
-            "Name": "Name",
-            "Nein": "No",
-            "Neue Person": "New person",
-            "Neuer Fehler": "New error",
-            "Nicht angegeben": "Not specified",
-            "Optionen durchsuchen": "Search options",
-            "Ort": "Location",
-            "Person": "Person",
-            "Personen": "People",
-            "Profil gefunden": "Profile found",
-            "Profil konnte nicht ausgelesen werden": "Could not read profile",
-            "Profil-ID": "Profile ID",
-            "Profil-URL": "Profile URL",
-            "Profilangabe": "Profile information",
-            "Profilbild": "Profile image",
-            "Quelle: Argus Web": "Source: Argus Web",
-            "Quelle: Blackbird": "Source: Blackbird",
-            "Quelle: Holehe": "Source: Holehe",
-            "Quelle: Ignorant": "Source: Ignorant",
-            "Quelle: Maigret": "Source: Maigret",
-            "Quelle: User Scanner": "Source: User Scanner",
-            "Recherche": "Research",
-            "Recherchehinweis": "Research information",
-            "Seitenbeschreibung": "Page description",
-            "Seitentitel": "Page title",
-            "Sprachen": "Languages",
-            "Tag erstellen": "Create tag",
-            "Tag hinzufügen": "Add tag",
-            "Tag löschen": "Delete tag",
-            "Tag-Farbe": "Tag color",
-            "Tag-Name": "Tag name",
-            "Telefonnummer": "Phone number",
-            "Unklar": "Unclear",
-            "Unverifiziert": "Unverified",
-            "Verbindung löschen": "Delete connection",
-            "Verifiziert": "Verified",
-            "Verifizierung": "Verification",
-            "Verifizierung und Tags": "Verification and tags",
-            "Verknüpfte Profile": "Linked profiles",
-            "Vorname": "First name",
-            "Vorschaubild": "Preview image",
-            "Weitere Anbieter über die Suche eingrenzen.": "Narrow down more providers using search.",
-            "Weitere Optionen über die Suche eingrenzen.": "Narrow down more options using search.",
-            "Wohnort": "Home location",
-            "Zeitlimit je Website (Sekunden)": "Timeout per website (seconds)",
-            "Zusammengeführt": "Merged",
-            "Zusatzangaben gezielt zu einem Profil abrufen und als einzelne Daten-Nodes gruppieren.": "Fetch additional information for one profile and group individual data nodes.",
-            "Zweitname": "Middle name",
-            "message": "Error information",
-            "title": "Error title"
-          }
-        }
+        "name": "Generic Deep Research"
       },
       "files": {
-        "plugins/deep_research.py": "db51e99577c2069ff41469d8fa0fb2e46200598ce61b3c380626a76421d534b3",
-        "plugins/locales/deep_research.json": "20eee45785c13a5ecbded23b104933b99be6aee03596011238bf47cb95f7c116"
+        "plugins/deep_research.py": "b6ba3ed15f462f52cabb2c2ed7293c0db762551e8807dccc841c355e37fa4434"
       },
       "id": "deep_research",
       "module": "plugins/deep_research.py",
@@ -617,36 +249,80 @@
               "use_toutatis": true
             },
             "external": true,
-            "external_notice": "Abruf bei Instagram mit den Rechten der optional hinterlegten Sitzung. Medien werden als Links gespeichert; Stories werden nicht als gesehen markiert.",
+            "external_notice": "Retrieve Instagram data with the permissions of the optional saved session. Media are saved as links; stories are not marked as viewed.",
             "id": "lookup",
             "inputs": [
               "profile"
             ],
             "max_inputs": 1,
             "name": "Instagram Deep Research",
-            "parameter_help": "0 = kein Mengenlimit. Das Projektlimit von 5.000 Nodes bleibt aktiv.",
+            "parameter_help": "0 = no item limit. The project limit of 5,000 nodes still applies.",
+            "parameter_schema": {
+              "browser_enabled": {
+                "label": "Built-in browser fallback"
+              },
+              "browser_timeout": {
+                "label": "Browser timeout (seconds)"
+              },
+              "comments_limit": {
+                "label": "Comments per post"
+              },
+              "followers_limit": {
+                "label": "Followers limit"
+              },
+              "following_limit": {
+                "label": "Following limit"
+              },
+              "highlight_items_limit": {
+                "label": "Stories per highlight"
+              },
+              "highlights_limit": {
+                "label": "Highlights limit"
+              },
+              "login_password": {
+                "label": "Instagram login password"
+              },
+              "login_username": {
+                "label": "Instagram login username"
+              },
+              "posts_limit": {
+                "label": "Posts limit"
+              },
+              "request_timeout": {
+                "label": "Request timeout (seconds)"
+              },
+              "sessionid": {
+                "label": "Instagram session ID (optional, plugin settings only)"
+              },
+              "stories_limit": {
+                "label": "Current stories limit"
+              },
+              "use_toutatis": {
+                "label": "Look up masked recovery details (Toutatis)"
+              }
+            },
             "parameter_sections": [
               {
                 "key": "profile",
-                "label": "Allgemeine Profilinfos",
+                "label": "General profile information",
                 "limits": [],
                 "toggle": "include_profile"
               },
               {
                 "key": "contacts",
-                "label": "Kontaktdaten",
+                "label": "Contact details",
                 "limits": [],
                 "toggle": "include_contacts"
               },
               {
                 "key": "recovery",
-                "label": "Maskierte Wiederherstellungsangaben",
+                "label": "Masked account recovery details",
                 "limits": [],
                 "toggle": "include_recovery"
               },
               {
                 "key": "followers",
-                "label": "Follower",
+                "label": "Followers",
                 "limits": [
                   "followers_limit"
                 ],
@@ -654,7 +330,7 @@
               },
               {
                 "key": "following",
-                "label": "Gefolgte Konten",
+                "label": "Following",
                 "limits": [
                   "following_limit"
                 ],
@@ -662,7 +338,7 @@
               },
               {
                 "key": "posts",
-                "label": "Beiträge",
+                "label": "Posts",
                 "limits": [
                   "posts_limit",
                   "comments_limit"
@@ -671,7 +347,7 @@
               },
               {
                 "key": "highlights",
-                "label": "Highlight-Stories",
+                "label": "Highlight stories",
                 "limits": [
                   "highlights_limit",
                   "highlight_items_limit"
@@ -680,7 +356,7 @@
               },
               {
                 "key": "stories",
-                "label": "Aktuelle Stories",
+                "label": "Current stories",
                 "limits": [
                   "stories_limit"
                 ],
@@ -707,167 +383,18 @@
             "sessionid"
           ]
         ],
-        "category": "Recherche",
+        "category": "Research",
         "connection_action": {
           "id": "login",
-          "label": "Bei Instagram anmelden"
+          "label": "Log in to Instagram"
         },
-        "description": "Instagram-Profile gezielt auslesen: Profil, Kontakte, Kontenlisten, Beiträge und Stories.",
+        "description": "Retrieve Instagram profiles, contacts, account lists, posts and stories.",
         "icon": "instagram",
         "id": "instagram",
-        "name": "Instagram Deep Research",
-        "translations": {
-          "de": {
-            "0 = kein Mengenlimit. Das Projektlimit von 5.000 Nodes bleibt aktiv.": "0 = kein Mengenlimit. Das Projektlimit von 5.000 Nodes bleibt aktiv.",
-            "Abruf bei Instagram mit den Rechten der optional hinterlegten Sitzung. Medien werden als Links gespeichert; Stories werden nicht als gesehen markiert.": "Abruf bei Instagram mit den Rechten der optional hinterlegten Sitzung. Medien werden als Links gespeichert; Stories werden nicht als gesehen markiert.",
-            "Aktuelle Stories": "Aktuelle Stories",
-            "Allgemeine Profilinfos": "Allgemeine Profilinfos",
-            "Bei Instagram anmelden": "Bei Instagram anmelden",
-            "Beitragsabruf": "Beitragsabruf",
-            "Beitragsanzahl": "Beitragsanzahl",
-            "Beiträge": "Beiträge",
-            "Benutzername": "Benutzername",
-            "Beschreibung": "Beschreibung",
-            "Bild": "Bild",
-            "Biografie": "Biografie",
-            "E-Mail in Biografie": "E-Mail in Biografie",
-            "Follower": "Follower",
-            "Follower-Anzahl": "Follower-Anzahl",
-            "Gedenkkonto": "Gedenkkonto",
-            "Gefolgte Konten": "Gefolgte Konten",
-            "Gefolgte-Anzahl": "Gefolgte-Anzahl",
-            "Geschäftliche E-Mail": "Geschäftliche E-Mail",
-            "Geschäftliche Telefonnummer": "Geschäftliche Telefonnummer",
-            "Geschäftskonto": "Geschäftskonto",
-            "Highlight-Abruf": "Highlight-Abruf",
-            "Highlight-Stories": "Highlight-Stories",
-            "Instagram Deep Research": "Instagram Deep Research",
-            "Instagram-Angabe": "Instagram-Angabe",
-            "Instagram-ID": "Instagram-ID",
-            "Instagram-Profile gezielt auslesen: Profil, Kontakte, Kontenlisten, Beiträge und Stories.": "Instagram-Profile gezielt auslesen: Profil, Kontakte, Kontenlisten, Beiträge und Stories.",
-            "Instagram-verifiziert": "Instagram-verifiziert",
-            "Kategorie": "Kategorie",
-            "Keine Kontaktdaten": "Keine Kontaktdaten",
-            "Kommentar": "Kommentar",
-            "Kommentarabruf": "Kommentarabruf",
-            "Kommentaranzahl": "Kommentaranzahl",
-            "Kommentare": "Kommentare",
-            "Kontaktdaten": "Kontaktdaten",
-            "Kontaktmethode": "Kontaktmethode",
-            "Kontakttelefonnummer": "Kontakttelefonnummer",
-            "Kontotyp": "Kontotyp",
-            "Likes": "Likes",
-            "Maskierte Wiederherstellungsangaben": "Maskierte Wiederherstellungsangaben",
-            "Name": "Name",
-            "Privates Konto": "Privates Konto",
-            "Profil-Link": "Profil-Link",
-            "Profil-URL": "Profil-URL",
-            "Profilbild": "Profilbild",
-            "Pronomen": "Pronomen",
-            "Recherche": "Recherche",
-            "Recherchehinweis": "Recherchehinweis",
-            "Spitzname": "Spitzname",
-            "Story-Abruf": "Story-Abruf",
-            "Teilabruf": "Teilabruf",
-            "Veröffentlicht": "Veröffentlicht",
-            "Video": "Video",
-            "WhatsApp verknüpft": "WhatsApp verknüpft",
-            "Zeitpunkt": "Zeitpunkt",
-            "browser_enabled": "Eingebauter Browser als Fallback",
-            "browser_timeout": "Browser-Zeitlimit (Sekunden)",
-            "comments_limit": "Kommentare je Beitrag",
-            "followers_limit": "Max. Follower",
-            "following_limit": "Max. gefolgte Konten",
-            "highlight_items_limit": "Stories je Highlight",
-            "highlights_limit": "Max. Highlights",
-            "login_password": "Instagram-Passwort",
-            "login_username": "Instagram-Benutzername für die Anmeldung",
-            "posts_limit": "Max. Beiträge",
-            "request_timeout": "Anfrage-Zeitlimit (Sekunden)",
-            "run_timeout": "Aktor-Zeitlimit (Sekunden)",
-            "sessionid": "Instagram-Sitzungs-ID (optional, nur Plugin-Einstellung)",
-            "stories_limit": "Max. aktuelle Stories",
-            "Öffentliche E-Mail": "Öffentliche E-Mail",
-            "Öffentliche Telefonnummer": "Öffentliche Telefonnummer"
-          },
-          "en": {
-            "0 = kein Mengenlimit. Das Projektlimit von 5.000 Nodes bleibt aktiv.": "0 = no item limit. The project limit of 5,000 nodes still applies.",
-            "Abruf bei Instagram mit den Rechten der optional hinterlegten Sitzung. Medien werden als Links gespeichert; Stories werden nicht als gesehen markiert.": "Retrieve from Instagram with the optional session’s permissions. Media are stored as links; stories are not marked as seen.",
-            "Aktuelle Stories": "Current stories",
-            "Allgemeine Profilinfos": "General profile information",
-            "Bei Instagram anmelden": "Log in to Instagram",
-            "Beitragsabruf": "Post retrieval",
-            "Beitragsanzahl": "Post count",
-            "Beiträge": "Posts",
-            "Benutzername": "Username",
-            "Beschreibung": "Description",
-            "Bild": "Image",
-            "Biografie": "Biography",
-            "E-Mail in Biografie": "Email in biography",
-            "Follower": "Followers",
-            "Follower-Anzahl": "Follower count",
-            "Gedenkkonto": "Memorial account",
-            "Gefolgte Konten": "Following",
-            "Gefolgte-Anzahl": "Following count",
-            "Geschäftliche E-Mail": "Business email",
-            "Geschäftliche Telefonnummer": "Business phone number",
-            "Geschäftskonto": "Business account",
-            "Highlight-Abruf": "Highlight retrieval",
-            "Highlight-Stories": "Highlight stories",
-            "Instagram Deep Research": "Instagram Deep Research",
-            "Instagram-Angabe": "Instagram detail",
-            "Instagram-ID": "Instagram ID",
-            "Instagram-Profile gezielt auslesen: Profil, Kontakte, Kontenlisten, Beiträge und Stories.": "Extract Instagram profiles: profile, contacts, account lists, posts and stories.",
-            "Instagram-verifiziert": "Instagram verified",
-            "Kategorie": "Category",
-            "Keine Kontaktdaten": "No contact details",
-            "Kommentar": "Comment",
-            "Kommentarabruf": "Comment retrieval",
-            "Kommentaranzahl": "Comment count",
-            "Kommentare": "Comments",
-            "Kontaktdaten": "Contact details",
-            "Kontaktmethode": "Contact method",
-            "Kontakttelefonnummer": "Contact phone number",
-            "Kontotyp": "Account type",
-            "Likes": "Likes",
-            "Maskierte Wiederherstellungsangaben": "Masked account recovery details",
-            "Name": "Name",
-            "Privates Konto": "Private account",
-            "Profil-Link": "Profile link",
-            "Profil-URL": "Profile URL",
-            "Profilbild": "Profile picture",
-            "Pronomen": "Pronouns",
-            "Recherche": "Research",
-            "Recherchehinweis": "Research notice",
-            "Spitzname": "Nickname",
-            "Story-Abruf": "Story retrieval",
-            "Teilabruf": "Partial result",
-            "Veröffentlicht": "Published",
-            "Video": "Video",
-            "WhatsApp verknüpft": "WhatsApp linked",
-            "Zeitpunkt": "Timestamp",
-            "browser_enabled": "Built-in browser fallback",
-            "browser_timeout": "Browser timeout (seconds)",
-            "comments_limit": "Comments per post",
-            "followers_limit": "Followers limit",
-            "following_limit": "Following limit",
-            "highlight_items_limit": "Stories per highlight",
-            "highlights_limit": "Highlights limit",
-            "login_password": "Instagram login password",
-            "login_username": "Instagram login username",
-            "posts_limit": "Posts limit",
-            "request_timeout": "Request timeout (seconds)",
-            "run_timeout": "Run timeout (seconds)",
-            "sessionid": "Instagram session ID (optional, plugin settings only)",
-            "stories_limit": "Current stories limit",
-            "Öffentliche E-Mail": "Public email",
-            "Öffentliche Telefonnummer": "Public phone number"
-          }
-        }
+        "name": "Instagram Deep Research"
       },
       "files": {
-        "plugins/instagram.py": "fdb7f3b498825336e1d2ba717bbb0a0b3e96393dd4ff595fd7ee316f24ee70b7",
-        "plugins/locales/instagram.json": "ae1994d6d8553261c988f36d98c4cd923f26c2ecf9c18712f97ef7ded8490017"
+        "plugins/instagram.py": "7a9d234258f3de06e6a8cbe73ed618d6a3122183041c3678111f6b29c52f712c"
       },
       "id": "instagram",
       "module": "plugins/instagram.py",
@@ -913,7 +440,7 @@
             ],
             "max_inputs": 2,
             "min_inputs": 2,
-            "name": "Bilder mit DeepFace vergleichen",
+            "name": "Compare images with DeepFace",
             "parameter_schema": {
               "detector_backend": {
                 "enum": [
@@ -977,29 +504,14 @@
             }
           }
         ],
-        "category": "Bildanalyse",
-        "description": "Zwei Bilder vergleichen; Scores und Bilder mit Erkennungs-Overlays ausgeben.",
+        "category": "Image analysis",
+        "description": "Compare two images; output scores and images with detection overlays.",
         "icon": "face-compare",
         "id": "deepface",
-        "name": "DeepFace",
-        "translations": {
-          "de": {
-            "Bildanalyse": "Bildanalyse",
-            "Bilder mit DeepFace vergleichen": "Bilder mit DeepFace vergleichen",
-            "DeepFace": "DeepFace",
-            "Zwei Bilder vergleichen; Scores und Bilder mit Erkennungs-Overlays ausgeben.": "Zwei Bilder vergleichen; Scores und Bilder mit Erkennungs-Overlays ausgeben."
-          },
-          "en": {
-            "Bildanalyse": "Image analysis",
-            "Bilder mit DeepFace vergleichen": "Compare images with DeepFace",
-            "DeepFace": "DeepFace",
-            "Zwei Bilder vergleichen; Scores und Bilder mit Erkennungs-Overlays ausgeben.": "Compare two images; output scores and images with detection overlays."
-          }
-        }
+        "name": "DeepFace"
       },
       "files": {
-        "plugins/deepface_tool.py": "a30b8ed74404a5dbf4c20a96e29c6e57e8f6af88683c8a018cfc855edce49179",
-        "plugins/locales/deepface.json": "cb8cf9ca2f51c396d9b9a10c475473859be599bf2ef0c1a0e8d4c1a727136eba"
+        "plugins/deepface_tool.py": "71d35ff36130802a7187372b2b5a0f4a7fb0f55de3683cf066e2c789707a3d53"
       },
       "id": "deepface",
       "module": "plugins/deepface_tool.py",
@@ -1041,14 +553,23 @@
             ],
             "max_inputs": 2,
             "min_inputs": 2,
-            "name": "Datenbank durchsuchen",
+            "name": "Search database",
             "parameter_schema": {
+              "case_sensitive": {
+                "label": "Case sensitive"
+              },
               "match_mode": {
                 "enum": [
                   "exact",
                   "contains",
                   "starts_with"
-                ]
+                ],
+                "label": "Match mode",
+                "labels": {
+                  "contains": "Contains",
+                  "exact": "Exact",
+                  "starts_with": "Starts with"
+                }
               },
               "max_results": {
                 "max": 200,
@@ -1059,44 +580,14 @@
             "settings_only": []
           }
         ],
-        "category": "Datenbanken",
-        "description": "Passende Datensätze in einer ausgewählten Spalte finden.",
+        "category": "Databases",
+        "description": "Find matching records in a selected column.",
         "icon": "database-search",
         "id": "database_search",
-        "name": "Datenbank durchsuchen",
-        "translations": {
-          "de": {
-            "Datenbank durchsuchen": "Datenbank durchsuchen",
-            "Datenbanken": "Datenbanken",
-            "case_sensitive": "Groß-/Kleinschreibung beachten",
-            "contains": "Enthält",
-            "exact": "Exakt",
-            "match_mode": "Vergleichsmodus",
-            "max_results": "Maximale Treffer",
-            "starts_with": "Beginnt mit"
-          },
-          "en": {
-            "Datenbank durchsuchen": "Search database",
-            "Datenbanken": "Databases",
-            "Datenbankspalte auswählen": "Choose database column",
-            "Datenbanktreffer": "Database match",
-            "Keine passenden Datensätze gefunden.": "No matching records found.",
-            "Passende Datensätze in einer ausgewählten Spalte finden.": "Find matching records in a selected column.",
-            "Referenzspalte": "Reference column",
-            "Spalte": "Column",
-            "Treffer": "Matches",
-            "Trefferlimit erreicht; weitere Ergebnisse sind möglich.": "Result limit reached; additional matches may exist.",
-            "case_sensitive": "Case sensitive",
-            "contains": "Contains",
-            "exact": "Exact",
-            "match_mode": "Match mode",
-            "max_results": "Maximum results",
-            "starts_with": "Starts with"
-          }
-        }
+        "name": "Search database"
       },
       "files": {
-        "plugins/database_search.py": "4f75adbe51534bdf8dfa3816cc733146e0b0ffd1e457af4694cad0ed1d2f2b23"
+        "plugins/database_search.py": "5258188cbace191d40d93322649c0ffbbb76708d1fa41dfdc84c01999912dbad"
       },
       "id": "database_search",
       "module": "plugins/database_search.py",
@@ -1117,64 +608,21 @@
               "use_photon": true
             },
             "external": true,
-            "external_notice": "Ortsangaben werden an aktivierte Adressdienste gesendet. Nominatim-Endpunkt passend zu Datenschutz und Nutzungsbedingungen konfigurieren.",
+            "external_notice": "Place details are sent to enabled address services. Configure a Nominatim endpoint suitable for privacy and its usage terms.",
             "id": "normalize",
             "inputs": [
               "location"
             ],
-            "name": "Ort normalisieren & vervollständigen"
+            "name": "Normalize and complete place"
           }
         ],
-        "category": "Orte und Zeit",
-        "description": "Ort mit Photon und einem konfigurierbaren Nominatim-Endpunkt normalisieren.",
+        "category": "Places and time",
+        "description": "Normalize a place using Photon and a configurable Nominatim endpoint.",
         "id": "location",
-        "name": "Ort normalisieren & vervollständigen",
-        "translations": {
-          "de": {
-            "Anbieter": "Anbieter",
-            "Datum": "Datum",
-            "Ja": "Ja",
-            "Konto besteht?": "Konto besteht?",
-            "Nummer": "Nummer",
-            "Ort mit Photon und einem konfigurierbaren Nominatim-Endpunkt normalisieren.": "Ort mit Photon und einem konfigurierbaren Nominatim-Endpunkt normalisieren.",
-            "Ort normalisieren & vervollständigen": "Ort normalisieren & vervollständigen",
-            "Ortsangaben werden an aktivierte Adressdienste gesendet. Nominatim-Endpunkt passend zu Datenschutz und Nutzungsbedingungen konfigurieren.": "Ortsangaben werden an aktivierte Adressdienste gesendet. Nominatim-Endpunkt passend zu Datenschutz und Nutzungsbedingungen konfigurieren.",
-            "Photon-Endpunkt": "Photon-Endpunkt",
-            "Profiladresse": "Profiladresse",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Uhrzeit": "Uhrzeit",
-            "Zeitzone": "Zeitzone",
-            "nominatim_url": "nominatim_url",
-            "source_order": "source_order",
-            "use_nominatim": "use_nominatim",
-            "use_photon": "use_photon"
-          },
-          "en": {
-            "Anbieter": "Provider",
-            "Datum": "Date",
-            "Ja": "Yes",
-            "Konto besteht?": "Account exists?",
-            "Nummer": "Nummer",
-            "Ort mit Photon und einem konfigurierbaren Nominatim-Endpunkt normalisieren.": "Normalize a place using Photon and a configurable Nominatim endpoint.",
-            "Ort normalisieren & vervollständigen": "Normalize and complete place",
-            "Ortsangaben werden an aktivierte Adressdienste gesendet. Nominatim-Endpunkt passend zu Datenschutz und Nutzungsbedingungen konfigurieren.": "Place details are sent to enabled address services. Configure a Nominatim endpoint suitable for privacy and its usage terms.",
-            "Photon-Endpunkt": "Photon endpoint",
-            "Profiladresse": "Profiladresse",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Uhrzeit": "Time",
-            "Zeitzone": "Time zone",
-            "nominatim_url": "nominatim_url",
-            "source_order": "source_order",
-            "use_nominatim": "use_nominatim",
-            "use_photon": "use_photon"
-          }
-        }
+        "name": "Normalize and complete place"
       },
       "files": {
-        "plugins/locales/location.json": "60b572456bbc9cd7b5c7bd8453cbcb47157122c4e846b7b894664aa9012a2219",
-        "plugins/location.py": "d2b6185d7a23bffb1a4a0486e6f4a11108159b79eafa61242ab7ab9ad9d17ec3"
+        "plugins/location.py": "3b6518244c626bd4d59e2d38adeb26f3af05b628b18d2c41b701dc108eb1b8c6"
       },
       "id": "location",
       "module": "plugins/location.py",
@@ -1190,47 +638,16 @@
               "image",
               "file"
             ],
-            "name": "Metadaten extrahieren"
+            "name": "Extract metadata"
           }
         ],
-        "category": "Datenbearbeitung",
-        "description": "Dateimetadaten lokal aus Bildern, PDFs, Dokumenten und Medien extrahieren.",
+        "category": "Data processing",
+        "description": "Extract local metadata from images, PDFs, documents and media.",
         "id": "metadata",
-        "name": "Metadaten extrahieren",
-        "translations": {
-          "de": {
-            "Anbieter": "Anbieter",
-            "Dateimetadaten lokal aus Bildern, PDFs, Dokumenten und Medien extrahieren.": "Dateimetadaten lokal aus Bildern, PDFs, Dokumenten und Medien extrahieren.",
-            "Datum": "Datum",
-            "Ja": "Ja",
-            "Konto besteht?": "Konto besteht?",
-            "Metadaten extrahieren": "Metadaten extrahieren",
-            "Nummer": "Nummer",
-            "Profiladresse": "Profiladresse",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Uhrzeit": "Uhrzeit",
-            "Zeitzone": "Zeitzone"
-          },
-          "en": {
-            "Anbieter": "Provider",
-            "Dateimetadaten lokal aus Bildern, PDFs, Dokumenten und Medien extrahieren.": "Extract local metadata from images, PDFs, documents and media.",
-            "Datum": "Date",
-            "Ja": "Yes",
-            "Konto besteht?": "Account exists?",
-            "Metadaten extrahieren": "Extract metadata",
-            "Nummer": "Nummer",
-            "Profiladresse": "Profiladresse",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Uhrzeit": "Time",
-            "Zeitzone": "Time zone"
-          }
-        }
+        "name": "Extract metadata"
       },
       "files": {
-        "plugins/locales/metadata.json": "39e26350fe9082ac413e4ff8a420e9f23938399106d11276e38c7233088c8f65",
-        "plugins/metadata.py": "e302d38e7e9aa7e801591c5598b04b1930ff817dc9be12cdb940053ff70b21f9"
+        "plugins/metadata.py": "c4612c93e13b3c4ef9899959202afcf9a11a2771cc68eb25a6aedba921961edb"
       },
       "id": "metadata",
       "module": "plugins/metadata.py",
@@ -1288,24 +705,10 @@
         "description": "Choose a rectangle visually and save a cropped copy of a photo.",
         "icon": "crop",
         "id": "image_crop",
-        "name": "Photo crop",
-        "translations": {
-          "de": {
-            "Choose a rectangle visually and save a cropped copy of a photo.": "Einen Bildausschnitt auswählen und als neue Bilddatei speichern.",
-            "Crop photo": "Foto zuschneiden",
-            "Media": "Medien",
-            "Photo crop": "Foto zuschneiden"
-          },
-          "en": {
-            "Choose a rectangle visually and save a cropped copy of a photo.": "Choose a rectangle visually and save a cropped copy of a photo.",
-            "Crop photo": "Crop photo",
-            "Media": "Media",
-            "Photo crop": "Photo crop"
-          }
-        }
+        "name": "Crop photo"
       },
       "files": {
-        "plugins/image_crop.py": "21dbfdb4ec2e6949a3f9225836d74bed1f894926fabfcf6d41360503192d881c"
+        "plugins/image_crop.py": "cc64106a26435166b544afc77d34d76433d8d8fc06c394a8436e3fbca963d22a"
       },
       "id": "image_crop",
       "module": "plugins/image_crop.py",
@@ -1452,38 +855,9 @@
         "description": "Trim a video into a new copy, or fuse a short sequence into a still image on the CPU.",
         "icon": "video-analysis",
         "id": "video",
-        "name": "Video tools",
-        "translations": {
-          "de": {
-            "Fuse video frames into an image": "Videoframes zu einem Bild fusionieren",
-            "Media": "Medien",
-            "Trim a video into a new copy, or fuse a short sequence into a still image on the CPU.": "Video als Kopie zuschneiden oder eine kurze Sequenz auf der CPU zu einem Einzelbild fusionieren.",
-            "Trim video": "Video zeitlich zuschneiden",
-            "Video tools": "Video-Tools",
-            "alignment_min": "Mindestqualität der Ausrichtung",
-            "burst_seconds": "Sequenzdauer (Sekunden)",
-            "end_seconds": "Endzeit (Sekunden)",
-            "max_frames": "Maximale Frames",
-            "scale_factor": "Ausgabeskalierung",
-            "start_seconds": "Startzeit (Sekunden)"
-          },
-          "en": {
-            "Fuse video frames into an image": "Fuse video frames into an image",
-            "Media": "Media",
-            "Trim a video into a new copy, or fuse a short sequence into a still image on the CPU.": "Trim a video into a new copy, or fuse a short sequence into a still image on the CPU.",
-            "Trim video": "Trim video",
-            "Video tools": "Video tools",
-            "alignment_min": "Minimum alignment quality",
-            "burst_seconds": "Sequence duration (seconds)",
-            "end_seconds": "End time (seconds)",
-            "max_frames": "Maximum frames",
-            "scale_factor": "Output scale",
-            "start_seconds": "Start time (seconds)"
-          }
-        }
+        "name": "Video tools"
       },
       "files": {
-        "plugins/locales/video.json": "0154f75d2c94b60202fcf30fe985c70227ca0db023c8cff2f996be60f1f8db4f",
         "plugins/video.py": "746fef781c3c9ad80931dbe5f77dd40bd18a3cc9323c8693a4f74b4349ca19a0"
       },
       "id": "video",
@@ -1514,11 +888,11 @@
             ],
             "max_inputs": 2,
             "min_inputs": 1,
-            "name": "Aufnahmeort schätzen",
-            "parameter_help": "Aufnahmebeginn als 2026-11-05 14:30 eintragen oder einen Datum-/Zeit-Node verbinden. Suchgebiet optional als West, Süd, Ost, Nord in Dezimalgrad. Das Herunterladen der Flugdaten kann viele Gigabyte und Stunden brauchen; geladene Daten bleiben gespeichert, bis das Plugin entfernt wird.",
+            "name": "Estimate recording location",
+            "parameter_help": "Enter the recording start as 2026-11-05 14:30 or connect a date/time node. Optional search area as west, south, east, north in decimal degrees. Downloading the flight data can take many gigabytes and hours; downloaded data stays cached until the plugin is removed.",
             "parameter_schema": {
               "bounds": {
-                "secret": false
+                "label": "Search area (optional)"
               },
               "country": {
                 "enum": [
@@ -1528,63 +902,40 @@
                   "ES",
                   "IT"
                 ],
-                "secret": false
+                "label": "Country"
               },
               "download_data": {
-                "secret": false
+                "label": "Download flight data"
               },
               "max_candidates": {
+                "label": "Maximum location candidates",
                 "max": 20,
                 "min": 1,
-                "secret": false,
                 "step": 1
               },
               "recording_start": {
-                "secret": false
+                "label": "Recording start"
               },
               "start_uncertainty_minutes": {
+                "label": "Latest start (+ minutes)",
                 "max": 720,
                 "min": 0,
-                "secret": false,
                 "step": 1
               },
               "timezone": {
-                "secret": false
+                "label": "Time zone"
               }
             }
           }
         ],
-        "category": "Medien",
-        "description": "Aufnahmeort einer Audiodatei aus den Doppler-Verläufen überfliegender Flugzeuge und historischen ADS-B-Flugspuren schätzen. Nur für private, nicht kommerzielle Nutzung (PolyForm Noncommercial).",
+        "category": "Media",
+        "description": "Estimate where an audio recording was made from the Doppler shifts of passing aircraft and historical ADS-B flight tracks. Private, noncommercial use only (PolyForm Noncommercial).",
         "icon": "audio-location",
         "id": "dopplergeist",
-        "name": "Audio mit Dopplergeist verorten",
-        "translations": {
-          "de": {
-            "Audio mit Dopplergeist verorten": "Audio mit Dopplergeist verorten",
-            "Aufnahmebeginn als 2026-11-05 14:30 eintragen oder einen Datum-/Zeit-Node verbinden. Suchgebiet optional als West, Süd, Ost, Nord in Dezimalgrad. Das Herunterladen der Flugdaten kann viele Gigabyte und Stunden brauchen; geladene Daten bleiben gespeichert, bis das Plugin entfernt wird.": "Aufnahmebeginn als 2026-11-05 14:30 eintragen oder einen Datum-/Zeit-Node verbinden. Suchgebiet optional als West, Süd, Ost, Nord in Dezimalgrad. Das Herunterladen der Flugdaten kann viele Gigabyte und Stunden brauchen; geladene Daten bleiben gespeichert, bis das Plugin entfernt wird.",
-            "Aufnahmeort einer Audiodatei aus den Doppler-Verläufen überfliegender Flugzeuge und historischen ADS-B-Flugspuren schätzen. Nur für private, nicht kommerzielle Nutzung (PolyForm Noncommercial).": "Aufnahmeort einer Audiodatei aus den Doppler-Verläufen überfliegender Flugzeuge und historischen ADS-B-Flugspuren schätzen. Nur für private, nicht kommerzielle Nutzung (PolyForm Noncommercial).",
-            "Aufnahmeort schätzen": "Aufnahmeort schätzen",
-            "Dopplergeist: kein Ort": "Dopplergeist: kein Ort",
-            "Ergebnis": "Ergebnis",
-            "Medien": "Medien",
-            "Möglicher Aufnahmeort": "Möglicher Aufnahmeort"
-          },
-          "en": {
-            "Audio mit Dopplergeist verorten": "Locate audio with Dopplergeist",
-            "Aufnahmebeginn als 2026-11-05 14:30 eintragen oder einen Datum-/Zeit-Node verbinden. Suchgebiet optional als West, Süd, Ost, Nord in Dezimalgrad. Das Herunterladen der Flugdaten kann viele Gigabyte und Stunden brauchen; geladene Daten bleiben gespeichert, bis das Plugin entfernt wird.": "Enter the recording start as 2026-11-05 14:30 or connect a date/time node. Optional search area as west, south, east, north in decimal degrees. Downloading the flight data can take many gigabytes and hours; downloaded data stays cached until the plugin is removed.",
-            "Aufnahmeort einer Audiodatei aus den Doppler-Verläufen überfliegender Flugzeuge und historischen ADS-B-Flugspuren schätzen. Nur für private, nicht kommerzielle Nutzung (PolyForm Noncommercial).": "Estimate where an audio recording was made from the Doppler shifts of passing aircraft and historical ADS-B flight tracks. Private, noncommercial use only (PolyForm Noncommercial).",
-            "Aufnahmeort schätzen": "Estimate recording location",
-            "Dopplergeist: kein Ort": "Dopplergeist: no location",
-            "Ergebnis": "Result",
-            "Medien": "Media",
-            "Möglicher Aufnahmeort": "Possible recording location"
-          }
-        }
+        "name": "Locate audio with Dopplergeist"
       },
       "files": {
-        "plugins/dopplergeist.py": "bec76fd7faa27f8c539196eda14ee8ce436bc58ac65819a54f688d21d67bee9e",
-        "plugins/locales/dopplergeist.json": "9fa2a4c8fc8330d4e7dc0407a46dbe2fa20efbdd0d546105f6ced12956eb6123"
+        "plugins/dopplergeist.py": "a8e6f25c1065b4e781406df4839b278b57dbcdec142bc59612bcd0fb9467ca5b"
       },
       "id": "dopplergeist",
       "module": "plugins/dopplergeist.py",
@@ -1602,95 +953,18 @@
               "*"
             ],
             "min_inputs": 2,
-            "name": "Daten zusammenführen",
+            "name": "Merge data",
             "same_type": true
           }
         ],
-        "category": "Datenbearbeitung",
-        "description": "Gleichartige Daten-Nodes zu einem neuen Node zusammenführen; Konflikte einzeln auswählen.",
+        "category": "Data processing",
+        "description": "Merge data nodes of the same type into a new node; resolve conflicts individually.",
         "icon": "merge",
         "id": "merge",
-        "name": "Daten zusammenführen",
-        "translations": {
-          "de": {
-            "Bitte auswählen": "Bitte auswählen",
-            "Daten zusammenführen": "Daten zusammenführen",
-            "Ein Tag mit diesem Namen existiert bereits.": "Ein Tag mit diesem Namen existiert bereits.",
-            "Eingebauter Browser / Cloudflare-Prüfung": "Eingebauter Browser / Cloudflare-Prüfung",
-            "Geburtsdatum": "Geburtsdatum",
-            "Geburtsland": "Geburtsland",
-            "Geburtsort": "Geburtsort",
-            "Gleichartige Daten-Nodes zu einem neuen Node zusammenführen; Konflikte einzeln auswählen.": "Gleichartige Daten-Nodes zu einem neuen Node zusammenführen; Konflikte einzeln auswählen.",
-            "Globale Tags": "Globale Tags",
-            "Globale Tags in den Einstellungen anlegen.": "Globale Tags in den Einstellungen anlegen.",
-            "Kategorie A–Z": "Kategorie A–Z",
-            "Kategorie Z–A": "Kategorie Z–A",
-            "Keine passenden Optionen.": "Keine passenden Optionen.",
-            "Konflikte beim Zusammenführen": "Konflikte beim Zusammenführen",
-            "Nachname": "Nachname",
-            "Neue Person": "Neue Person",
-            "Nicht angegeben": "Nicht angegeben",
-            "Optionen durchsuchen": "Optionen durchsuchen",
-            "Person": "Person",
-            "Personen": "Personen",
-            "Tag erstellen": "Tag erstellen",
-            "Tag hinzufügen": "Tag hinzufügen",
-            "Tag löschen": "Tag löschen",
-            "Tag-Farbe": "Tag-Farbe",
-            "Tag-Name": "Tag-Name",
-            "Unklar": "Unklar",
-            "Unverifiziert": "Unverifiziert",
-            "Verbindung löschen": "Verbindung löschen",
-            "Verifiziert": "Verifiziert",
-            "Verifizierung": "Verifizierung",
-            "Verifizierung und Tags": "Verifizierung und Tags",
-            "Vorname": "Vorname",
-            "Weitere Optionen über die Suche eingrenzen.": "Weitere Optionen über die Suche eingrenzen.",
-            "Zusammengeführt": "Zusammengeführt",
-            "Zweitname": "Zweitname"
-          },
-          "en": {
-            "Bitte auswählen": "Please select",
-            "Daten zusammenführen": "Merge data",
-            "Ein Tag mit diesem Namen existiert bereits.": "A tag with this name already exists.",
-            "Eingebauter Browser / Cloudflare-Prüfung": "Built-in browser / Cloudflare challenge handling",
-            "Geburtsdatum": "Date of birth",
-            "Geburtsland": "Country of birth",
-            "Geburtsort": "Place of birth",
-            "Gleichartige Daten-Nodes zu einem neuen Node zusammenführen; Konflikte einzeln auswählen.": "Combine data nodes of the same type into a new node; choose each conflicting field.",
-            "Globale Tags": "Global tags",
-            "Globale Tags in den Einstellungen anlegen.": "Create global tags in settings.",
-            "Kategorie A–Z": "Category A–Z",
-            "Kategorie Z–A": "Category Z–A",
-            "Keine passenden Optionen.": "No matching options.",
-            "Konflikte beim Zusammenführen": "Resolve merge conflicts",
-            "Nachname": "Last name",
-            "Neue Person": "New person",
-            "Nicht angegeben": "Not specified",
-            "Optionen durchsuchen": "Search options",
-            "Person": "Person",
-            "Personen": "People",
-            "Tag erstellen": "Create tag",
-            "Tag hinzufügen": "Add tag",
-            "Tag löschen": "Delete tag",
-            "Tag-Farbe": "Tag color",
-            "Tag-Name": "Tag name",
-            "Unklar": "Unclear",
-            "Unverifiziert": "Unverified",
-            "Verbindung löschen": "Delete connection",
-            "Verifiziert": "Verified",
-            "Verifizierung": "Verification",
-            "Verifizierung und Tags": "Verification and tags",
-            "Vorname": "First name",
-            "Weitere Optionen über die Suche eingrenzen.": "Narrow down more options using search.",
-            "Zusammengeführt": "Merged",
-            "Zweitname": "Middle name"
-          }
-        }
+        "name": "Merge data"
       },
       "files": {
-        "plugins/locales/merge.json": "735926ccdee4b7c11efc3fdde2b69e3dc44b79886d16a3226ef57ce2770ee852",
-        "plugins/merge.py": "a24d0f7148c65a3877ffa462293f42ecd1d5bb9df16c6338a40584fbd72575ce"
+        "plugins/merge.py": "4cf6412fc49730f87e8d4596a51cc08b033245a6ac1f3a6e1174bbd2d7ebdaef"
       },
       "id": "merge",
       "module": "plugins/merge.py",
@@ -1706,48 +980,15 @@
             "inputs": [
               "*"
             ],
-            "name": "JavaScript-Transform"
+            "name": "JavaScript transform"
           }
         ],
-        "description": "JavaScript im Browser-Worker; JSON-Eingaben in Datenknoten umformen.",
+        "description": "JavaScript in a browser worker; turn inputs into data nodes.",
         "id": "transform",
-        "name": "JSON-Transform",
-        "translations": {
-          "de": {
-            "Anbieter": "Anbieter",
-            "Datum": "Datum",
-            "JSON-Transform": "JSON-Transform",
-            "Ja": "Ja",
-            "JavaScript im Browser-Worker; JSON-Eingaben in Datenknoten umformen.": "JavaScript im Browser-Worker; JSON-Eingaben in Datenknoten umformen.",
-            "JavaScript-Transform": "JavaScript-Transform",
-            "Konto besteht?": "Konto besteht?",
-            "Nummer": "Nummer",
-            "Profiladresse": "Profiladresse",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Uhrzeit": "Uhrzeit",
-            "Zeitzone": "Zeitzone"
-          },
-          "en": {
-            "Anbieter": "Provider",
-            "Datum": "Date",
-            "JSON-Transform": "Data transform",
-            "Ja": "Yes",
-            "JavaScript im Browser-Worker; JSON-Eingaben in Datenknoten umformen.": "JavaScript in a browser worker; turn inputs into data nodes.",
-            "JavaScript-Transform": "JavaScript transform",
-            "Konto besteht?": "Account exists?",
-            "Nummer": "Nummer",
-            "Profiladresse": "Profiladresse",
-            "Registrierung": "Registrierung",
-            "Rufnummer": "Rufnummer",
-            "Uhrzeit": "Time",
-            "Zeitzone": "Time zone"
-          }
-        }
+        "name": "Data transform"
       },
       "files": {
-        "plugins/locales/transform.json": "b15a67bb6051607ccd5f5f3de3a79984267536316c29fdd4b46c85591b8a9055",
-        "plugins/transform.py": "0b6af78d3e84d63dfab0b3f55825cb6ba55598ea40da5c91da531319d456e6b3"
+        "plugins/transform.py": "01ecc4dafed8b20c9240a6843880aa271371b362f15d0c1667c5f14608316495"
       },
       "id": "transform",
       "module": "plugins/transform.py",

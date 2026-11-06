@@ -63,9 +63,7 @@ function createState() {
       repositories: []
     },
     preferencesState: {
-      appSettings: {
-        language: 'de'
-      },
+      appSettings: {},
       settingsPromise: null,
       settingsError: '',
       settingsDirty: false,

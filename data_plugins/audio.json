@@ -1,15 +1,15 @@
 {
   "id": "data_audio",
   "name": "Audio",
-  "description": "Daten-Node: Audio",
+  "description": "Data node: Audio",
   "actions": [],
   "nodes": [
     {
       "type": "audio",
       "name": "Audio",
-      "new_label": "Neue Audiodatei",
+      "new_label": "New audio file",
       "icon": "audio",
-      "category": "Medien",
+      "category": "Media",
       "defaults": {
         "filename": "",
         "file_id": "",
@@ -18,19 +18,5 @@
         "duration": 0
       }
     }
-  ],
-  "translations": {
-    "de": {
-      "Audio": "Audio",
-      "Daten-Node: Audio": "Daten-Node: Audio",
-      "Neue Audiodatei": "Neue Audiodatei",
-      "Medien": "Medien"
-    },
-    "en": {
-      "Audio": "Audio",
-      "Daten-Node: Audio": "Data node: Audio",
-      "Neue Audiodatei": "New audio file",
-      "Medien": "Media"
-    }
-  }
+  ]
 }

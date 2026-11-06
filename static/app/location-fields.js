@@ -1,4 +1,3 @@
-import { t } from '../i18n.js';
 import phone_countries_default from '../phone-countries.js';
 var location_fields_default = {
   name: 'location-fields',
@@ -23,7 +22,7 @@ var location_fields_default = {
       return [...new Set(parts)].join(', ');
     }
     function locationDisplayLines(data = {}, width) {
-      const text = formatLocation(data) || data.formatted_address || t('ui.location'),
+      const text = formatLocation(data) || data.formatted_address || 'Location',
         maxWidth = width - 24,
         lines = [];
       let line = '';

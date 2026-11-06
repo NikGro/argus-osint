@@ -6,13 +6,13 @@ from plugins._process import bounded_run
 
 PLUGIN = {
     "id": "metadata",
-    "name": "Metadaten extrahieren",
-    "category": "Datenbearbeitung",
-    "description": "Dateimetadaten lokal aus Bildern, PDFs, Dokumenten und Medien extrahieren.",
+    "name": "Extract metadata",
+    "category": "Data processing",
+    "description": "Extract local metadata from images, PDFs, documents and media.",
     "actions": [
         {
             "id": "extract",
-            "name": "Metadaten extrahieren",
+            "name": "Extract metadata",
             "inputs": ["image", "file"],
             "external": False,
         }
@@ -53,7 +53,7 @@ def degrees(value):
 
 def run(action, inputs, params, context):
     if action != "extract":
-        raise ValueError("Unbekannte Metadatenaktion.")
+        raise ValueError("Unknown metadata action.")
     outputs = []
     updates = []
     warnings = []
@@ -86,19 +86,19 @@ def run(action, inputs, params, context):
         }
         metadata = {
             key: (
-                (node["data"].get("filename") or node.get("label", "Datei"))
+                (node["data"].get("filename") or node.get("label", "File"))
                 if key.split(":")[-1] == "FileName"
                 else value
             )
             for key, value in metadata.items()
         }
         metadata["System:FileName"] = node["data"].get("filename") or node.get(
-            "label", "Datei"
+            "label", "File"
         )
         updates.append(
             {"id": node["id"], "data": node["data"], "evidence": {"metadata": metadata}}
         )
-        group = "Metadaten · " + str(node.get("label") or metadata["System:FileName"])
+        group = "Metadata · " + str(node.get("label") or metadata["System:FileName"])
         for attribute, value in attributes(metadata):
             outputs.append(
                 {
@@ -108,7 +108,7 @@ def run(action, inputs, params, context):
                     "source_input": node["id"],
                     "group": group,
                     "group_id": node["id"],
-                    "relation": "Metadatum",
+                    "relation": "Metadata field",
                     "source": {
                         "tool": "ExifTool",
                         "attribute": attribute,

@@ -62,7 +62,7 @@ External tools contact providers when explicitly run. Image previews are downloa
 
 Add an approved community repository under the plugin library, inspect its metadata and install explicitly. Python modules are pinned to a repository commit and SHA-256. Community code runs unsandboxed with ARGUS's permissions, so treat it as trusted code you chose to install. A manifest entry may list `tools` from `core/tools.py`; ARGUS installs them with the plugin.
 
-A data plugin may declare node types, default fields, display defaults, categories, icons and translations. A tool plugin declares accepted input types, actions, parameter metadata and a `run` function. For the exact contract, structured result shapes, prompts and provenance rules, see [PLUGIN_CONTRACT.md](PLUGIN_CONTRACT.md) and the examples. Keep a plugin's returned facts small and atomic; use nested groups to express provider/context relationships.
+A data plugin may declare node types, default fields, display defaults, categories and icons. A tool plugin declares accepted input types, actions, parameter metadata and a `run` function. For the exact contract, structured result shapes, prompts and provenance rules, see [PLUGIN_CONTRACT.md](PLUGIN_CONTRACT.md) and the examples. Keep a plugin's returned facts small and atomic; use nested groups to express provider/context relationships.
 
 ## Video tools
 

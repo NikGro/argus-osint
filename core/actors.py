@@ -103,7 +103,9 @@ class ActorService:
         if choice.get("source_input"):
             from core.node_policy import formatted_address
 
-            node["label"] = formatted_address(node["data"]) or node.get("label", "Ort")
+            node["label"] = formatted_address(node["data"]) or node.get(
+                "label", "Location"
+            )
         choice["chosen"] = True
         choice["selected_index"] = index
         if all(c.get("chosen") for c in run["candidates"]):
@@ -404,13 +406,13 @@ class _Execution:
     def _error_output(self, diagnostic):
         return {
             "type": "error",
-            "label": self.action["name"] + " fehlgeschlagen",
+            "label": self.action["name"] + " failed",
             "data": {
-                "title": "Tool-Ausführung fehlgeschlagen",
+                "title": "Tool execution failed",
                 "message": diagnostic,
             },
             "source_input": self.inputs[0]["id"],
-            "relation": "Ausführungsfehler",
+            "relation": "Execution error",
             "source": {"tool": self.module.PLUGIN["name"], "failed": True},
         }
 

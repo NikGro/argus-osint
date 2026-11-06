@@ -1,29 +1,17 @@
 {
   "id": "data_marker",
-  "name": "Farbmarker",
-  "description": "Farbfläche zur visuellen Gliederung",
+  "name": "Color marker",
+  "description": "Color area for visual organization",
   "actions": [],
   "nodes": [
     {
       "type": "marker",
-      "name": "Farbmarker",
+      "name": "Color marker",
       "new_label": "",
       "icon": "group",
-      "category": "Eigene Angaben",
+      "category": "Custom data",
       "defaults": {},
       "display_defaults": {}
     }
-  ],
-  "translations": {
-    "en": {
-      "Farbmarker": "Color marker",
-      "Farbfläche zur visuellen Gliederung": "Color area for visual organization",
-      "Eigene Angaben": "Custom data"
-    },
-    "de": {
-      "Farbmarker": "Farbmarker",
-      "Farbfläche zur visuellen Gliederung": "Farbfläche zur visuellen Gliederung",
-      "Eigene Angaben": "Eigene Angaben"
-    }
-  }
+  ]
 }

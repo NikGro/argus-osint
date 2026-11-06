@@ -75,7 +75,7 @@ def make_profile(provider, url, identifier, node, tool, kind, service_key=None):
     identifier = str(identifier or "").strip()
     url = profile_url(url, kind)
     if not provider or not (identifier or url):
-        raise ValueError("Profil benötigt Anbieter und URL oder Identifier.")
+        raise ValueError("A profile requires a provider and a URL or identifier.")
     data = {"provider": provider, "url": url, "identifier": identifier}
     recipe = {
         "tool": tool,
@@ -88,7 +88,7 @@ def make_profile(provider, url, identifier, node, tool, kind, service_key=None):
         "type": "profile",
         "label": label(provider),
         "data": data,
-        "relation": "Profil gefunden",
+        "relation": "Profile found",
         "source_input": node["id"],
         "source": {"tool": tool, "service": label(provider), "lookup": recipe},
     }
@@ -117,9 +117,9 @@ def discovery_outputs(outputs, node, kind):
         if not provider:
             continue
         if item.get("relation") not in (
-            "Benutzername gefunden",
-            "Registrierungsbefund",
-            "Profil gefunden",
+            "Username found",
+            "Registration finding",
+            "Profile found",
         ):
             continue
         if item["type"] == "profile":

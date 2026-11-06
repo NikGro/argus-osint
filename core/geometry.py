@@ -9,7 +9,7 @@ LAYOUT = json.loads(
 
 
 def node_bounds(node, preferences=None):
-    preferences = preferences or {"tags": [], "language": "de"}
+    preferences = preferences or {"tags": []}
     appearance = node.get("appearance", {})
     display = node.get("display", {})
     size = LAYOUT.get(node["type"], LAYOUT["base"])
@@ -43,9 +43,7 @@ def node_bounds(node, preferences=None):
             height += LAYOUT["mapHeight"]
     from core.node_metadata import badge_height
 
-    height += badge_height(
-        node, width, preferences.get("tags", []), preferences.get("language", "de")
-    )
+    height += badge_height(node, width, preferences.get("tags", []))
     height += LAYOUT["quickActionHeight"] * sum(
         bool(display.get(key))
         for key in (
