@@ -244,7 +244,6 @@ def run(action, inputs, params, context):
     start, end = recording_window(inputs, params)
     limit = int(params.get("max_candidates", 5))
     cache = tools.directory("dopplergeist") / "cache"
-    cache.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="argus-dopplergeist-") as directory:
         folder = Path(directory)
         suffix = SUFFIXES.get(node["data"].get("mime"), "") or (

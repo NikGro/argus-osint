@@ -1583,7 +1583,7 @@
         }
       },
       "files": {
-        "plugins/dopplergeist.py": "dd890cf987587a1986973e60ae81b00a0a54f36a4c568506ef4372b153958c74",
+        "plugins/dopplergeist.py": "bec76fd7faa27f8c539196eda14ee8ce436bc58ac65819a54f688d21d67bee9e",
         "plugins/locales/dopplergeist.json": "9fa2a4c8fc8330d4e7dc0407a46dbe2fa20efbdd0d546105f6ced12956eb6123"
       },
       "id": "dopplergeist",

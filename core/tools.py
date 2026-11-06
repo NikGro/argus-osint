@@ -187,6 +187,13 @@ def _venv_packages(*packages, check=None):
     return steps
 
 
+def _dopplergeist(job):
+    job.venv("dopplergeist==0.1.2")
+    job.run([job.path / "venv/bin/python", "-c", "import dopplergeist.cli"])
+    # Flight and map data cache; removed together with the tool.
+    (job.path / "cache").mkdir()
+
+
 def _consensus(job):
     job.github_source(
         "OSINT-Experts-Society/Consensus-OSINT",
@@ -306,10 +313,8 @@ RECIPES = {
     # Flight and map data are cached in the tool folder (see plugins/dopplergeist.py).
     "dopplergeist": Recipe(
         "Dopplergeist",
-        "0.1.2-1",
-        _venv_packages(
-            "dopplergeist==0.1.2", check="import dopplergeist.cli, dopplergeist.jobs"
-        ),
+        "0.1.2-2",
+        _dopplergeist,
     ),
 }
 

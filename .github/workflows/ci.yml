@@ -19,7 +19,8 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: pip install -r requirements-dev.txt
+      # The plugin manifest check imports the plugins and their runtime dependencies.
+      - run: pip install -r requirements.txt -r requirements-dev.txt
       - run: npm ci
       - run: ruff check .
       - run: black --check core plugins scripts tests server.py
