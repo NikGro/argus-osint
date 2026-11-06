@@ -1,5 +1,6 @@
 """Consensus discovery adapter: confirmed identities only; incomplete checks remain warnings."""
 
+from core import tools
 import json
 import subprocess
 from pathlib import Path
@@ -67,11 +68,11 @@ def run(kind, inputs, params, context):
         try:
             output, _ = bounded_run(
                 [
-                    "/opt/argus-tools/consensus-venv/bin/python",
+                    tools.python("consensus"),
                     "-I",
                     str(Path(__file__).with_name("_consensus_runner.py")),
                 ],
-                int(params.get("run_timeout", 300)),
+                None,
                 {
                     "kind": "user" if kind == "username" else kind,
                     "value": value,

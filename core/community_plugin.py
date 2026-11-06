@@ -1,7 +1,19 @@
-"""Resource-limited execution boundary for community Python plugins.
+"""Run an installed community plugin as a subprocess of ARGUS.
 
-Requires the namespace broker; there is no in-process or same-identity fallback.
+Community plugins are trusted like integrations in a marketplace: there is no
+sandbox. The code runs with the application's identity and can read the data
+volume and use ARGUS' research tools. A subprocess keeps a crashing plugin from
+taking ARGUS down and lets cancellation stop it; there is no time or memory
+limit. Users must only install plugins whose source they trust.
 """
+
+import os
+from pathlib import Path
+import sys
+
+from plugins._process import bounded_run
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class CommunityPlugin:
@@ -16,24 +28,36 @@ class CommunityPlugin:
         return self._invoke("connect", action, [], params, context)
 
     def _invoke(self, operation, action, inputs, params, context):
-        from core.isolation import invoke
+        import json
 
         files = {
-            node["data"]["file_id"]: context["resolve_file"](node["data"]["file_id"])
+            node["data"]["file_id"]: str(
+                context["resolve_file"](node["data"]["file_id"])
+            )
             for node in inputs
             if node["type"] in ("image", "file", "video")
             and node["data"].get("file_id")
         }
-        return invoke(
-            "community",
+        stdout, _ = bounded_run(
+            [
+                sys.executable,
+                str(ROOT / "core" / "community_runner.py"),
+                str(self.path),
+            ],
+            None,
             {
                 "operation": operation,
                 "transient": context.get("transient", {}),
                 "action": action,
                 "inputs": inputs,
                 "params": params,
+                "files": files,
             },
-            timeout=60,
-            code=self.source,
-            files=files,
+            extra_env={
+                "PYTHONPATH": str(ROOT),
+                "DATA_DIR": os.environ.get("DATA_DIR", ""),
+                "ARGUS_TOOLS_DIR": os.environ.get("ARGUS_TOOLS_DIR", ""),
+            },
+            max_bytes=64 * 1024 * 1024,
         )
+        return json.loads(stdout)

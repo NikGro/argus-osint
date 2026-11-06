@@ -1,12 +1,27 @@
-"""Persistent plugin catalogue and explicit community installs, independent of projects."""
+"""Plugin catalogue, on-demand installation of native and community plugins.
 
-from core.errors import DomainError
-from core.build_info import user_agent
+ARGUS ships without installed plugins. Native plugins come from the official
+catalogue (plugins/native.json): installing one downloads its files from the
+ARGUS repository at the image's source revision, accepts them only when every
+SHA-256 matches the catalogue, and installs the research tools it needs into
+the data volume. Uninstalling removes the files and any tool that no other
+installed plugin still needs. Settings survive uninstalling.
+"""
+
+from core.errors import AppError, DomainError
+from core.build_info import user_agent, VERSION
+from core import catalogues, tools
 import copy
 import hashlib
+import importlib.util
 import json
+import logging
+import os
 from pathlib import Path
 import re
+import shutil
+import sys
+import threading
 import urllib.parse
 import urllib.request
 from uuid import uuid4
@@ -15,16 +30,31 @@ from core.secrets import SecretStore, redact, is_secret
 from core.plugin_contract import validate_descriptor
 from core.community_plugin import CommunityPlugin
 
+CATALOGUE = Path(__file__).resolve().parents[1] / "plugins" / "native.json"
+LOG = logging.getLogger("argus.plugins")
+
+
+def load_catalogue():
+    return json.loads(CATALOGUE.read_text(encoding="utf-8"))
+
 
 class Manager:
 
-    def __init__(self, db, data, builtins):
-        self.db, self.data, self.builtins = (db, data, builtins)
-        for module in builtins.values():
-            for action in module.PLUGIN.get("actions", []):
-                schema = action.setdefault("parameter_schema", {})
-                for key in action.get("default_params", {}):
-                    schema.setdefault(key, {"secret": is_secret(key)})
+    def __init__(self, db, data, builtins=None, *, catalogue=None, source=None):
+        """builtins: modules to treat as installed natives (tests); None loads
+        the natives installed in the data volume."""
+        self.db, self.data = db, Path(data)
+        self.catalogue = load_catalogue() if catalogue is None else catalogue
+        self.native = {item["id"]: item for item in self.catalogue["plugins"]}
+        self.native_root = self.data / "plugins" / "native"
+        self.source = source or os.environ.get("ARGUS_PLUGIN_SOURCE", "github")
+        self.ref = os.environ.get("ARGUS_SOURCE_REF") or "v" + VERSION
+        self.progress = {}
+        self.pending = []
+        self.install_queue = threading.Lock()
+        self.builtins = {}
+        for module in (builtins or {}).values():
+            self.register(module)
         self.data_descriptors = [
             dict(
                 json.loads(file.read_text(encoding="utf-8")),
@@ -35,12 +65,16 @@ class Manager:
                 (Path(__file__).parents[1] / "data_plugins").glob("*.json")
             )
         ]
-        self.builtin_locales = {}
-        for pid in builtins:
+        self.builtin_locales = {
+            pid: item["descriptor"]["translations"]
+            for pid, item in self.native.items()
+            if item["descriptor"].get("translations")
+        }
+        for pid in self.builtins:
             file = Path(__file__).parents[1] / "plugins" / "locales" / (pid + ".json")
-            if file.exists():
+            if pid not in self.builtin_locales and file.exists():
                 self.builtin_locales[pid] = json.loads(file.read_text(encoding="utf-8"))
-        self.sources = data / "community-plugins"
+        self.sources = self.data / "community-plugins"
         self.sources.mkdir(exist_ok=True)
         self.secrets = SecretStore(data)
         with self.connect() as conn:
@@ -52,6 +86,9 @@ class Manager:
             )
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS community_installed (id TEXT PRIMARY KEY, descriptor TEXT NOT NULL, source_path TEXT NOT NULL, sha256 TEXT NOT NULL, repo_id TEXT NOT NULL)"
+            )
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS native_installed (id TEXT PRIMARY KEY, files TEXT NOT NULL, ref TEXT NOT NULL)"
             )
             previous = {
                 row[0]: json.loads(row[1])
@@ -126,7 +163,7 @@ class Manager:
                     (json.dumps(settings), pid),
                 )
             for pid in ("username", "email"):
-                if pid not in builtins:
+                if pid not in self.native:
                     continue
                 row = conn.execute(
                     "SELECT settings FROM plugin_state WHERE id=?", (pid,)
@@ -137,7 +174,9 @@ class Manager:
                 if settings.get("consensus_only_defaults_v1"):
                     continue
                 defaults = settings.setdefault("defaults", {}).setdefault("lookup", {})
-                descriptor = builtins[pid].PLUGIN["actions"][0]["default_params"]
+                descriptor = self.native[pid]["descriptor"]["actions"][0][
+                    "default_params"
+                ]
                 for key in descriptor:
                     if key.startswith("use_"):
                         defaults[key] = key == "use_consensus"
@@ -147,12 +186,142 @@ class Manager:
                     (json.dumps(settings), pid),
                 )
 
+        if builtins is None:
+            self.load_installed()
+
     def connect(self):
         return database_connect(self.db)
 
+    # -- native plugins: loading, installing, removing ----------------------
+
+    def register(self, module):
+        for action in module.PLUGIN.get("actions", []):
+            schema = action.setdefault("parameter_schema", {})
+            for key in action.get("default_params", {}):
+                schema.setdefault(key, {"secret": is_secret(key)})
+        self.builtins[module.PLUGIN["id"]] = module
+
+    def load_installed(self):
+        """Load installed natives; outdated ones are reinstalled by resume()."""
+        with self.connect() as conn:
+            rows = conn.execute("SELECT id,files FROM native_installed").fetchall()
+        for pid, files in rows:
+            entry = self.native.get(pid)
+            if not entry:
+                continue
+            current = json.loads(files) == entry["files"] and all(
+                tools.installed(tool) for tool in entry["tools"]
+            )
+            try:
+                if current:
+                    self.register(self.import_native(pid))
+                    continue
+            except (OSError, SyntaxError, ImportError, AppError) as error:
+                LOG.warning(
+                    json.dumps(
+                        {
+                            "event": "plugin_load_failed",
+                            "plugin": pid,
+                            "error": type(error).__name__,
+                        }
+                    )
+                )
+            self.pending.append(pid)
+
+    def resume(self):
+        """Bring installed natives up to the catalogue of this ARGUS version."""
+        for pid in self.pending:
+            self.start_install(pid)
+        self.pending = []
+
+    def import_native(self, pid):
+        entry = self.native[pid]
+        path = self.native_root / pid / entry["module"]
+        name = "plugins." + Path(entry["module"]).stem
+        spec = importlib.util.spec_from_file_location(name, path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        try:
+            spec.loader.exec_module(module)
+        except BaseException:
+            sys.modules.pop(name, None)
+            raise
+        return module
+
+    def source_file(self, path):
+        if self.source == "github":
+            repository = self.catalogue["repository"]
+            return self.fetch(
+                f"https://raw.githubusercontent.com/{repository}/"
+                + urllib.parse.quote(self.ref, safe="")
+                + "/"
+                + urllib.parse.quote(path, safe="/"),
+                4 * 1024 * 1024,
+            )
+        return (Path(self.source) / path).read_bytes()
+
+    def install_native(self, pid, log, with_tools=True):
+        entry = self.native[pid]
+        staging = self.native_root / (pid + ".partial")
+        shutil.rmtree(staging, ignore_errors=True)
+        try:
+            for path, expected in sorted(entry["files"].items()):
+                self.set_progress(pid, "download", path)
+                content = self.source_file(path)
+                if hashlib.sha256(content).hexdigest() != expected:
+                    raise DomainError("validation.79bd815e89")
+                target = staging / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(content)
+            if with_tools:
+                for tool in entry["tools"]:
+                    self.set_progress(pid, "tool", tools.RECIPES[tool].label)
+                    tools.install(tool, log)
+                if entry["tools"]:
+                    self.set_progress(pid, "catalogue")
+                    catalogues.build()
+            final = self.native_root / pid
+            shutil.rmtree(final, ignore_errors=True)
+            staging.rename(final)
+        finally:
+            shutil.rmtree(staging, ignore_errors=True)
+        self.builtins.pop(pid, None)
+        self.register(self.import_native(pid))
+        with self.connect() as conn:
+            conn.execute(
+                "INSERT INTO native_installed VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET files=excluded.files, ref=excluded.ref",
+                (pid, json.dumps(entry["files"]), self.ref),
+            )
+
+    def set_progress(self, pid, step, detail=""):
+        state = self.progress.setdefault(pid, {"state": "installing", "log": []})
+        state.update(step=step, detail=detail)
+
+    def required_tools(self):
+        needed = set()
+        for item in self.installed():
+            if item["id"] in self.native:
+                needed.update(self.native[item["id"]]["tools"])
+            elif item.get("origin") == "community":
+                needed.update(item.get("tools", []))
+        return needed
+
+    def prune_tools(self):
+        needed = self.required_tools()
+        removed = False
+        for tool in tools.RECIPES:
+            if tool not in needed and tools.installed(tool):
+                tools.remove(tool)
+                removed = True
+        if removed:
+            catalogues.build()
+
     def secret_fields(self, pid, settings=None):
+        first_party = pid in self.builtins or pid in self.native
         if pid in self.builtins:
             descriptor = self.builtins[pid].PLUGIN
+        elif pid in self.native:
+            descriptor = self.native[pid]["descriptor"]
         else:
             with self.connect() as conn:
                 row = conn.execute(
@@ -168,14 +337,14 @@ class Manager:
             }
             for key, value in params.items():
                 if schema.get(key, {}).get(
-                    "secret", pid not in self.builtins and isinstance(value, str)
+                    "secret", not first_party and isinstance(value, str)
                 ) or is_secret(key):
                     fields.add(key)
             fields.update(
                 (
                     key
                     for key, config in schema.items()
-                    if config.get("secret", pid not in self.builtins)
+                    if config.get("secret", not first_party)
                 )
             )
         return fields
@@ -209,11 +378,24 @@ class Manager:
             ]
 
     def all_descriptors(self):
-        items = [
+        items = []
+        for pid, entry in self.native.items():
+            module = self.builtins.get(pid)
+            descriptor = copy.deepcopy(module.PLUGIN if module else entry["descriptor"])
+            descriptor.pop("tools", None)
+            items.append(
+                dict(
+                    descriptor,
+                    origin="builtin",
+                    version="bundled",
+                    tools=entry["tools"],
+                )
+            )
+        items.extend(
             dict(copy.deepcopy(m.PLUGIN), origin="builtin", version="bundled")
-            for m in self.builtins.values()
-            if not m.PLUGIN.get("hidden")
-        ]
+            for pid, m in self.builtins.items()
+            if pid not in self.native and not m.PLUGIN.get("hidden")
+        )
         items.extend(copy.deepcopy(self.data_descriptors))
         for item in items:
             if item["id"] in self.builtin_locales:
@@ -230,7 +412,9 @@ class Manager:
         result = []
         for item in self.all_descriptors():
             state = states.get(item["id"], {"installed": True, "settings": {}})
-            if not state["installed"]:
+            # Native plugins count only once their files are installed and loaded.
+            native = item["id"] in self.native
+            if not state["installed"] or (native and item["id"] not in self.builtins):
                 continue
             item["settings"] = state["settings"]
             defaults = item["settings"].get("defaults", {})
@@ -285,11 +469,26 @@ class Manager:
                 )
                 items.append(item)
         installed = {item["id"] for item in self.installed()}
-        return [dict(item, installed=item["id"] in installed) for item in items]
+        status = tools.status()
+        return [
+            dict(
+                item,
+                installed=item["id"] in installed,
+                progress=copy.deepcopy(self.progress.get(item["id"])),
+                tool_status=[
+                    {"id": tool, **status[tool]}
+                    for tool in item.get("tools", [])
+                    if tool in status
+                ],
+            )
+            for item in items
+        ]
 
     def uninstall(self, pid):
         if pid not in {d["id"] for d in self.all_descriptors()}:
             raise DomainError("validation.655dc4df51")
+        if (self.progress.get(pid) or {}).get("state") == "installing":
+            raise AppError("plugin_installing", 409)
         settings = self.state(reveal_secrets=True).get(pid, {}).get("settings", {})
         with self.connect() as conn:
             conn.execute(
@@ -302,6 +501,15 @@ class Manager:
                     ),
                 ),
             )
+        if pid in self.native:
+            with self.connect() as conn:
+                conn.execute("DELETE FROM native_installed WHERE id=?", (pid,))
+            module = self.builtins.pop(pid, None)
+            if module:
+                sys.modules.pop(module.__name__, None)
+            shutil.rmtree(self.native_root / pid, ignore_errors=True)
+        self.progress.pop(pid, None)
+        self.prune_tools()
         return {"removed": True}
 
     def data_catalogue(self):
@@ -493,6 +701,11 @@ class Manager:
                     raise DomainError("validation.4b02988d2e")
                 seen.add(item["id"])
                 self.validate_descriptor(item)
+                requested = item.get("tools", [])
+                if not isinstance(requested, list) or any(
+                    tool not in tools.RECIPES for tool in requested
+                ):
+                    raise DomainError("validation.4b02988d2e")
                 if not item.get("actions"):
                     continue
                 module = Path(item.get("module", ""))
@@ -537,6 +750,7 @@ class Manager:
         return {"removed": True}
 
     def install(self, pid):
+        """Start installing in the background; poll library() for progress."""
         item = next((x for x in self.library() if x["id"] == pid), None)
         if not item:
             raise DomainError("validation.09967d95a5")
@@ -548,40 +762,57 @@ class Manager:
         for node in item.get("nodes", []):
             if node["type"] in owned and owned[node["type"]] != pid:
                 raise DomainError("validation.4f93ab50cc")
-        if item.get("origin") == "community":
-            with self.connect() as conn:
-                existing = conn.execute(
-                    "SELECT source_path FROM community_installed WHERE id=?", (pid,)
-                ).fetchone()
-            if not existing and (not item.get("actions")):
-                with self.connect() as conn:
-                    conn.execute(
-                        "INSERT INTO community_installed VALUES (?,?,?,?,?)",
-                        (pid, json.dumps(item), "", "", item["repo_id"]),
-                    )
-            elif not existing:
-                path = item["repo_url"].removeprefix("https://github.com/")
-                source = self.fetch(
-                    f"https://raw.githubusercontent.com/{path}/{item['commit']}/"
-                    + urllib.parse.quote(item["module"], safe="/"),
-                    512 * 1024,
+        if pid not in self.native and not item.get("tools"):
+            # Plugins without tools are a few small files: install inline.
+            self.install_now(pid)
+            return {"installing": False}
+        # Native plugins may download large tools; poll library() for progress.
+        self.start_install(pid)
+        return {"installing": True}
+
+    def start_install(self, pid, wait=False):
+        current = self.progress.get(pid)
+        if current and current.get("state") == "installing" and not wait:
+            return
+        self.progress[pid] = {"state": "installing", "step": "queued", "log": []}
+        if wait:
+            self.install_job(pid)
+        else:
+            threading.Thread(target=self.install_job, args=(pid,), daemon=True).start()
+
+    def install_now(self, pid, with_tools=True):
+        """Synchronous install for maintenance and tests."""
+        self.progress[pid] = {"state": "installing", "step": "queued", "log": []}
+        self.install_job(pid, with_tools=with_tools, raise_errors=True)
+
+    def install_job(self, pid, with_tools=True, raise_errors=False):
+        state = self.progress[pid]
+
+        def log(line):
+            state["log"] = (state["log"] + [str(line)[:500]])[-200:]
+
+        try:
+            with self.install_queue:
+                if pid in self.native:
+                    self.install_native(pid, log, with_tools=with_tools)
+                elif not any(d["id"] == pid for d in self.data_descriptors):
+                    # Data plugins ship with ARGUS; only their state changes.
+                    self.install_community(pid, log, with_tools=with_tools)
+                self.mark_installed(pid)
+            self.progress.pop(pid, None)
+            LOG.info(json.dumps({"event": "plugin_installed", "plugin": pid}))
+        except Exception as error:
+            code = getattr(error, "code", None) or type(error).__name__
+            state.update(state="failed", step="failed", error=code)
+            LOG.warning(
+                json.dumps(
+                    {"event": "plugin_install_failed", "plugin": pid, "error": code}
                 )
-                if hashlib.sha256(source).hexdigest() != item["sha256"]:
-                    raise DomainError("validation.79bd815e89")
-                compile(source.decode("utf-8"), item["module"], "exec")
-                target = self.sources / (uuid4().hex + ".py")
-                target.write_bytes(source)
-                with self.connect() as conn:
-                    conn.execute(
-                        "INSERT INTO community_installed VALUES (?,?,?,?,?)",
-                        (
-                            pid,
-                            json.dumps(item),
-                            str(target),
-                            item["sha256"],
-                            item["repo_id"],
-                        ),
-                    )
+            )
+            if raise_errors:
+                raise
+
+    def mark_installed(self, pid):
         settings = self.state(reveal_secrets=True).get(pid, {}).get("settings", {})
         with self.connect() as conn:
             conn.execute(
@@ -594,7 +825,57 @@ class Manager:
                     ),
                 ),
             )
-        return {"installed": True}
+
+    def install_community(self, pid, log, with_tools=True):
+        item = next((x for x in self.library() if x["id"] == pid), None)
+        if not item or item.get("origin") != "community":
+            raise DomainError("validation.09967d95a5")
+        with self.connect() as conn:
+            existing = conn.execute(
+                "SELECT source_path FROM community_installed WHERE id=?", (pid,)
+            ).fetchone()
+        if not existing and not item.get("actions"):
+            with self.connect() as conn:
+                conn.execute(
+                    "INSERT INTO community_installed VALUES (?,?,?,?,?)",
+                    (pid, json.dumps(item), "", "", item["repo_id"]),
+                )
+        elif not existing:
+            self.set_progress(pid, "download", item["module"])
+            path = item["repo_url"].removeprefix("https://github.com/")
+            source = self.fetch(
+                f"https://raw.githubusercontent.com/{path}/{item['commit']}/"
+                + urllib.parse.quote(item["module"], safe="/"),
+                512 * 1024,
+            )
+            if hashlib.sha256(source).hexdigest() != item["sha256"]:
+                raise DomainError("validation.79bd815e89")
+            compile(source.decode("utf-8"), item["module"], "exec")
+            target = self.sources / (uuid4().hex + ".py")
+            target.write_bytes(source)
+            with self.connect() as conn:
+                conn.execute(
+                    "INSERT INTO community_installed VALUES (?,?,?,?,?)",
+                    (
+                        pid,
+                        json.dumps(
+                            {
+                                k: v
+                                for k, v in item.items()
+                                if k not in ("progress", "tool_status", "installed")
+                            }
+                        ),
+                        str(target),
+                        item["sha256"],
+                        item["repo_id"],
+                    ),
+                )
+        if with_tools and item.get("tools"):
+            for tool in item["tools"]:
+                self.set_progress(pid, "tool", tools.RECIPES[tool].label)
+                tools.install(tool, log)
+            self.set_progress(pid, "catalogue")
+            catalogues.build()
 
     def action_params(self, pid, action_id):
         plugin = next(
@@ -609,6 +890,18 @@ class Manager:
         if not action:
             raise DomainError("validation.b680d5ba95")
         return copy.deepcopy(action.get("default_params", {}))
+
+    def descriptor(self, pid):
+        """Descriptor of an installed or catalogued plugin, or None."""
+        if pid in self.builtins:
+            return self.builtins[pid].PLUGIN
+        if pid in self.native:
+            return self.native[pid]["descriptor"]
+        with self.connect() as conn:
+            row = conn.execute(
+                "SELECT descriptor FROM community_installed WHERE id=?", (pid,)
+            ).fetchone()
+        return json.loads(row[0]) if row else None
 
     def module(self, pid):
         descriptor = next((x for x in self.installed() if x["id"] == pid), None)

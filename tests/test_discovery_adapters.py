@@ -1,9 +1,9 @@
+import tool_stubs  # external tools count as installed
+from core import tools
 import json
 from pathlib import Path
 import shutil
 import subprocess
-import sys
-import sysconfig
 import unittest
 from unittest.mock import patch
 from plugins import holehe, maigret
@@ -21,16 +21,13 @@ class DiscoveryAdapterContracts(unittest.TestCase):
             holehe, "bounded_run", return_value=('{"rows":[]}', "")
         ) as child:
             holehe.run("lookup", [node], {}, {})
-        self.assertEqual(child.call_args.args[0][:2], [sys.executable, "-I"])
+        self.assertEqual(child.call_args.args[0][:2], [tools.python("holehe"), "-I"])
 
-    @unittest.skipUnless(
-        (Path(sysconfig.get_path("purelib")) / "holehe").exists(),
-        "Holehe system package absent locally",
-    )
+    @unittest.skipUnless(tool_stubs.real("holehe"), "Holehe is not installed")
     def test_real_holehe_child_import_from_plugin_directory(self):
         runner = Path(__file__).resolve().parents[1] / "plugins" / "_holehe_runner.py"
         child = subprocess.run(
-            [sys.executable, "-I", str(runner), "--self-test"],
+            [tools.python("holehe"), "-I", str(runner), "--self-test"],
             cwd=runner.parent,
             capture_output=True,
             text=True,

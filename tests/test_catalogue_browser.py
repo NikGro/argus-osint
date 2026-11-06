@@ -1,7 +1,11 @@
 """Offline contract coverage for profiles, review metadata, merge and native web enrichment."""
 
 import copy
+import tool_stubs  # external tools count as installed
+from core import tools
+from plugins._browser import browser_command
 import json
+import os
 import subprocess
 import unittest
 from pathlib import Path
@@ -316,27 +320,16 @@ class CatalogueBrowserContracts(unittest.TestCase):
         self.assertGreater(len(registry.catalogue()), 8000)
 
     @unittest.skipUnless(
-        Path("/opt/argus-tools/flaresolverr-venv/bin/python").exists(),
-        "Embedded browser is installed by Docker build",
-    )
-    @unittest.skipUnless(
-        Path("/run/argus/worker.sock").exists(),
-        "Requires enabled namespace worker runtime; no unrestricted browser fallback",
+        tool_stubs.real("flaresolverr"), "Embedded browser tool is not installed"
     )
     def test_embedded_browser_executes_offline_javascript(self):
-        python = Path("/opt/argus-tools/flaresolverr-venv/bin/python")
-        if not python.exists():
-            return
+        browser = browser_command()
         result = subprocess.run(
-            [
-                str(python),
-                "-I",
-                str(Path(app.ROOT) / "plugins/_browser_runner.py"),
-                "--self-test",
-            ],
+            [*browser["command"], "--self-test"],
             capture_output=True,
             text=True,
             timeout=75,
+            env={**os.environ, **browser["env"]},
         )
         self.assertEqual(result.returncode, 0, result.stderr[-3000:])
         payload = json.loads(result.stdout)
@@ -344,13 +337,12 @@ class CatalogueBrowserContracts(unittest.TestCase):
         self.assertFalse(payload["external_requests"])
 
     @unittest.skipUnless(
-        Path("/opt/argus-tools/flaresolverr-venv/bin/python").exists(),
-        "Chromium is installed by Docker build",
+        tool_stubs.real("flaresolverr"), "Embedded browser tool is not installed"
     )
     def test_actual_chromium_ui_workflow_without_external_requests(self):
         result = subprocess.run(
             [
-                "/opt/argus-tools/flaresolverr-venv/bin/python",
+                tools.python("flaresolverr"),
                 str(Path(app.ROOT) / "tests/browser_workspace.py"),
             ],
             capture_output=True,

@@ -416,9 +416,11 @@ class Controller:
                 "interval_seconds": 900,
             }
         )
+        # busy counts the tools that currently hold the tunnel. Several tools
+        # share one connection; a rotation waits until none of them runs.
         self.active, self.busy, self.pending, self.stopped = (
             None,
-            False,
+            0,
             self.settings["enabled"],
             False,
         )
@@ -447,7 +449,7 @@ class Controller:
             if action == "configure":
                 if self.busy or self.switching:
                     raise ValueError(
-                        "Wait for the running tool or VPN change before changing VPN settings"
+                        "Wait for the running tools or VPN change before changing VPN settings"
                     )
                 settings = request["settings"]
                 if (
@@ -511,21 +513,23 @@ class Controller:
                 acquired = (
                     self.state == "connected"
                     and not self.pending
-                    and not self.busy
                     and not self.switching
                 )
                 if acquired:
-                    self.busy = True
+                    self.busy += 1
                 return {**self.status(), "acquired": acquired}
             elif action == "release":
-                self.busy = False
+                self.busy = max(0, self.busy - 1)
                 if (
                     request.get("rotate", True)
                     and self.settings["rotation_enabled"]
                     and self.settings["rotation_mode"] == "actor"
                 ):
+                    # New tools wait while pending; the switch happens once the
+                    # last running tool has released the tunnel.
                     self.pending = True
-                    self.state = "connecting"
+                    if not self.busy:
+                        self.state = "connecting"
             elif action == "rotate":
                 self.pending = True
                 if not self.busy:

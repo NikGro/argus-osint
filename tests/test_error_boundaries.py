@@ -1,5 +1,6 @@
 """Error recovery contracts using local fixtures; no upstream research or inference."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import io
 import json
 from pathlib import Path
@@ -292,9 +293,10 @@ class RecoveryBoundaries(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             maps = Maps(directory)
             with (
-                patch("core.maps.Path.exists", return_value=True),
+                patch("core.maps.tools.installed", return_value=True),
                 patch(
-                    "core.isolation.invoke", side_effect=OSError("secret fixture value")
+                    "plugins._browser.fetch",
+                    side_effect=OSError("secret fixture value"),
                 ),
                 patch.object(maps, "tile", return_value=b"fixture"),
                 self.assertLogs("argus.maps", level="WARNING") as captured,
@@ -304,9 +306,9 @@ class RecoveryBoundaries(unittest.TestCase):
             self.assertIn("OSError", "".join(captured.output))
             self.assertNotIn("secret fixture value", "".join(captured.output))
             with (
-                patch("core.maps.Path.exists", return_value=True),
+                patch("core.maps.tools.installed", return_value=True),
                 patch(
-                    "core.isolation.invoke", side_effect=RuntimeError("fixture defect")
+                    "plugins._browser.fetch", side_effect=RuntimeError("fixture defect")
                 ),
                 self.assertRaises(RuntimeError),
             ):

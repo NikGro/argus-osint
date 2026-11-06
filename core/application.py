@@ -1,6 +1,5 @@
 """Explicit application resources and lifecycle; importing creates no files or threads."""
 
-import importlib
 import json
 import os
 from pathlib import Path
@@ -40,6 +39,7 @@ from core.dataset_imports import DatasetImports
 from core.system_logs import SystemLogs
 from core.vpn import VPN as VPNService
 from core.build_info import VERSION
+from core import tools
 
 
 class ApplicationResources:
@@ -56,12 +56,6 @@ class ApplicationResources:
         (self.DATA / "home").mkdir(mode=0o700, exist_ok=True)
         (self.DATA / "files").mkdir(exist_ok=True)
         self.DB = self.DATA / "workbench.sqlite3"
-        self.PLUGINS = {}
-        for path in sorted((self.ROOT / "plugins").glob("*.py")):
-            if path.name.startswith("_"):
-                continue
-            module = importlib.import_module("plugins." + path.stem)
-            self.PLUGINS[module.PLUGIN["id"]] = module
         with self.connect() as conn:
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, title TEXT NOT NULL, document TEXT NOT NULL, revision INTEGER NOT NULL, updated_at TEXT NOT NULL)"
@@ -75,7 +69,10 @@ class ApplicationResources:
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS application_settings (id INTEGER PRIMARY KEY, settings TEXT NOT NULL)"
             )
-        self.MANAGER = Manager(self.DB, self.DATA, self.PLUGINS)
+        tools.configure(self.DATA)
+        self.MANAGER = Manager(self.DB, self.DATA)
+        # Installed native plugin modules, keyed by plugin id.
+        self.PLUGINS = self.MANAGER.builtins
         self.ACTOR_LOCK = threading.Lock()
         self.TAG_PREFERENCES = {"tags": [], "language": "de"}
         self.SETTINGS = SettingsRepository(
@@ -113,6 +110,7 @@ class ApplicationResources:
             connect_plugin=self.CONNECTIONS.connect,
             vpn=self.VPN,
             start=False,
+            workers=self.SETTINGS.load().get("parallel_workers", 1),
         )
         self.LOGGER = logging.getLogger("argus.http")
         self.SYSTEM_LOGS = SystemLogs(self.connect, self.now)
@@ -138,18 +136,20 @@ class ApplicationResources:
         return self.SETTINGS.languages()
 
     def save_settings(self, body):
-        return self.SETTINGS.save(body)
+        saved = self.SETTINGS.save(body)
+        self.JOBS.resize(saved.get("parallel_workers", 1))
+        return saved
 
     def actor_node_policy(self, node):
         # Configured credentials belong to plugin settings, never to a graph/clipboard.
         params = node.get("data", {}).get("params", {})
         if isinstance(params, dict):
-            module = self.PLUGINS.get(node["data"].get("plugin"))
+            module = self.MANAGER.descriptor(node["data"].get("plugin"))
             action = (
                 next(
                     (
                         a
-                        for a in module.PLUGIN.get("actions", [])
+                        for a in module.get("actions", [])
                         if a["id"] == node["data"].get("action")
                     ),
                     {},
@@ -244,6 +244,7 @@ class ApplicationResources:
         self.VPN.require_gateway()
         self._started = True
         logging.getLogger("argus").addHandler(self.SYSTEM_LOGS)
+        self.MANAGER.resume()
         self.JOBS.start()
         self._gc_thread = threading.Thread(
             target=self._collect_files, name="argus-file-gc", daemon=True

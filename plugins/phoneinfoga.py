@@ -1,5 +1,5 @@
+from core import tools
 import re
-import shutil
 import phonenumbers
 from urllib.parse import urlparse, parse_qs
 from plugins._process import bounded_run
@@ -16,7 +16,6 @@ PLUGIN = {
             "external": True,
             "external_notice": "Die Telefonnummer wird an aktivierte Scanner übermittelt. Suchlinks sind keine bestätigten Treffer.",
             "default_params": {
-                "run_timeout": 60,
                 "phone_region": "",
                 "disabled_scanners": [],
                 "numverify_api_key": "",
@@ -146,12 +145,7 @@ def run(action, inputs, params, context):
         )
     ):
         raise ValueError("Ungültige Scannerliste.")
-    timeout = int(params.get("run_timeout", 60))
-    if not 5 <= timeout <= 180:
-        raise ValueError("Ungültiges Suchzeitlimit.")
-    executable = shutil.which("phoneinfoga")
-    if not executable:
-        raise ValueError("PhoneInfoga ist nicht installiert.")
+    executable = tools.executable("phoneinfoga", "phoneinfoga")
     command = [executable, "scan", "-n", number]
     for scanner in disabled:
         command.extend(["--disable", scanner])
@@ -164,7 +158,7 @@ def run(action, inputs, params, context):
         ]
         if params.get(key)
     }
-    output, stderr = bounded_run(command, timeout, extra_env=extra)
+    output, stderr = bounded_run(command, None, extra_env=extra)
     for secret in extra.values():
         output = output.replace(secret, "[redacted]")
         stderr = stderr.replace(secret, "[redacted]")

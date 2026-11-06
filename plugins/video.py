@@ -2,16 +2,19 @@
 
 import json
 import math
+import os
 from pathlib import Path
 import tempfile
 
 from core.video import probe_video
 from core.crop import CROP_DEFAULTS, CROP_SCHEMA, crop_box
 from plugins._process import bounded_run
+from core import tools
+from plugins._helpers import helper
 
-FUSION_PYTHON = "/opt/argus-tools/media-venv/bin/python"
 PLUGIN = {
     "id": "video",
+    "tools": ["media"],
     "name": "Video tools",
     "icon": "video-analysis",
     "category": "Media",
@@ -122,7 +125,7 @@ def run(action, inputs, params, context):
             "error",
             "-nostdin",
             "-threads",
-            "2",
+            "0",
             "-ss",
             str(start),
             "-i",
@@ -154,7 +157,7 @@ def run(action, inputs, params, context):
                     "-c:v",
                     "libx264",
                     "-threads",
-                    "2",
+                    "0",
                     "-preset",
                     "veryfast",
                     "-crf",
@@ -168,7 +171,7 @@ def run(action, inputs, params, context):
                     "-y",
                     str(output),
                 ],
-                300,
+                None,
                 output_limit=(output, 128 * 1024 * 1024),
             )
             details = {
@@ -201,22 +204,28 @@ def run(action, inputs, params, context):
                     "-frames:v",
                     str(int(frames)),
                     "-threads",
-                    "2",
+                    "0",
                     "-y",
                     str(folder / "frame-%03d.png"),
                 ],
-                120,
+                None,
             )
             output = folder / "fused.png"
             stdout, _ = bounded_run(
-                [FUSION_PYTHON, str(Path(__file__).with_name("_video_fusion.py"))],
-                240,
+                [
+                    tools.python("media"),
+                    helper("_video_fusion.py"),
+                ],
+                None,
                 {
                     "directory": str(folder),
                     "scale": int(scale),
                     "alignment_min": minimum,
                 },
-                extra_env={"OMP_NUM_THREADS": "2", "OPENBLAS_NUM_THREADS": "2"},
+                extra_env={
+                    "OMP_NUM_THREADS": str(os.cpu_count() or 2),
+                    "OPENBLAS_NUM_THREADS": str(os.cpu_count() or 2),
+                },
             )
             details = json.loads(stdout)
             warnings = details.pop("warnings", [])

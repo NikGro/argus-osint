@@ -1,17 +1,23 @@
-# ARGUS on hosts whose kernel has no seccomp support, such as Synology DSM.
-# The integrated VPN and the isolated community/browser workers need seccomp and
-# stay disabled; ARGUS runs unprivileged as UID 10001 and reports
-# worker_isolation: false. Select this file with COMPOSE_FILE in .env.
+# ARGUS on Synology DSM. Same permissions as compose.yaml, with fixed
+# container, image and volume names for Container Manager.
 name: argus
 services:
   argus:
-    build: .
+    build:
+      context: .
+      args:
+        # Git revision whose plugin files match plugins/native.json in this
+        # image. Empty means the release tag v<VERSION>.
+        ARGUS_SOURCE_REF: ${ARGUS_SOURCE_REF:-}
     image: argus:local
     container_name: ARGUS
-    user: "10001:10001"
+    # Root only until the VPN controller runs; the application and every
+    # plugin then run as UID 10001. No other privileges are needed.
+    user: "0:0"
     cap_drop: [ALL]
-    security_opt:
-      - no-new-privileges:true
+    cap_add: [NET_ADMIN, NET_RAW, SETUID, SETGID, CHOWN, KILL]
+    devices: [/dev/net/tun:/dev/net/tun]
+    security_opt: [no-new-privileges:true]
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8080}:8080"
     volumes:

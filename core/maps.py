@@ -8,6 +8,7 @@ from pathlib import Path
 import time
 from urllib.parse import urlencode
 from core.errors import AppError
+from core import tools
 from core.public_network import request
 
 
@@ -22,12 +23,11 @@ class Maps:
         cached = self.previews.get(key)
         if cached and time.monotonic() - cached[0] < 600:
             return cached[1]
-        if provider == "google" and Path("/run/argus/worker.sock").exists():
+        if provider == "google" and tools.installed("flaresolverr"):
             try:
-                from core.isolation import invoke
+                from plugins._browser import fetch
 
-                result = invoke(
-                    "browser",
+                result = fetch(
                     {
                         "url": "https://www.google.com/maps/search/?"
                         + urlencode(
@@ -35,8 +35,7 @@ class Maps:
                         ),
                         "timeout": 35,
                         "screenshot": True,
-                    },
-                    timeout=55,
+                    }
                 )
                 picture = result.get("image_base64")
                 if picture and len(picture) < 8 * 1024 * 1024:

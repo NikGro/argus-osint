@@ -1,5 +1,6 @@
 """Integration coverage for data plugins and all deferred data contracts, offline."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
 from core.errors import AppError
 import copy
 import json
@@ -135,7 +136,7 @@ class SourceRoutingContracts(unittest.TestCase):
         m.uninstall("email")
         item = next((p for p in m.library() if p["id"] == "email"))
         self.assertFalse(item["installed"])
-        m.install("email")
+        m.install_now("email", with_tools=False)
         self.assertTrue(
             next((p for p in m.library() if p["id"] == "email"))["installed"]
         )

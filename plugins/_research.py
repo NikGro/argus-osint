@@ -2,7 +2,6 @@
 
 import copy
 import json
-import math
 import re
 from core.errors import AppError
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
@@ -166,18 +165,16 @@ def deduplicate(outputs):
 def aggregate(kind, providers, inputs, params, context):
     if len(inputs) != 1:
         raise ValueError("Genau einen Eingabeknoten anschließen.")
-    timeout = int(params.get("run_timeout", 300))
+    # No overall run time limit: ARGUS gives research tools the time they need.
+    # Each website request keeps its own timeout so a dead host cannot hang a run.
     request = int(params.get("request_timeout", 12))
     limit = int(params.get("max_results", 500))
-    if not 10 <= timeout <= 300 or not 2 <= request <= 30 or not 1 <= limit <= 1000:
-        raise ValueError(
-            "Zeitlimit: 10–300 Sekunden; je Website: 2–30 Sekunden; Ergebnisse: 1–1000."
-        )
+    if not 2 <= request <= 30 or not 1 <= limit <= 1000:
+        raise ValueError("Je Website: 2–30 Sekunden; Ergebnisse: 1–1000.")
     if any(not isinstance(params.get("use_" + name, True), bool) for name in providers):
         raise ValueError("Recherchequellen müssen ein- oder ausgeschaltet sein.")
     params = {
         **params,
-        "run_timeout": timeout,
         "request_timeout": request,
         "max_results": limit,
         "identity_only": True,
@@ -198,7 +195,6 @@ def aggregate(kind, providers, inputs, params, context):
             "Mindestens eine Recherchequelle in den Plugin-Einstellungen aktivieren."
         )
     from plugins._search_profiles import plans
-    import time
 
     # Validate every enabled provider before making the first external request.
     planned = [(name, fn, plans(kind, name, params)) for name, fn in enabled]
@@ -207,16 +203,7 @@ def aggregate(kind, providers, inputs, params, context):
     logs = []
     success = 0
     for name, fn, scopes in planned:
-        deadline = time.monotonic() + timeout
         for scope in scopes:
-            remaining = math.ceil(deadline - time.monotonic())
-            if remaining < 10:
-                warnings.append(
-                    name
-                    + ": Zeitlimit erreicht; weitere Suchprofile wurden nicht ausgeführt."
-                )
-                break
-            scope["run_timeout"] = remaining
             try:
                 result = fn(inputs, scope, context)
                 success += 1

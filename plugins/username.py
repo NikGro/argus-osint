@@ -5,6 +5,7 @@ from plugins import _consensus
 
 PLUGIN = {
     "id": "username",
+    "tools": ["consensus", "sherlock", "maigret", "user_scanner", "blackbird"],
     "name": "Username",
     "category": "Recherche",
     "description": "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.",
@@ -40,7 +41,6 @@ PLUGIN = {
                     "blackbird",
                 ],
                 "request_timeout": 12,
-                "run_timeout": 300,
                 "max_results": 500,
             },
         }
@@ -62,7 +62,6 @@ def run(action, inputs, params, context):
                     **p,
                     "sites": p.get("sherlock_sites", []),
                     "max_results": min(int(p.get("max_results", 500)), 300),
-                    "run_timeout": min(int(p.get("run_timeout", 300)), 180),
                 },
                 c,
             ),

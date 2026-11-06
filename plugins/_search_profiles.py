@@ -1,9 +1,7 @@
 """Validated provider-local scopes; no user input can broaden an invalid selection."""
 
 import copy
-import json
 from functools import lru_cache
-from pathlib import Path
 
 SITE_FIELDS = {
     "consensus": "consensus_sites",
@@ -15,10 +13,12 @@ SITE_FIELDS = {
 
 @lru_cache(maxsize=1)
 def catalogue():
-    file = Path(__file__).resolve().parent.parent / "providers/research-profiles.json"
-    if file.exists():
-        return json.loads(file.read_text(encoding="utf-8"))
-    # Development without the installed upstream catalogues.
+    from core import catalogues
+
+    built = catalogues.load(catalogues.PROFILES)
+    if built:
+        return built
+    # Before the research tools are installed there are no site catalogues.
     return {
         kind: {provider: [] for provider in providers}
         for kind, providers in {

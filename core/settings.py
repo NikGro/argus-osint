@@ -2,6 +2,7 @@
 
 from core.errors import DomainError
 import json
+from core.system_resources import MAX_WORKERS
 import re
 
 
@@ -19,6 +20,7 @@ class SettingsRepository:
             "language": "de",
             "geocoder_enabled": True,
             "geocoder_provider": "photon",
+            "parallel_workers": 1,
         }
         with self.connect() as conn:
             row = conn.execute(
@@ -62,6 +64,11 @@ class SettingsRepository:
             ).fetchone()
             value = json.loads(row[0]) if row else {}
             value["language"] = body["language"]
+            if "parallel_workers" in body:
+                workers = body["parallel_workers"]
+                if type(workers) is not int or not 1 <= workers <= MAX_WORKERS:
+                    raise DomainError("validation.parallel_workers")
+                value["parallel_workers"] = workers
             if "tags" in body:
                 tags = body["tags"]
                 if not isinstance(tags, list) or len(tags) > 200:

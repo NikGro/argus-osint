@@ -15,10 +15,12 @@ def key(value):
 
 @functools.lru_cache(maxsize=1)
 def catalogue():
-    file = ROOT / "providers" / "catalogue.json"
-    if file.exists():
-        return json.loads(file.read_text())["providers"]
-    # Development without a built Docker image retains the explicit seed identities.
+    from core import catalogues
+
+    built = catalogues.load(catalogues.PROVIDERS)
+    if built:
+        return built["providers"]
+    # Before any research tool is installed only the seed identities exist.
     return [
         dict(entry, id=id, sources={})
         for id, entry in json.loads(

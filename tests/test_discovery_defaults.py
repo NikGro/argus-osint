@@ -1,5 +1,6 @@
 """Focused checks for Consensus identity parsing, retained partial results and default migration."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import json
 from pathlib import Path
 import tempfile

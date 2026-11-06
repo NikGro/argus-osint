@@ -66,13 +66,13 @@ cd argus-osint
 docker compose up -d --build
 ```
 
-Open **http://127.0.0.1:8080/**. The image includes the research engines, Chromium, media tools, VPN controller and isolated community workers. The first build is substantial; no browser or VPN sidecar is required.
+Open **http://127.0.0.1:8080/**. ARGUS starts without research plugins. Open **Plugins → Add plugins** and install the ones you need; ARGUS downloads each plugin and its tools (for example Sherlock, Maigret or DeepFace) into the data volume. The image itself holds only the application, Chromium, media libraries and the VPN controller.
 
-The supplied Compose file declares the Linux capabilities and TUN device required by the integrated runtime. Its supervisor manages privileged networking while the application runs unprivileged. See [runtime setup](docs/worker-runtime.md), [VPN configuration](docs/vpn.md) and [.env.example](.env.example).
+The supplied Compose file declares the Linux capabilities and TUN device the integrated VPN needs. Its supervisor starts the VPN controller and then runs the application, its plugins and their tools unprivileged as UID 10001. **Settings → Parallel tools** sets how many tools run at once. See [runtime](docs/worker-runtime.md), [VPN configuration](docs/vpn.md) and [.env.example](.env.example).
 
 ARGUS currently has no user-account login. Keep access within a trusted environment; the default binding is localhost. The interface targets desktop browsers; small-screen users see a desktop-mode notice.
 
-**Synology and other hosts without seccomp:** the DSM kernel cannot load the seccomp filter that the integrated VPN and isolated workers require, so the default file does not start there. Use the unprivileged variant instead by adding `COMPOSE_FILE=compose.synology.yaml` (and `BIND_ADDRESS=0.0.0.0` for access from your home network) to `.env`, then run `docker compose up -d --build`. ARGUS then runs as UID 10001 without extra capabilities; VPN, community plugins and the built-in browser stay disabled and `/api/health` reports `worker_isolation: false`.
+**Synology:** `compose.synology.yaml` has the same permissions with fixed container, image and volume names for Container Manager. Add `COMPOSE_FILE=compose.synology.yaml` (and `BIND_ADDRESS=0.0.0.0` for access from your home network) to `.env`, then run `docker compose up -d --build`.
 
 Projects, files, settings, encrypted credentials and sessions live in the data volume. Back up the complete volume, including encryption keys. Update with `docker compose up -d --build` and retain the volume.
 

@@ -1,3 +1,4 @@
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import copy
 import hashlib
 import json
@@ -216,14 +217,10 @@ class PluginManagerTests(unittest.TestCase):
         )
         self.manager.uninstall("location")
         self.assertNotIn("location", {p["id"] for p in self.manager.installed()})
-        self.manager.install("location")
+        self.manager.install_now("location", with_tools=False)
         item = next((p for p in self.manager.installed() if p["id"] == "location"))
         self.assertFalse(item["actions"][0]["default_params"]["enrich"])
 
-    @unittest.skipUnless(
-        Path("/run/argus/worker.sock").exists(),
-        "Requires enabled namespace worker runtime",
-    )
     def test_repo_install_is_pinned_verified_and_executable(self):
         source = b"def run(action,inputs,params,context):\n return {'outputs':[{'type':'value','data':{'value':'ok'}}]}\n"
         descriptor = {

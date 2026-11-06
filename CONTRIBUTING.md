@@ -3,7 +3,7 @@
 Python 3.12+, Docker Compose v2 and, for frontend tooling, Node.js 22+.
 
 ```sh
-python -m pip install -r requirements.txt -r requirements-core.txt -r requirements-dev.txt -r requirements-test.txt
+python -m pip install -r requirements.txt -r requirements-dev.txt -r requirements-test.txt
 npm ci
 npm run lint
 npm run format:check

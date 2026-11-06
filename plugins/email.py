@@ -5,6 +5,7 @@ from plugins import _consensus
 
 PLUGIN = {
     "id": "email",
+    "tools": ["consensus", "holehe", "user_scanner", "blackbird"],
     "name": "E-Mail",
     "category": "Recherche",
     "description": "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.",
@@ -26,7 +27,6 @@ PLUGIN = {
                 "holehe_sites": [],
                 "source_order": ["consensus", "holehe", "user_scanner", "blackbird"],
                 "request_timeout": 12,
-                "run_timeout": 300,
                 "max_results": 500,
             },
         }

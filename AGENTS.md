@@ -7,4 +7,5 @@
 - Pushing code and creating a GitHub Release are separate actions. Use GitHub MCP for repository publication.
 - Versions follow the user-selected calendar scheme: 26.10.2-beta.1 (V26.10.2 Beta 1), then later calendar releases.
 - Never initiate face comparisons or real-person research. Tests use synthetic fixtures and mocked inference.
-- Standard deployment is a single ARGUS image containing VPN, browser and isolated community workers. Keep the application unprivileged behind its internal supervisor; do not replace fail-closed isolation with unrestricted fallback execution.
+- Standard deployment is a single slim ARGUS image with the VPN controller and system libraries. Plugins (including ARGUS's own) and their research tools are installed on demand into the data volume and run unsandboxed as the unprivileged application user (user decision, Nov 2026). Keep the VPN fail-closed: when the controller stops, the application stops.
+- Native plugin code changes require `python scripts/build_plugin_manifest.py` (updates `plugins/native.json` and `.dockerignore`).

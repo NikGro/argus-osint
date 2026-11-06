@@ -4,6 +4,7 @@ import contextlib
 from html.parser import HTMLParser
 import json
 import re
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -48,10 +49,23 @@ def get_page(url, timeout):
     return page, response["url"]
 
 
-def browser_page(url, timeout):
-    from core.isolation import invoke
-
-    payload = invoke("browser", {"url": url, "timeout": timeout}, timeout=timeout + 25)
+def browser_page(url, timeout, browser):
+    if not browser:
+        raise ValueError("Browser nicht installiert.")
+    completed = subprocess.run(
+        browser["command"],
+        input=json.dumps({"url": url, "timeout": timeout}).encode(),
+        capture_output=True,
+        env={
+            "PATH": "/usr/local/bin:/usr/bin:/bin",
+            "LANG": "C.UTF-8",
+            **browser["env"],
+        },
+        check=False,
+    )
+    if completed.returncode:
+        raise ValueError("Browserabruf fehlgeschlagen.")
+    payload = json.loads(completed.stdout)
     if int(payload.get("status", 200)) >= 400:
         raise ValueError("Public page HTTP " + str(payload["status"]))
     return payload["html"], payload["url"]
@@ -251,7 +265,9 @@ def collect(payload):
 
     url = public_url(payload["url"])
     warnings = []
-    browser_enabled = bool(payload.get("browser_enabled", True))
+    browser_enabled = bool(payload.get("browser_enabled", True)) and bool(
+        payload.get("browser")
+    )
     browser = False
     try:
         page, final = get_page(url, int(payload["request_timeout"]))
@@ -266,7 +282,9 @@ def collect(payload):
             raise ValueError(
                 str(exc) + " Eingebauter Browser ist deaktiviert."
             ) from exc
-        page, final = browser_page(url, int(payload.get("browser_timeout", 60)))
+        page, final = browser_page(
+            url, int(payload.get("browser_timeout", 60)), payload.get("browser")
+        )
         browser = True
     if any(
         part in ("login", "signin", "signup", "auth", "oauth")
@@ -288,7 +306,7 @@ def collect(payload):
     ):
         try:
             rendered, rendered_url = browser_page(
-                url, int(payload.get("browser_timeout", 60))
+                url, int(payload.get("browser_timeout", 60)), payload.get("browser")
             )
             if not blocked(rendered):
                 facts.update(extract_page(rendered, rendered_url))

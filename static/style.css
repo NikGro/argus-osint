@@ -926,6 +926,61 @@ main:not(#workspace) {
 .plugin-row > :is(h3, p) {
   margin: 0 0 12px;
 }
+.plugin-library-group {
+  display: grid;
+  gap: 12px;
+}
+.plugin-library-group > h3 {
+  margin: 8px 0 0;
+}
+.plugin-copy .library-tools {
+  margin-top: 6px;
+}
+/* Install state sits where the install button was, so the row never jumps. */
+.install-state {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  align-items: center;
+  min-height: var(--control-height);
+  color: var(--muted);
+}
+.install-state.installed {
+  color: var(--success);
+}
+.install-failure {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+}
+.install-failure p {
+  margin: 0 0 8px;
+  color: var(--danger-hover);
+}
+.install-failure pre {
+  max-height: 240px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: var(--radius-control);
+  background: var(--input-surface);
+  color: var(--muted);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+.worker-controls {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.worker-controls > :first-child {
+  flex: 0 1 220px;
+  margin-bottom: 0;
+}
+.worker-recommendation {
+  color: var(--muted);
+}
 .repository-row strong {
   display: block;
   margin-bottom: 12px;

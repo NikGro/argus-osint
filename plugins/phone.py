@@ -5,6 +5,7 @@ from plugins import _consensus
 
 PLUGIN = {
     "id": "phone",
+    "tools": ["consensus", "phoneinfoga", "ignorant"],
     "name": "Telefonnummer",
     "category": "Recherche",
     "description": "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.",
@@ -30,7 +31,6 @@ PLUGIN = {
                 "use_ignorant": False,
                 "source_order": ["consensus", "phoneinfoga", "ignorant"],
                 "request_timeout": 12,
-                "run_timeout": 300,
                 "max_results": 500,
                 "phone_region": "",
                 "disabled_scanners": [],
@@ -53,7 +53,7 @@ def run(action, inputs, params, context):
             "phoneinfoga": lambda i, p, c: phoneinfoga.run(
                 "scan",
                 i,
-                {**p, "run_timeout": min(int(p.get("run_timeout", 300)), 180)},
+                p,
                 c,
             ),
             "ignorant": extra.ignorant,

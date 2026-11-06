@@ -14,3 +14,29 @@ node_modules
 .pytest_cache
 .ruff_cache
 dist
+# >>> native plugins (written by scripts/build_plugin_manifest.py)
+plugins/database_search.py
+plugins/deep_research.py
+plugins/deepface_tool.py
+plugins/email.py
+plugins/image_crop.py
+plugins/instagram.py
+plugins/locales/deep_research.json
+plugins/locales/deepface.json
+plugins/locales/email.json
+plugins/locales/instagram.json
+plugins/locales/location.json
+plugins/locales/merge.json
+plugins/locales/metadata.json
+plugins/locales/phone.json
+plugins/locales/transform.json
+plugins/locales/username.json
+plugins/locales/video.json
+plugins/location.py
+plugins/merge.py
+plugins/metadata.py
+plugins/phone.py
+plugins/transform.py
+plugins/username.py
+plugins/video.py
+# <<< native plugins

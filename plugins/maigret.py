@@ -1,9 +1,9 @@
 """Bounded Maigret CLI integration; public matches and extracted facts retain sources."""
 
+from core import tools
 import json
 from pathlib import Path
 import re
-import shutil
 import tempfile
 from urllib.parse import urlparse
 from plugins._process import bounded_run
@@ -24,7 +24,6 @@ PLUGIN = {
                 "sites": [],
                 "top_sites": 100,
                 "request_timeout": 10,
-                "run_timeout": 180,
                 "max_results": 100,
             },
         }
@@ -104,20 +103,12 @@ def run(action, inputs, params, context):
         )
     ):
         raise ValueError("Ungültige Anbieterliste.")
-    timeout = int(params.get("run_timeout", 180))
     request = int(params.get("request_timeout", 10))
     top = int(params.get("top_sites", 100))
     limit = int(params.get("max_results", 100))
-    if (
-        not 10 <= timeout <= 300
-        or not 1 <= request <= 30
-        or not 1 <= top <= 500
-        or not 1 <= limit <= 300
-    ):
+    if not 1 <= request <= 30 or not 1 <= top <= 500 or not 1 <= limit <= 300:
         raise ValueError("Ungültiges Maigret-Limit.")
-    executable = shutil.which("maigret")
-    if not executable:
-        raise ValueError("Maigret ist nicht installiert.")
+    executable = tools.executable("maigret", "maigret")
     with tempfile.TemporaryDirectory(prefix="argus-maigret-") as directory:
         command = [
             executable,
@@ -149,7 +140,7 @@ def run(action, inputs, params, context):
             command.append("--enrich")
         for site in sites:
             command.extend(["--site", site])
-        stdout, stderr = bounded_run(command, timeout)
+        stdout, stderr = bounded_run(command, None)
         reports = list(Path(directory).glob("*.json"))
         if len(reports) != 1 or reports[0].stat().st_size > 8 * 1024 * 1024:
             raise ValueError("Maigret lieferte keinen eindeutigen JSON-Bericht.")

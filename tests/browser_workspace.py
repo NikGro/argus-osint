@@ -27,19 +27,37 @@ port = sock.getsockname()[1]
 sock.close()
 base = "http://127.0.0.1:" + str(port)
 logfile = tempfile.TemporaryFile()
-process = subprocess.Popen(
+APPLICATION_PYTHON = os.environ.get(
+    "ARGUS_APPLICATION_PYTHON",
+    (
+        "/usr/local/bin/python"
+        if Path("/usr/local/bin/python").exists()
+        else sys.executable
+    ),
+)
+SERVER_ENV = {
+    **os.environ,
+    "DATA_DIR": temp.name,
+    "HOST": "127.0.0.1",
+    "PORT": str(port),
+    "ARGUS_PLUGIN_SOURCE": str(ROOT),
+}
+# ARGUS starts without plugins; install the natives from this checkout first.
+subprocess.run(
     [
-        os.environ.get(
-            "ARGUS_APPLICATION_PYTHON",
-            (
-                "/usr/local/bin/python"
-                if Path("/usr/local/bin/python").exists()
-                else sys.executable
-            ),
-        ),
-        str(ROOT / "server.py"),
+        APPLICATION_PYTHON,
+        "-c",
+        "from pathlib import Path; from core.plugin_manager import Manager; "
+        "import os; d = Path(os.environ['DATA_DIR']); m = Manager(d / 'workbench.sqlite3', d); "
+        "[m.install_now(p, with_tools=False) for p in m.native]",
     ],
-    env={**os.environ, "DATA_DIR": temp.name, "HOST": "127.0.0.1", "PORT": str(port)},
+    cwd=ROOT,
+    env=SERVER_ENV,
+    check=True,
+)
+process = subprocess.Popen(
+    [APPLICATION_PYTHON, str(ROOT / "server.py")],
+    env=SERVER_ENV,
     stdout=logfile,
     stderr=logfile,
     start_new_session=True,

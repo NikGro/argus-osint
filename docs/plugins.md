@@ -20,7 +20,7 @@ ARGUS distinguishes **data plugins** (node schemas and presentation) from **tool
 | JSON Transform | Connected data nodes | Browser-worker transformation using the supplied JavaScript |
 | DeepFace | Exactly two images | Match/no match, numeric comparison values and optional overlay image nodes |
 
-The installed descriptor is authoritative for accepted types, limits and available fields. Missing tools/dependencies and unsupported host isolation are reported rather than silently substituted.
+The installed descriptor is authoritative for accepted types, limits and available fields. Missing tools are reported rather than silently substituted; reinstall the plugin to download them again.
 
 ## Configuration versus defaults
 
@@ -60,7 +60,7 @@ External tools contact providers when explicitly run. Image previews are downloa
 
 ## Installing/developing community plugins
 
-Add an approved community repository under the plugin library, inspect its metadata and install explicitly. Python modules are pinned to a repository commit and SHA-256. Treat community code as trusted code you chose to install; the worker boundary is an additional control, not a claim that arbitrary hostile code is safe.
+Add an approved community repository under the plugin library, inspect its metadata and install explicitly. Python modules are pinned to a repository commit and SHA-256. Community code runs unsandboxed with ARGUS's permissions, so treat it as trusted code you chose to install. A manifest entry may list `tools` from `core/tools.py`; ARGUS installs them with the plugin.
 
 A data plugin may declare node types, default fields, display defaults, categories, icons and translations. A tool plugin declares accepted input types, actions, parameter metadata and a `run` function. For the exact contract, structured result shapes, prompts and provenance rules, see [PLUGIN_CONTRACT.md](PLUGIN_CONTRACT.md) and the examples. Keep a plugin's returned facts small and atomic; use nested groups to express provider/context relationships.
 

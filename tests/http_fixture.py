@@ -1,5 +1,6 @@
 """Authenticated fixture client. Production authentication is never disabled for tests."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import json
 import time
 import urllib.request

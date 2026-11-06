@@ -24,6 +24,7 @@ ROUTES = (
     Route("GET", "/api/plugins", "get_plugins"),
     Route("GET", "/api/plugin\\-library", "get_plugin_library"),
     Route("GET", "/api/settings", "get_settings"),
+    Route("GET", "/api/system/resources", "get_system_resources"),
     Route("GET", "(?:/api/system\\-logs|/api/system\\-logs/export)", "get_system_logs"),
     Route("GET", "/api/databases", "get_databases"),
     Route("GET", "(?:/api/databases/).*", "get_database"),

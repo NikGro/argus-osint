@@ -36,8 +36,8 @@
     "static/jobs-client.js": "198bf0479a80f59d83bec77b0da862bbd42f0336f77a3c22cef72b61634a052d",
     "static/layout-spec.json": "42cf1f7b20eb7d214f100400a120d00d85f0f200e64b483bee812b8f98df87ca",
     "static/licenses/Apache-2.0.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
-    "static/locales/de.json": "59b7588a6a9e536c81a01a417b51a5cd806ce2c804478feaa6b4de197979d6d1",
-    "static/locales/en.json": "c067bd1888450f13034a64c0ce24a5cdba5a6ba5c5efef41a90e7f7d7dab33d2",
+    "static/locales/de.json": "5374fd2000595c9ffd6baffc2e2ff1ca3f710c77057deb2abb6e6b5a831e97eb",
+    "static/locales/en.json": "dad3921e1fffa662d56cde2d907e3f2a5b5370d5f5ba0cd605ff24c233a00251",
     "static/location-countries.js": "d2b81efc0b7fdaf66d24169b9ea51a3a3e1eac6e779e2fe2918624db314feb76",
     "static/main.js": "d040b3c8602fa56beae77e104243fbc331ca6056a8b5f077acdc19d76b0175d6",
     "static/map-view.css": "a9f56ef653731ac39b81a2943561bffd2262aa5b32351af40742635765e02d6e",
@@ -51,9 +51,9 @@
     "static/react/databases.jsx": "cc807f9ec7d4e703961134bcd7555bed45d289533b152c8e113a788b0a5773fe",
     "static/react/help.jsx": "c6d94d79417f0ac806646e912dfca94241215fbc9c3757716ce09a3139a72cbc",
     "static/react/main.jsx": "3ed0c4bcc02508d99df6bdde7d707d406fd8d8257630d3a4efbda51c7be471d2",
-    "static/react/plugins.jsx": "f05b00368f1b6683eef8d24df07afae53b33094e5b0b3427df86336729904ddb",
+    "static/react/plugins.jsx": "81c3edabd868867aafb2c0a41c269db7ae54aa8eb5eef7e41198767044a579ec",
     "static/react/report.jsx": "2a141275398b012efd3573468ddc1f52498b989bbda16152dad7ac1b33e2fd91",
-    "static/react/settings.jsx": "ecb37a328ad7d376cf2ba5c9d52600607755074c6cac6a3a99c89046d867ac7e",
+    "static/react/settings.jsx": "b26adb2633f9eeb07d10924a5b4bcc28a562ac03c8c111d6654b4e942a26bee9",
     "static/react/ui/controls.jsx": "943edce0cec00991246cb7fa28aa6ca1bdc532a31e044a3b7118523c234a5389",
     "static/react/ui/fields.jsx": "9d3a442111b13d93db5504bb7f458a477abfbac0c11f327df2a5171b8e63965a",
     "static/react/ui/index.jsx": "ae798ccdc0666dd6d4f273e7cdc704b7a61018f7a2f9b6ff9002fdb244ec1fd3",
@@ -68,9 +68,9 @@
     "static/react-dom-LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
     "static/report.css": "ea5e9866fcdd65ac036662e8c2f6299447c016b68a12235d296e1fb47570336d",
     "static/scheduler-LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
-    "static/style.css": "088d138458da051723e65cfb814c79c9feeb464ce5c9b8ed6869ebb8a5b9aa45",
+    "static/style.css": "21f9708dea2ecbb2582aee3eab37c44d17421ce5adf163ecf53ecaee032b933a",
     "static/transform-worker.js": "f28cd7af8fadb2454e288a62e90dbd4e566ce39488585d4be2b99f1d1a3a1917",
     "static/version.js": "bcf65d6f87bff8565e58f58045d840fc878f328e3a3bd3c6dbc48993670161da"
   },
-  "bundle_sha256": "a85d53b11c761cc272e6ab1eabb7789777e003b5477eef6c5aa4a2eb9ee5f0b1"
+  "bundle_sha256": "1652bf368a9fe810272e3369e5d3da5289fb3672e921cb0e31d30875be1274b6"
 }

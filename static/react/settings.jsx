@@ -74,6 +74,11 @@ export function Settings({ app }) {
             onChange={(tags) => app.safely(() => persist({ tags }))}
           />
         </section>
+        <WorkerSettings
+          app={app}
+          value={values.parallel_workers || 1}
+          onChange={(parallel_workers) => app.safely(() => persist({ parallel_workers }))}
+        />
         {app.ui.view === 'settingsView' && (
           <>
             <VPNSettings app={app} />
@@ -84,6 +89,63 @@ export function Settings({ app }) {
     </main>
   );
 }
+const GIB = 1024 ** 3;
+
+function WorkerSettings({ app, value, onChange }) {
+  const [system, setSystem] = useState(null),
+    [checking, setChecking] = useState(false),
+    [error, setError] = useState('');
+  async function detect() {
+    setChecking(true);
+    try {
+      const found = await app.commands.api('/api/system/resources');
+      setSystem(found);
+      setError('');
+      onChange(found.recommended_workers);
+    } catch (problem) {
+      setError(problem.message);
+    } finally {
+      setChecking(false);
+    }
+  }
+  return (
+    <section id="workerSettings">
+      <h2>
+        <Icon name="nodes" /> {t('ui.parallel_tools')}
+      </h2>
+      <p className="source-help">{t('ui.parallel_tools_help')}</p>
+      <div className="worker-controls">
+        <Field
+          label={t('ui.tools_running_at_once')}
+          value={value}
+          schema={{ min: 1, max: system?.max_workers || 32, step: 1 }}
+          onChange={(workers) =>
+            Number.isInteger(workers) && workers >= 1 && workers <= 32 && onChange(workers)
+          }
+        />
+        <Button
+          app={app}
+          icon={checking ? 'spinner' : 'search'}
+          disabled={checking}
+          onClick={detect}
+        >
+          {t('ui.detect_system_resources')}
+        </Button>
+      </div>
+      {system && (
+        <p role="status" className="worker-recommendation">
+          {t('ui.system_resources_found', {
+            cores: system.cpu_count,
+            memory: system.memory_available ? (system.memory_available / GIB).toFixed(1) : '?',
+            workers: system.recommended_workers
+          })}
+        </p>
+      )}
+      {error && <p role="alert">{error}</p>}
+    </section>
+  );
+}
+
 function TagSettings({ app, tags, onChange }) {
   return (
     <>

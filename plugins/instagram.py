@@ -10,7 +10,10 @@ import re
 import tempfile
 from urllib.parse import urlsplit
 from plugins._process import bounded_run
+from plugins._browser import browser_command
+from core import tools
 from core.provider_registry import identity
+from plugins._helpers import helper
 
 SECTIONS = {
     "profile": True,
@@ -35,7 +38,6 @@ DEFAULTS = {
     **{"include_" + key: value for key, value in SECTIONS.items()},
     **{key + "_limit": value for key, value in LIMITS.items()},
     "request_timeout": 15,
-    "run_timeout": 300,
     "browser_enabled": True,
     "browser_timeout": 60,
     "use_toutatis": True,
@@ -45,6 +47,7 @@ DEFAULTS = {
 }
 PLUGIN = {
     "id": "instagram",
+    "tools": ["instagram", "flaresolverr"],
     "name": "Instagram Deep Research",
     "category": "Recherche",
     "icon": "instagram",
@@ -90,7 +93,7 @@ PLUGIN = {
                 }
                 for key in SECTIONS
             ],
-            "parameter_help": "0 = kein Mengenlimit. Zeitlimit und Projektlimit von 5.000 Nodes bleiben aktiv.",
+            "parameter_help": "0 = kein Mengenlimit. Das Projektlimit von 5.000 Nodes bleibt aktiv.",
             "settings_only": [
                 "sessionid",
                 "login_username",
@@ -179,7 +182,6 @@ def run(action, inputs, params, context):
         settings[key + "_limit"] = int(value)
     for key, low, high in [
         ("request_timeout", 2, 30),
-        ("run_timeout", 30, 1800),
         ("browser_timeout", 10, 120),
     ]:
         value = settings[key]
@@ -238,15 +240,16 @@ def collect(lookup, settings, context, remaining=4999, auth_only=False):
             "auth_only": auth_only,
             "transient": context.get("transient", {}),
             "session_output": str(Path(folder) / "session.json"),
+            "browser": browser_command(),
         }
         try:
             stdout, _ = bounded_run(
                 [
-                    "/opt/argus-tools/instagram-venv/bin/python",
+                    tools.python("instagram"),
                     "-I",
-                    str(Path(__file__).with_name("_instagram_runner.py")),
+                    helper("_instagram_runner.py"),
                 ],
-                int(settings["run_timeout"]) + 15,
+                None,
                 payload,
                 max_bytes=12 * 1024 * 1024,
             )

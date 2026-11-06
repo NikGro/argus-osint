@@ -2,19 +2,29 @@
 
 import copy
 import json
-from pathlib import Path
 import re
 import sys
 from plugins import _extra_sources as extra, holehe, maigret
 from plugins._process import bounded_run
+from plugins._browser import browser_command
+from core import tools
 from plugins._profile import provider_key, profile_url, recipes
 from plugins._research import deduplicate, fact_outputs
 from core.provider_registry import label as provider_label, services
 from core.build_info import user_agent
 from core.errors import AppError
+from plugins._helpers import helper
 
 PLUGIN = {
     "id": "deep_research",
+    "tools": [
+        "maigret",
+        "user_scanner",
+        "blackbird",
+        "holehe",
+        "ignorant",
+        "flaresolverr",
+    ],
     "name": "Generic Deep Research",
     "category": "Recherche",
     "icon": "argus",
@@ -46,7 +56,6 @@ PLUGIN = {
                 ],
                 "identifier_kind": "auto",
                 "request_timeout": 12,
-                "run_timeout": 300,
                 "max_results": 500,
             },
         }
@@ -115,14 +124,9 @@ class ProfileEnrichment:
             raise ValueError(
                 "Profil benötigt einen Anbieter und mindestens eine gültige Profil-URL oder einen Identifier."
             )
-        self.timeout = int(self.params.get("run_timeout", 300))
         self.request = int(self.params.get("request_timeout", 12))
         self.limit = int(self.params.get("max_results", 500))
-        if (
-            not 10 <= self.timeout <= 300
-            or not 2 <= self.request <= 30
-            or (not 1 <= self.limit <= 1000)
-        ):
+        if not 2 <= self.request <= 30 or (not 1 <= self.limit <= 1000):
             raise ValueError("Ungültige Recherchelimits.")
         self.order = self.params.get("source_order", list(TOOLS))
         if (
@@ -198,7 +202,6 @@ class ProfileEnrichment:
                 **self.params,
                 "identity_only": False,
                 "deep": True,
-                "run_timeout": self.timeout,
                 "request_timeout": self.request,
                 "max_results": min(self.limit, 300),
                 "service": self.service,
@@ -266,14 +269,15 @@ class ProfileEnrichment:
                 [
                     sys.executable,
                     "-I",
-                    str(Path(__file__).with_name("_argus_web_runner.py")),
+                    helper("_argus_web_runner.py"),
                 ],
-                self.timeout,
+                None,
                 {
                     "url": self.url,
                     "request_timeout": self.request,
                     "browser_enabled": self.params.get("argus_browser_enabled", True),
                     "browser_timeout": self.browser_timeout,
+                    "browser": browser_command(),
                 },
             )
             self.payload = json.loads(self.stdout)
@@ -299,11 +303,11 @@ class ProfileEnrichment:
                 self.attempts += 1
                 self.stdout, self.stderr = bounded_run(
                     [
-                        sys.executable,
+                        tools.python("maigret"),
                         "-I",
-                        str(Path(__file__).with_name("_profile_extract_runner.py")),
+                        helper("_profile_extract_runner.py"),
                     ],
-                    self.timeout,
+                    None,
                     {
                         "url": self.url,
                         "request_timeout": self.request,
@@ -329,25 +333,16 @@ class ProfileEnrichment:
                     "log": self.stdout,
                 }
             elif self.kind == "username" and self.value:
-                import maigret as package
-
-                self.package = package
-                from maigret.sites import MaigretDatabase
-
-                self.MaigretDatabase = MaigretDatabase
-                self.database = self.MaigretDatabase().load_from_path(
-                    str(Path(self.package.__file__).parent / "resources" / "data.json")
-                )
-                self.matches = [
-                    site.name
-                    for site in self.database.sites
-                    if site.name == self.service
-                ]
+                # Maigret runs in its own tool environment; read its site list directly.
+                self.database = json.loads(
+                    (
+                        tools.site_packages("maigret") / "maigret/resources/data.json"
+                    ).read_text(encoding="utf-8")
+                ).get("sites", {})
+                self.matches = [name for name in self.database if name == self.service]
                 if not self.matches and self.targets:
                     self.matches = [
-                        site.name
-                        for site in self.database.sites
-                        if site.name == self.targets[0]
+                        name for name in self.database if name == self.targets[0]
                     ]
                 if len(self.matches) != 1:
                     self.warnings.append(

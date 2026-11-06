@@ -1,9 +1,9 @@
+from core import tools
 import json
-from pathlib import Path
 import re
-import sys
 from plugins._process import bounded_run
 from plugins._research import fact_outputs
+from plugins._helpers import helper
 
 PLUGIN = {
     "id": "holehe",
@@ -16,7 +16,7 @@ PLUGIN = {
             "inputs": ["email"],
             "external": True,
             "external_notice": "Die E-Mail-Adresse wird an die ausgewählten Anbieter gesendet.",
-            "default_params": {"sites": [], "request_timeout": 12, "run_timeout": 300},
+            "default_params": {"sites": [], "request_timeout": 12},
         }
     ],
 }
@@ -124,13 +124,16 @@ def run(action, inputs, params, context):
         )
     ):
         raise ValueError("Ungültige Holehe-Anbieterliste.")
-    timeout = int(params.get("run_timeout", 300))
     request_timeout = int(params.get("request_timeout", 12))
-    if not 5 <= timeout <= 300 or not 2 <= request_timeout <= 30:
+    if not 2 <= request_timeout <= 30:
         raise ValueError("Ungültiges Suchzeitlimit.")
     output, _ = bounded_run(
-        [sys.executable, "-I", str(Path(__file__).with_name("_holehe_runner.py"))],
-        timeout,
+        [
+            tools.python("holehe"),
+            "-I",
+            helper("_holehe_runner.py"),
+        ],
+        None,
         {"email": email, "sites": sites, "request_timeout": request_timeout},
     )
     payload = json.loads(output)

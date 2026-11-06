@@ -2,9 +2,12 @@
 
 import json
 import math
+import os
 from pathlib import Path
 import tempfile
 from plugins._process import bounded_run
+from core import tools
+from plugins._helpers import helper
 
 MODELS = [
     "SFace",
@@ -41,7 +44,6 @@ DEFAULTS = {
     "anti_spoofing": False,
     "include_overlays": True,
     "resize_large_images": False,
-    "run_timeout": 300,
     "column_id": "",
     "max_comparisons": 100,
 }
@@ -70,17 +72,11 @@ SCHEMA.update(
             "step": 0.01,
             "control": "range",
         },
-        "run_timeout": {
-            "secret": False,
-            "min": 0,
-            "max": 900,
-            "step": 10,
-            "control": "range",
-        },
     }
 )
 PLUGIN = {
     "id": "deepface",
+    "tools": ["deepface"],
     "icon": "face-compare",
     "name": "DeepFace",
     "category": "Bildanalyse",
@@ -124,7 +120,6 @@ def validated(params):
     for key, low, high in [
         ("expand_percentage", 0, 100),
         ("threshold", 0, 100),
-        ("run_timeout", 0, 900),
     ]:
         number = values[key]
         if (
@@ -136,9 +131,6 @@ def validated(params):
             raise ValueError("Ungültiger Zahlenwert: " + key)
     if int(values["expand_percentage"]) != values["expand_percentage"]:
         raise ValueError("Bildausschnitt-Erweiterung muss ganzzahlig sein.")
-    if values["run_timeout"] != 0 and values["run_timeout"] < 10:
-        key = "run_timeout"
-        raise ValueError("Ungültiger Zahlenwert: " + key)
     return values
 
 
@@ -186,19 +178,20 @@ def run(action, inputs, params, context):
     with tempfile.TemporaryDirectory(prefix="argus-deepface-") as folder:
         stdout, _ = bounded_run(
             [
-                "/opt/argus-tools/deepface-venv/bin/python",
+                tools.python("deepface"),
                 "-I",
-                str(Path(__file__).with_name("_deepface_runner.py")),
+                helper("_deepface_runner.py"),
             ],
-            int(values["run_timeout"]) if values["run_timeout"] else None,
+            None,
             {"paths": paths, "params": values, "artifact_dir": folder},
             extra_env={
                 "DEEPFACE_HOME": str(cache),
                 "DEEPFACE_BACKEND_ENGINE": "onnx",
                 "TF_CPP_MIN_LOG_LEVEL": "3",
                 "CUDA_VISIBLE_DEVICES": "-1",
-                "OMP_NUM_THREADS": "2",
-                "TF_NUM_INTRAOP_THREADS": "2",
+                # Use the machine's cores; ARGUS supplies the compute.
+                "OMP_NUM_THREADS": str(os.cpu_count() or 2),
+                "TF_NUM_INTRAOP_THREADS": str(os.cpu_count() or 2),
                 "TF_NUM_INTEROP_THREADS": "2",
             },
         )

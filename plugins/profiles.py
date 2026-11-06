@@ -1,11 +1,11 @@
 """Broad username discovery through Sherlock; no provider-specific plugin dependency."""
 
+from core import tools
+from plugins._process import bounded_run
 import csv
 import io
 from pathlib import Path
 import re
-import shutil
-import subprocess
 import tempfile
 import threading
 from urllib.parse import urlparse
@@ -24,7 +24,6 @@ PLUGIN = {
             "default_params": {
                 "sites": [],
                 "request_timeout": 10,
-                "run_timeout": 120,
                 "max_results": 100,
             },
         }
@@ -103,11 +102,7 @@ def parse_csv(text, node, max_results):
 
 
 def search(username, params):
-    executable = shutil.which("sherlock")
-    if not executable:
-        raise ValueError(
-            "Sherlock ist nicht installiert. Container mit der aktuellen requirements.txt neu bauen."
-        )
+    executable = tools.executable("sherlock", "sherlock")
     # Disallow path segments, options and upstream wildcard expansion; no shell execution.
     if (
         not re.fullmatch(r"[\w.@+\-]{1,100}", username, flags=re.UNICODE)
@@ -127,11 +122,8 @@ def search(username, params):
             "sites muss eine Liste von höchstens 50 Sherlock-Anbieternamen sein."
         )
     request_timeout = int(params.get("request_timeout", 10))
-    run_timeout = int(params.get("run_timeout", 120))
-    if not 1 <= request_timeout <= 30 or not 10 <= run_timeout <= 180:
-        raise ValueError(
-            "request_timeout: 1–30 Sekunden; run_timeout: 10–180 Sekunden."
-        )
+    if not 1 <= request_timeout <= 30:
+        raise ValueError("request_timeout: 1–30 Sekunden.")
     with tempfile.TemporaryDirectory(prefix="trace-sherlock-") as directory:
         args = [
             executable,
@@ -146,23 +138,11 @@ def search(username, params):
         for site in sites:
             args.extend(["--site", site])
         args.extend(["--", username])
-        try:
-            # Child stdout/stderr stay local and bounded by a file; do not leak research inputs to logs.
-            with open(Path(directory) / "process.log", "wb") as log:
-                completed = subprocess.run(
-                    args,
-                    cwd=directory,
-                    stdout=log,
-                    stderr=log,
-                    timeout=run_timeout,
-                    check=False,
-                )
-        except subprocess.TimeoutExpired as exc:
-            raise ValueError(
-                "Sherlock-Gesamtzeitlimit erreicht. Suche unvollständig; weniger Anbieter auswählen oder Zeitlimit erhöhen."
-            ) from exc
+        # No overall time limit; cancellation still stops the whole process group.
+        # Child output stays local and is discarded; research inputs never reach logs.
+        bounded_run(args, None, cwd=directory, max_bytes=64 * 1024 * 1024)
         report = Path(directory) / (username + ".csv")
-        if completed.returncode != 0 or not report.is_file():
+        if not report.is_file():
             raise ValueError(
                 "Sherlock lieferte kein auswertbares Ergebnis. Installation, Netzwerk und sites-Auswahl prüfen."
             )

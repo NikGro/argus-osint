@@ -22,6 +22,7 @@ trusted team on an internal network. It has no user accounts and must not be
 exposed to the internet or to untrusted networks.
 
 Community plugins are optional and never installed by default. ARGUS does not
-review their code. They run in an isolated worker, which is an additional
-safeguard rather than protection against malicious code, so install only
-repositories you have reviewed and whose author you trust.
+review their code. They run without a sandbox and with all of ARGUS's
+permissions: a plugin can read projects, credentials and files and use the
+network. Install only repositories you have reviewed and whose author you
+trust.

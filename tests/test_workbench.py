@@ -1,3 +1,4 @@
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import io
 import json
 import shutil

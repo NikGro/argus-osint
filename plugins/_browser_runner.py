@@ -9,19 +9,10 @@ import shutil
 import sys
 import tempfile
 
-ROOT = Path("/opt/argus-tools/flaresolverr")
+ROOT = Path(os.environ.get("ARGUS_FLARESOLVERR_SRC", "/nonexistent"))
 
 
 def run(payload, self_test=False):
-    if os.getenv("ARGUS_ISOLATED_WORKER") != "1":
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-        from core.isolation import invoke
-
-        return invoke(
-            "browser_self_test" if self_test else "browser",
-            payload,
-            timeout=int(payload.get("timeout", 60)) + 25,
-        )
     if not self_test:
         spec = importlib.util.spec_from_file_location(
             "argus_public_page", Path(__file__).with_name("_argus_web_runner.py")
@@ -57,17 +48,9 @@ def run(payload, self_test=False):
             kwargs["use_subprocess"] = True
             options = kwargs.get("options")
             if options:
-                options.add_argument(
-                    "--proxy-server=" + os.environ["ARGUS_WORKER_PROXY"]
-                )
-                options.add_argument("--proxy-bypass-list=<-loopback>")
-                options.add_argument("--disable-quic")
-                options.add_argument(
-                    "--force-webrtc-ip-handling-policy=disable_non_proxied_udp"
-                )
                 options.add_argument("--disable-background-networking")
-            # Upstream Chromium flags remain inside a separate network/PID/mount namespace.
-            # The proxy is the only egress; /data and the app's process table are absent.
+                # Containers have no user namespaces for Chromium's own sandbox.
+                options.add_argument("--no-sandbox")
             super().__init__(*args, **kwargs)
 
         def quit(self, *args, **kwargs):

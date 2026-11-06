@@ -186,15 +186,7 @@ class InstagramCollector:
                 )
             )
         ):
-            self.remaining = max(
-                1,
-                min(
-                    25,
-                    int(
-                        self.config["run_timeout"] - (time.monotonic() - self.start) - 5
-                    ),
-                ),
-            )
+            self.remaining = 25
             try:
                 self.response = subprocess.run(
                     [
@@ -318,8 +310,6 @@ class InstagramCollector:
         temporary.replace(self.checkpoint)
 
     def tick(self):
-        if time.monotonic() - self.start > self.config["run_timeout"] - 5:
-            raise StopCollection("Zeitlimit erreicht; Teilergebnisse gespeichert.")
         if len(self.outputs) >= self.node_budget:
             raise StopCollection(
                 "Projektlimit erreicht; Teilergebnisse gespeichert. 0 hebt nur das Bereichslimit auf."
@@ -464,17 +454,8 @@ class InstagramCollector:
             spec.loader.exec_module(web)
             page, url = web.browser_page(
                 self.profile_url,
-                min(
-                    self.config["browser_timeout"],
-                    max(
-                        10,
-                        int(
-                            self.config["run_timeout"]
-                            - (time.monotonic() - self.start)
-                            - 8
-                        ),
-                    ),
-                ),
+                self.config["browser_timeout"],
+                self.payload.get("browser"),
             )
 
             class Scripts(HTMLParser):

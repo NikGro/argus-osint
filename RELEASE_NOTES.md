@@ -1,3 +1,25 @@
+# ARGUS – next beta (draft)
+
+ARGUS now starts as a slim all-in-one container without research plugins. You install the plugins you need from the library, ARGUS downloads them and their tools, and runs them itself, several at once if you like.
+
+## Read before updating
+
+- **After the update no plugins are installed.** Open **Plugins → Add plugins** and install the ones you use. Their settings, saved logins and node defaults are kept and apply again.
+- Tools (Sherlock, Maigret, DeepFace, FlareSolverr and the others) are downloaded into the data volume (`/data/tools`) on install. Expect a few hundred MB to a few GB depending on the plugins.
+- Use the updated Compose files: the container needs fewer privileges (no `SYS_ADMIN`, no seccomp or AppArmor profile) and the same file now works on Synology DSM, including the VPN.
+
+## Plugins on demand
+
+- ARGUS's own plugins are listed in the library and downloaded from this release's source on install; every file is checked against its SHA-256.
+- The library shows each install step, failures with the reason and the installation log, and a retry. Removing a plugin asks for confirmation, keeps its settings and deletes tools no other plugin needs.
+- Website catalogues for site selection are rebuilt from the tools that are installed.
+
+## Execution
+
+- No more overall time limits for tools; a tool runs until it finishes or you cancel it. Per-request timeouts stay.
+- **Settings → Parallel tools** sets how many tools run at the same time. **Detect system resources** reads cores and free memory and sets a recommendation. Parallel tools share the VPN connection; a rotation waits until none is running.
+- Plugins, tools and community plugins run without a sandbox as the unprivileged application user. Community plugins therefore have all of ARGUS's permissions; the install warning says so. The namespace/seccomp worker isolation and its egress proxy were removed.
+
 # ARGUS 26.10.4 Beta 1
 
 This beta adds an official Compose file for hosts without seccomp support, such as Synology DSM. It includes everything from 26.10.3 Beta 1 (below). Existing data volumes remain compatible.

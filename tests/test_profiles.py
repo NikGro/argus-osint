@@ -1,10 +1,11 @@
+import tool_stubs  # external tools count as installed
+from core import tools
 import unittest
 from unittest.mock import patch
 import subprocess
 from pathlib import Path
 import tempfile
 import json
-import shutil
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from plugins import profiles
@@ -46,10 +47,7 @@ class ProfileTests(unittest.TestCase):
         self.assertTrue(any(("begrenzt" in warning for warning in warnings)))
 
     def test_invalid_username_never_runs_subprocess(self):
-        with (
-            patch.object(profiles.shutil, "which", return_value="/bin/sherlock"),
-            patch.object(profiles.subprocess, "run") as process,
-        ):
+        with patch.object(profiles, "bounded_run") as process:
             for bad in ["../escape", "--help", "a b", "{?}", ".."]:
                 with self.assertRaises(ValueError):
                     profiles.search(bad, {})
@@ -57,31 +55,16 @@ class ProfileTests(unittest.TestCase):
 
     def test_cli_arguments_and_csv(self):
 
-        def fake_run(args, **kwargs):
+        def fake_run(args, timeout, **kwargs):
             directory = args[args.index("--folderoutput") + 1]
             (Path(directory) / "example.csv").write_text(CSV)
             self.assertEqual(args[-2:], ["--", "example"])
             self.assertEqual(args[args.index("--site") + 1], "GitHub")
-            self.assertNotIn("shell", kwargs)
-            return subprocess.CompletedProcess(args, 0)
+            self.assertIsNone(timeout)
+            return ("", "")
 
-        with (
-            patch.object(profiles.shutil, "which", return_value="/bin/sherlock"),
-            patch.object(profiles.subprocess, "run", side_effect=fake_run),
-        ):
+        with patch.object(profiles, "bounded_run", side_effect=fake_run):
             self.assertEqual(profiles.search("example", {"sites": ["GitHub"]}), CSV)
-
-    def test_timeout_is_not_no_hits(self):
-        with (
-            patch.object(profiles.shutil, "which", return_value="/bin/sherlock"),
-            patch.object(
-                profiles.subprocess,
-                "run",
-                side_effect=subprocess.TimeoutExpired("sherlock", 120),
-            ),
-        ):
-            with self.assertRaisesRegex(ValueError, "unvollständig"):
-                profiles.search("example", {})
 
     def test_grouped_results_persist_in_graph(self):
         doc = {
@@ -126,7 +109,7 @@ class ProfileTests(unittest.TestCase):
         )
         self.assertEqual(result["document"]["runs"][0]["status"], "completed")
 
-    @unittest.skipUnless(shutil.which("sherlock"), "Sherlock-CLI nicht installiert")
+    @unittest.skipUnless(tool_stubs.real("sherlock"), "Sherlock-CLI nicht installiert")
     def test_real_cli_against_controlled_local_websites(self):
 
         class Fixture(BaseHTTPRequestHandler):
@@ -157,7 +140,7 @@ class ProfileTests(unittest.TestCase):
                 }
                 (path / "sites.json").write_text(json.dumps(spec))
                 args = [
-                    shutil.which("sherlock"),
+                    tools.executable("sherlock", "sherlock"),
                     "--json",
                     str(path / "sites.json"),
                     "--ignore-exclusions",

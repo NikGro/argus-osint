@@ -1,8 +1,8 @@
+from core import tools
 import json
 from pathlib import Path
 import re
 import shutil
-import sys
 import tempfile
 from urllib.parse import urlsplit
 from plugins._process import bounded_run
@@ -95,11 +95,11 @@ def user_scanner(kind, inputs, params, context):
     validate(kind, value)
     output, stderr = bounded_run(
         [
-            sys.executable,
+            tools.python("user_scanner"),
             "-I",
             str(Path(__file__).with_name("_user_scanner_runner.py")),
         ],
-        int(params.get("run_timeout", 300)),
+        None,
         {
             "kind": kind,
             "value": value,
@@ -130,7 +130,7 @@ def blackbird(kind, inputs, params, context):
         )
     with tempfile.TemporaryDirectory(prefix="argus-blackbird-") as folder:
         work = Path(folder) / "tool"
-        shutil.copytree("/opt/argus-tools/blackbird", work)
+        shutil.copytree(tools.source("blackbird"), work)
         # Keep source targeting and parser policy in this process's private copy.
         from plugins._profile import provider_key
 
@@ -189,7 +189,7 @@ def blackbird(kind, inputs, params, context):
         if params.get("identity_only"):
             (work / "data" / "wmn-metadata.json").write_text(json.dumps({"sites": {}}))
         command = [
-            "/opt/argus-tools/blackbird-venv/bin/python",
+            tools.python("blackbird"),
             str(work / "blackbird.py"),
             "--username" if kind == "username" else "--email",
             value,
@@ -200,9 +200,7 @@ def blackbird(kind, inputs, params, context):
             "--max-concurrent-requests",
             "20",
         ]
-        stdout, stderr = bounded_run(
-            command, int(params.get("run_timeout", 300)), cwd=work
-        )
+        stdout, stderr = bounded_run(command, None, cwd=work)
         files = list((work / "results").rglob("*.json"))
         rows = []
         for file in files:
@@ -259,8 +257,12 @@ def ignorant(inputs, params, context):
     except phonenumbers.NumberParseException as exc:
         raise ValueError("Ungültige Telefonnummer.") from exc
     output, _ = bounded_run(
-        [sys.executable, "-I", str(Path(__file__).with_name("_ignorant_runner.py"))],
-        int(params.get("run_timeout", 300)),
+        [
+            tools.python("ignorant"),
+            "-I",
+            str(Path(__file__).with_name("_ignorant_runner.py")),
+        ],
+        None,
         {
             "phone": str(number.national_number),
             "country_code": str(number.country_code),

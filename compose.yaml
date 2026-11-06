@@ -1,14 +1,18 @@
 services:
   argus:
-    build: .
+    build:
+      context: .
+      args:
+        # Git revision whose plugin files match plugins/native.json in this
+        # image. Empty means the release tag v<VERSION>.
+        ARGUS_SOURCE_REF: ${ARGUS_SOURCE_REF:-}
+    # Root only until the VPN controller runs; the application and every
+    # plugin then run as UID 10001. No other privileges are needed.
     user: "0:0"
     cap_drop: [ALL]
-    cap_add: [SYS_ADMIN, NET_ADMIN, SETPCAP, SETUID, SETGID, CHOWN, KILL]
+    cap_add: [NET_ADMIN, NET_RAW, SETUID, SETGID, CHOWN, KILL]
     devices: [/dev/net/tun:/dev/net/tun]
-    security_opt:
-      - no-new-privileges:true
-      - seccomp=./deploy/seccomp-argus.json
-      - apparmor=${ARGUS_APPARMOR_PROFILE:-unconfined}
+    security_opt: [no-new-privileges:true]
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8080}:8080"
     volumes:

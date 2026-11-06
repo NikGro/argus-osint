@@ -1,14 +1,10 @@
-"""Run an explicitly installed community module in a broker-isolated filesystem/network/PID namespace with a per-job identity."""
+"""Entry point that runs one installed community module (no sandbox, no limits)."""
 
 import contextlib
 import importlib.util
 import json
-import resource
 import sys
 
-resource.setrlimit(resource.RLIMIT_AS, (1024 * 1024 * 1024, 1024 * 1024 * 1024))
-resource.setrlimit(resource.RLIMIT_CPU, (45, 45))
-resource.setrlimit(resource.RLIMIT_FSIZE, (9 * 1024 * 1024, 9 * 1024 * 1024))
 payload = json.load(sys.stdin)
 with contextlib.redirect_stdout(sys.stderr):
     spec = importlib.util.spec_from_file_location("argus_community", sys.argv[1])
@@ -22,7 +18,7 @@ with contextlib.redirect_stdout(sys.stderr):
         return path
 
     context = {
-        "api_version": 1,
+        "api_version": 2,
         "resolve_file": resolve_file,
         "transient": payload.get("transient", {}),
     }

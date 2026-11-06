@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { t } from '../i18n.js';
 import { pollJob } from '../jobs-client.js';
-import { Button, Check, Field, Fields, SearchProfiles, SortList } from './ui/index.jsx';
+import { Button, Check, Fields, Icon, SearchProfiles, SortList } from './ui/index.jsx';
 import { providerFields, displayOptions } from '../app/labels.js';
 
 export function Plugins({ app }) {
-  const [query, setQuery] = useState(''),
-    [library, setLibrary] = useState(false);
   const { commands: c, state: s } = app;
+  const hasTools = s.pluginsState.catalog.some((plugin) => plugin.actions?.length);
+  const [query, setQuery] = useState(''),
+    [library, setLibrary] = useState(!hasTools);
   return (
     <main id="pluginsView" hidden={app.ui.view !== 'pluginsView'}>
       <div className="intro">
@@ -22,13 +23,19 @@ export function Plugins({ app }) {
           placeholder={t('ui.search_plugins')}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <Button className="primary" icon="plus" onClick={() => setLibrary(!library)}>
-          {t('ui.add_plugins_a728662a')}
+        <Button
+          className={library ? '' : 'primary'}
+          icon={library ? 'close' : 'plus'}
+          aria-expanded={library}
+          aria-controls="pluginLibrary"
+          onClick={() => setLibrary(!library)}
+        >
+          {t(library ? 'ui.close_plugin_library' : 'ui.add_plugins_a728662a')}
         </Button>
       </section>
-      {library && <Library app={app} />}
+      {library && <Library app={app} query={query} />}
       <div id="pluginList" className="plugin-list">
-        {[false, true].map((tools) => (
+        {[true, false].map((tools) => (
           <section key={String(tools)} className="installed-plugin-section">
             <h2>{t(tools ? 'Tools' : 'Daten-Nodes')}</h2>
             {s.pluginsState.catalog
@@ -42,6 +49,9 @@ export function Plugins({ app }) {
               .map((plugin) => (
                 <Plugin key={plugin.id} app={app} plugin={plugin} />
               ))}
+            {tools && !hasTools && (
+              <p className="empty-state">{t('ui.no_tool_plugins_installed_yet')}</p>
+            )}
           </section>
         ))}
       </div>
@@ -177,6 +187,17 @@ function Plugin({ app, plugin }) {
           only
           className="danger-filled"
           onClick={async () => {
+            if (
+              !(await c.askConfirm(
+                t('ui.remove_plugin_title', { name: c.pluginDisplayName(plugin) }),
+                t(
+                  plugin.tools?.length
+                    ? 'ui.remove_plugin_with_tools_message'
+                    : 'ui.remove_plugin_message'
+                )
+              ))
+            )
+              return;
             await persist();
             await c.api('/api/plugin/remove', { id: plugin.id });
             await c.refreshCatalog();
@@ -448,14 +469,123 @@ function Plugin({ app, plugin }) {
   );
 }
 
-function Library({ app }) {
+const MIB = 1024 ** 2;
+
+function size(bytes) {
+  return bytes >= 1024 * MIB
+    ? (bytes / 1024 / MIB).toFixed(1) + ' GB'
+    : Math.max(1, Math.round(bytes / MIB)) + ' MB';
+}
+
+function installStep(plugin) {
+  const progress = plugin.progress || {};
+  if (progress.step === 'tool') {
+    const labels = (plugin.tool_status || []).map((tool) => tool.label);
+    return t('ui.installing_tool', {
+      tool: progress.detail,
+      index: Math.max(1, labels.indexOf(progress.detail) + 1),
+      total: labels.length || 1
+    });
+  }
+  if (progress.step === 'download') return t('ui.downloading_plugin_files');
+  if (progress.step === 'catalogue') return t('ui.updating_site_catalogues');
+  return t('ui.waiting_for_installation');
+}
+
+function LibraryPlugin({ app, plugin, reload }) {
   const { commands: c } = app;
-  const [data, setData] = useState({ plugins: [], repositories: [] }),
-    [query, setQuery] = useState('');
-  const load = async () => setData(await c.api('/api/plugin-library'));
+  const progress = plugin.progress;
+  const installing = progress?.state === 'installing';
+  const failed = progress?.state === 'failed';
+  const tools = plugin.tool_status || [];
+  const installedSize = tools.reduce((sum, tool) => sum + (tool.size || 0), 0);
+  async function install() {
+    if (
+      plugin.origin === 'community' &&
+      !(await c.askConfirm(
+        t('ui.install_community_plugin'),
+        t('ui.community_plugin_install_warning', {
+          repository: plugin.repo_url || plugin.id,
+          commit: String(plugin.commit || '').slice(0, 12) || '–'
+        })
+      ))
+    )
+      return;
+    const started = await c.api('/api/plugin/install', { id: plugin.id });
+    // Small plugins install immediately; large ones report progress via polling.
+    if (!started?.installing) await c.refreshCatalog();
+    await reload();
+  }
+  return (
+    <article className="plugin-row library-plugin" data-library-plugin={plugin.id}>
+      <div className="plugin-header">
+        <div className="plugin-copy">
+          <strong>{c.pluginDisplayName(plugin)}</strong>
+          <p>{c.pluginText(plugin, plugin.description)}</p>
+          {tools.length > 0 && (
+            <p className="library-tools">
+              {plugin.installed && installedSize
+                ? t('ui.uses_tools_installed_size', {
+                    tools: tools.map((tool) => tool.label).join(', '),
+                    size: size(installedSize)
+                  })
+                : t('ui.downloads_tools', { tools: tools.map((tool) => tool.label).join(', ') })}
+            </p>
+          )}
+        </div>
+        {installing ? (
+          <span className="install-state" role="status">
+            <Icon name="spinner" /> {installStep(plugin)}
+          </span>
+        ) : plugin.installed ? (
+          <span className="install-state installed">
+            <Icon name="check" /> {t('Installiert')}
+          </span>
+        ) : (
+          <Button app={app} icon={failed ? 'refresh' : 'download'} onClick={install}>
+            {t(failed ? 'ui.retry_installation' : 'Installieren')}
+          </Button>
+        )}
+      </div>
+      {failed && (
+        <div className="install-failure" role="alert">
+          <p>{t('errors.' + (progress.error || 'tool_install_failed'))}</p>
+          {progress.log?.length > 0 && (
+            <details>
+              <summary>{t('ui.show_installation_log')}</summary>
+              <pre>{progress.log.join('\n')}</pre>
+            </details>
+          )}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function Library({ app, query }) {
+  const { commands: c } = app;
+  const [data, setData] = useState({ plugins: [], repositories: [] });
+  const installing = useRef(new Set());
+  const load = async () => {
+    const next = await c.api('/api/plugin-library');
+    const active = new Set(
+      next.plugins.filter((p) => p.progress?.state === 'installing').map((p) => p.id)
+    );
+    // A finished installation changes the installed list and the tool palette.
+    if ([...installing.current].some((id) => !active.has(id))) await c.refreshCatalog();
+    installing.current = active;
+    setData(next);
+    app.redraw();
+  };
   useEffect(() => {
     app.safely(load);
   }, []);
+  const busy = data.plugins.some((plugin) => plugin.progress?.state === 'installing');
+  useEffect(() => {
+    if (!busy) return;
+    const timer = setInterval(() => app.safely(load), 1500);
+    return () => clearInterval(timer);
+  }, [busy]);
   async function addRepository() {
     const url = await c.askText(t('ui.add_community_repository'), t('ui.repository_url'), '');
     if (!url?.trim()) return;
@@ -466,58 +596,35 @@ function Library({ app }) {
     await c.api('/api/repositories/add', { url: url.trim() });
     await load();
   }
+  const visible = data.plugins.filter(
+    (plugin) => plugin.origin !== 'builtin' || plugin.actions?.length || !plugin.installed
+  );
+  const matches = (plugin) =>
+    (c.pluginDisplayName(plugin) + ' ' + plugin.id).toLowerCase().includes(query.toLowerCase());
   return (
-    <section className="plugin-library">
+    <section className="plugin-library" id="pluginLibrary">
       <div className="plugin-library-header">
         <h2>{t('ui.plugin_library_4ba1045f')}</h2>
-        <input
-          type="search"
-          value={query}
-          aria-label={t('ui.search_plugins')}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t('ui.search_plugins')}
-        />
         <Button app={app} icon="plus" onClick={addRepository}>
           {t('ui.add_community_repository')}
         </Button>
       </div>
-      <div className="plugin-library-list">
-        {data.plugins
-          .filter((plugin) =>
-            (plugin.name + ' ' + plugin.id).toLowerCase().includes(query.toLowerCase())
+      {[
+        ['ui.argus_plugins', visible.filter((p) => p.origin !== 'community')],
+        ['ui.community_plugins', visible.filter((p) => p.origin === 'community')]
+      ].map(
+        ([title, plugins]) =>
+          plugins.length > 0 && (
+            <section key={title} className="plugin-library-group">
+              <h3>{t(title)}</h3>
+              <div className="plugin-library-list">
+                {plugins.filter(matches).map((plugin) => (
+                  <LibraryPlugin key={plugin.id} app={app} plugin={plugin} reload={load} />
+                ))}
+              </div>
+            </section>
           )
-          .map((plugin) => (
-            <article key={plugin.id} className="plugin-row">
-              <h3>{c.pluginDisplayName(plugin)}</h3>
-              <p>{c.pluginText(plugin, plugin.description)}</p>
-              <Button
-                app={app}
-                icon="plus"
-                className="primary"
-                disabled={plugin.installed}
-                onClick={async () => {
-                  if (
-                    plugin.origin === 'community' &&
-                    !(await c.askConfirm(
-                      t('ui.install_community_plugin'),
-                      t('ui.community_plugin_install_warning', {
-                        repository: plugin.repo_url || plugin.id,
-                        commit: String(plugin.commit || '').slice(0, 12) || '–'
-                      })
-                    ))
-                  )
-                    return;
-                  await c.api('/api/plugin/install', { id: plugin.id });
-                  await c.refreshCatalog();
-                  await load();
-                  app.redraw();
-                }}
-              >
-                {t(plugin.installed ? 'Installiert' : 'Installieren')}
-              </Button>
-            </article>
-          ))}
-      </div>
+      )}
       <h3>{t('ui.community_repositories')}</h3>
       {data.repositories.length ? (
         <div className="plugin-library-list">

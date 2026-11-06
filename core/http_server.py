@@ -4,7 +4,6 @@ from core.messages import text as localized
 from core.http_routes import dispatch
 import json
 import mimetypes
-from pathlib import Path
 import threading
 import hashlib
 from uuid import uuid4
@@ -293,13 +292,16 @@ class Handler(BaseHTTPRequestHandler):
                 "status": "ok",
                 "database": "ok",
                 "version": self.app.APP_VERSION,
-                "worker_isolation": Path("/run/argus/worker.sock").exists(),
-                "queue_worker_alive": bool(
-                    self.app.JOBS.thread and self.app.JOBS.thread.is_alive()
-                ),
+                "queue_worker_alive": self.app.JOBS.alive() > 0,
+                "queue_workers": self.app.JOBS.alive(),
                 "last_worker_error": self.app.JOBS.last_worker_error,
             },
         )
+
+    def get_system_resources(self, path):
+        from core.system_resources import detect
+
+        return self.send(200, {**detect(), "workers": self.app.JOBS.workers})
 
     def get_session(self, path):
         return self.send(200, {"csrf_token": self.access_session["csrf"]})
