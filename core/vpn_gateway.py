@@ -29,6 +29,26 @@ def command(arguments, **kwargs):
     )
 
 
+def iptables_variant():
+    """nftables-backed iptables when the kernel has it, legacy otherwise.
+
+    Debian's default iptables uses nftables, which older host kernels such as
+    Synology DSM 7 (Linux 4.4) do not provide.
+    """
+    for suffix in ("", "-legacy"):
+        try:
+            subprocess.run(
+                ["iptables" + suffix, "-S", "OUTPUT"],
+                check=True,
+                capture_output=True,
+                timeout=5,
+            )
+            return suffix
+        except (OSError, subprocess.SubprocessError):
+            continue
+    return ""
+
+
 def endpoint(host, port, protocol):
     try:
         address = ipaddress.IPv4Address(host)
@@ -278,10 +298,13 @@ class Network:
         )[0]
 
     def firewall(self, profiles, enabled):
-        for family in ("iptables", "ip6tables"):
+        if not hasattr(self, "variant"):
+            self.variant = iptables_variant()
+        for name in ("iptables", "ip6tables"):
+            family = name + self.variant
             command(
                 [family + "-restore", "--noflush"],
-                input=firewall_rules(profiles, enabled, family == "ip6tables").encode(),
+                input=firewall_rules(profiles, enabled, name == "ip6tables").encode(),
             )
             exists = subprocess.run(
                 [family, "-C", "OUTPUT", "-j", "ARGUS_VPN"],
