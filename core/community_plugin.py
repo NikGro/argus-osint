@@ -35,7 +35,7 @@ class CommunityPlugin:
                 context["resolve_file"](node["data"]["file_id"])
             )
             for node in inputs
-            if node["type"] in ("image", "file", "video")
+            if node["type"] in ("image", "file", "video", "audio")
             and node["data"].get("file_id")
         }
         stdout, _ = bounded_run(

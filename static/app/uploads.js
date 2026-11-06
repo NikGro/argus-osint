@@ -31,6 +31,8 @@ var uploads_default = {
         type = choice;
       }
       if (type === 'file' && data.is_video) type = 'video';
+      if (type === 'file' && data.is_audio) type = 'audio';
+      if (type === 'audio' && !data.is_audio) throw Error(t('ui.unsupported_audio_file'));
       if (type === 'video' && !data.is_video) throw Error(t('ui.unsupported_video_file'));
       if (type === 'image' && !data.is_image) type = 'file';
       if (workspaceState.project?.id !== pid)
@@ -48,7 +50,7 @@ var uploads_default = {
               filename: file.name,
               mime: data.mime,
               size: data.size,
-              ...(type === 'video' ? { duration: data.duration } : {})
+              ...(['video', 'audio'].includes(type) ? { duration: data.duration } : {})
             },
         x,
         y

@@ -18,11 +18,13 @@ dist
 plugins/database_search.py
 plugins/deep_research.py
 plugins/deepface_tool.py
+plugins/dopplergeist.py
 plugins/email.py
 plugins/image_crop.py
 plugins/instagram.py
 plugins/locales/deep_research.json
 plugins/locales/deepface.json
+plugins/locales/dopplergeist.json
 plugins/locales/email.json
 plugins/locales/instagram.json
 plugins/locales/location.json

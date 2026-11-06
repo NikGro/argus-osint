@@ -55,6 +55,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def handle_one_request(self):
         self.body_reserved = False
+        self.body_read = False
         try:
             return super().handle_one_request()
         finally:
@@ -153,6 +154,12 @@ class Handler(BaseHTTPRequestHandler):
         )
         for name, value in getattr(self, "response_headers", {}).items():
             self.send_header(name, value)
+        if not getattr(self, "body_read", True) and self.headers.get(
+            "Content-Length", "0"
+        ) not in ("", "0"):
+            # An unread request body would be parsed as the next request on
+            # this keep-alive connection; close it instead.
+            self.close_connection = True
         if self.close_connection:
             self.send_header("Connection", "close")
         csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'"
@@ -258,6 +265,7 @@ class Handler(BaseHTTPRequestHandler):
         length = self.content_length(128 * 1024 * 1024 if raw else 48 * 1024 * 1024)
         self.reserve_body()
         data = self.rfile.read(length)
+        self.body_read = True
         if len(data) != length:
             raise AppError("invalid_request", 400)
         if raw:
@@ -562,6 +570,7 @@ class Handler(BaseHTTPRequestHandler):
         return self.send(200, self.app.VPN.rotate())
 
     def post_clear_system_logs(self, path):
+        self.body()
         self.app.SYSTEM_LOGS.clear()
         return self.send(200, {"cleared": True})
 

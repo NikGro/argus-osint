@@ -25,6 +25,13 @@ class FileRepository:
             "video/mp4",
             "video/webm",
             "video/quicktime",
+            "audio/mpeg",
+            "audio/wav",
+            "audio/flac",
+            "audio/ogg",
+            "audio/webm",
+            "audio/mp4",
+            "audio/aac",
         }
     )
 
@@ -153,13 +160,17 @@ class FileRepository:
                     is_image = True
             except (OSError, ValueError, SyntaxError, Image.DecompressionBombError):
                 pass
-            video = {}
+            video = audio = {}
             if not is_image:
-                from core.video import probe_video
+                from core.video import probe_audio, probe_video
 
                 video = probe_video(temporary, required=False)
                 if video:
                     mime = video["mime"]
+                else:
+                    audio = probe_audio(temporary)
+                    if audio:
+                        mime = audio["mime"]
             os.replace(temporary, path)
             with self.connect() as conn:
                 conn.execute(
@@ -177,7 +188,8 @@ class FileRepository:
                 "size": length,
                 "is_image": is_image,
                 "is_video": bool(video),
-                "duration": video.get("duration", 0),
+                "is_audio": bool(audio),
+                "duration": (video or audio).get("duration", 0),
             }
         except BaseException:
             path.unlink(missing_ok=True)

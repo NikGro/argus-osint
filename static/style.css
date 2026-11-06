@@ -309,6 +309,11 @@ header nav {
 #helpTab {
   flex: 0 0 36px;
 }
+/* Settings and help form one button group, spaced like the navigation (8px)
+   rather than by the header gap (16px). */
+#settingsTab + #helpTab {
+  margin-left: -8px;
+}
 #status {
   display: inline-flex;
   gap: 8px;
@@ -977,6 +982,11 @@ main:not(#workspace) {
 .worker-controls > :first-child {
   flex: 0 1 220px;
   margin-bottom: 0;
+}
+.audio-preview {
+  display: block;
+  width: 100%;
+  margin: 8px 0 16px;
 }
 .worker-recommendation {
   color: var(--muted);

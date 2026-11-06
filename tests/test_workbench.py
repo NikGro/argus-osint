@@ -122,6 +122,28 @@ class APITests(unittest.TestCase):
         cls.httpd.shutdown()
         cls.httpd.server_close()
 
+    def test_keep_alive_survives_post_bodies(self):
+        """A POST body must never be parsed as the next request (clear logs bug)."""
+        import http.client
+
+        conn = http.client.HTTPConnection("127.0.0.1", self.httpd.server_address[1])
+        headers = {
+            "Authorization": "Bearer " + app.AUTH.key,
+            "Content-Type": "application/json",
+        }
+        try:
+            for path in ("/api/system-logs/clear", "/api/logout"):
+                conn.request("POST", path, body=b"{}", headers=headers)
+                response = conn.getresponse()
+                response.read()
+                self.assertLess(response.status, 500, path)
+                conn.request("GET", "/api/system-logs?q=&offset=0", headers=headers)
+                response = conn.getresponse()
+                self.assertEqual(response.status, 200)
+                self.assertIn("lines", json.loads(response.read()))
+        finally:
+            conn.close()
+
     def call(self, path, body=None, headers=None, raw=None):
         payload = (
             raw

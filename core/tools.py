@@ -302,6 +302,15 @@ RECIPES = {
         "5.0.0.93-1",
         _venv_packages("numpy==2.5.4", "opencv-contrib-python-headless==5.0.0.93"),
     ),
+    # PolyForm Noncommercial 1.0.0: private, noncommercial use only.
+    # Flight and map data are cached in the tool folder (see plugins/dopplergeist.py).
+    "dopplergeist": Recipe(
+        "Dopplergeist",
+        "0.1.2-1",
+        _venv_packages(
+            "dopplergeist==0.1.2", check="import dopplergeist.cli, dopplergeist.jobs"
+        ),
+    ),
 }
 
 

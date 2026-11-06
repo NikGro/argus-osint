@@ -160,7 +160,7 @@ var resources_default = {
         return;
       }
       const url =
-        ['image', 'file', 'video'].includes(node.type) && node.data.file_id
+        ['image', 'file', 'video', 'audio'].includes(node.type) && node.data.file_id
           ? '/api/files/' + encodeURIComponent(node.data.file_id)
           : node.type === 'location'
             ? mapsUrl(node, false, provider)

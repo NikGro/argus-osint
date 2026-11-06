@@ -31,6 +31,7 @@ NATIVE = [
     "metadata",
     "image_crop",
     "video",
+    "dopplergeist",
     "merge",
     "transform",
 ]

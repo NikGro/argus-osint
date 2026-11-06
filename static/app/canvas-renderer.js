@@ -81,6 +81,7 @@ var canvas_renderer_default = {
       return (
         {
           video: 'video',
+          audio: 'audio',
           email: 'email',
           phone: 'phone',
           username: 'account',

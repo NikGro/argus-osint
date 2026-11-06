@@ -14,6 +14,16 @@ ARGUS now starts as a slim all-in-one container without research plugins. You in
 - The library shows each install step, failures with the reason and the installation log, and a retry. Removing a plugin asks for confirmation, keeps its settings and deletes tools no other plugin needs.
 - Website catalogues for site selection are rebuilt from the tools that are installed.
 
+## Audio and Dopplergeist
+
+- New **Audio** data node (MP3, WAV, FLAC, OGG, M4A) with a player in the node details. Dropped audio files become audio nodes; MP3s with cover art are no longer mistaken for videos.
+- New plugin **Locate audio with Dopplergeist**: estimates where a recording was made from passing aircraft and historical ADS-B flight tracks. Takes the recording start from its parameters or a connected date/time node; candidates become location nodes, an inconclusive analysis becomes an error node with the reason. Flight data (often many gigabytes) is cached until the plugin is removed. Dopplergeist is licensed for private, noncommercial use only.
+
+## Fixes
+
+- **Clear system logs** no longer shows an "Unexpected token" error. The request body was left unread, so the next request on the same connection failed; ARGUS now closes such connections.
+- Settings and help in the header are spaced like the other buttons.
+
 ## Execution
 
 - No more overall time limits for tools; a tool runs until it finishes or you cancel it. Per-request timeouts stay.

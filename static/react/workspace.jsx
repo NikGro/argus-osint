@@ -959,6 +959,11 @@ function NodeDetails({ app, node }) {
       {node.type === 'video' && fileURL && (
         <MediaFrame className="media-frame preview" src={fileURL} video />
       )}
+      {node.type === 'audio' && fileURL && (
+        <audio className="audio-preview" controls preload="metadata" src={fileURL}>
+          {t('ui.audio_playback_unsupported')}
+        </audio>
+      )}
       {node.type === 'image' && fileURL && (
         <MediaFrame className="media-frame preview" src={fileURL} alt={node.label} />
       )}
