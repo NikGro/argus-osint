@@ -35,7 +35,7 @@ const path = require('node:path');
     const u=new URL(route.request().url()), method=route.request().method();
     const send=body=>route.fulfill({json:body});
     if(u.pathname==='/api/auth/session')return send({csrf_token:'fixture'});
-    if(u.pathname==='/api/settings')return send({settings:{language:'en',tags:[{id:'fixture',name:'Fixture',color:'#6fc58c'}]},languages:[{code:'en',name:'English'},{code:'de',name:'Deutsch'}]});
+    if(u.pathname==='/api/settings')return send({settings:{tags:[{id:'fixture',name:'Fixture',color:'#6fc58c'}]}});
     if(u.pathname==='/api/plugins')return send({plugins:[...data,research],data_plugins:data,node_defaults:Object.fromEntries(data.flatMap(p=>(p.nodes||[]).map(n=>[n.type,n.defaults])))});
     if(u.pathname==='/api/providers')return send({providers:[]});
     if(u.pathname==='/api/health')return send({status:'ok'});

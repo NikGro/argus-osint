@@ -5,16 +5,17 @@ from plugins import _consensus
 
 PLUGIN = {
     "id": "email",
-    "name": "E-Mail",
-    "category": "Recherche",
-    "description": "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.",
+    "tools": ["consensus", "holehe", "user_scanner", "blackbird"],
+    "name": "Email",
+    "category": "Research",
+    "description": "Find profiles; retrieve additional information using Generic Deep Research.",
     "actions": [
         {
             "id": "lookup",
-            "name": "E-Mail recherchieren",
+            "name": "Research email",
             "inputs": ["email"],
             "external": True,
-            "external_notice": "Die Eingabe wird an die aktivierten Recherchequellen gesendet.",
+            "external_notice": "The input is sent to the enabled research sources.",
             "settings_only": ["consensus_sites", "holehe_sites"],
             "default_params": {
                 "search_profiles": {},
@@ -26,7 +27,6 @@ PLUGIN = {
                 "holehe_sites": [],
                 "source_order": ["consensus", "holehe", "user_scanner", "blackbird"],
                 "request_timeout": 12,
-                "run_timeout": 300,
                 "max_results": 500,
             },
         }
@@ -36,7 +36,7 @@ PLUGIN = {
 
 def run(action, inputs, params, context):
     if action != "lookup":
-        raise ValueError("Unbekannte Aktion.")
+        raise ValueError("Unknown action.")
     return aggregate(
         "email",
         {

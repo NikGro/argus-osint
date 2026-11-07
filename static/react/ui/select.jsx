@@ -1,7 +1,6 @@
 import React, { useId, useRef, useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './controls.jsx';
-import { t } from '../../i18n.js';
 
 export function Select({
   id,
@@ -117,7 +116,7 @@ export function Select({
               ref={search}
               type="search"
               role="searchbox"
-              aria-label={t('ui.search_51942c20')}
+              aria-label={'Search …'}
               aria-controls={listId}
               aria-activedescendant={filtered[active] ? listId + '-' + active : undefined}
               value={query}
@@ -149,7 +148,7 @@ export function Select({
             />
             {matches.length > 100 && (
               <small className="select-limit">
-                {t('ui.use_search_to_narrow_down_more_entries')} ({matches.length})
+                {'Use search to narrow down more entries.'} ({matches.length})
               </small>
             )}
             <div role="listbox" id={listId}>

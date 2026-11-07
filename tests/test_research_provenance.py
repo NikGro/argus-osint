@@ -1,5 +1,7 @@
 """Offline integration coverage for queued revisions; no external account lookups."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
+from core import tools
 import copy
 import io
 import json
@@ -39,7 +41,7 @@ class RevisionSources(unittest.TestCase):
             "label": "example · registration",
             "data": {"value": value},
             "source": {"tool": tool, "service": "example"},
-            "relation": "Benutzername gefunden",
+            "relation": "Username found",
         }
 
     def project(self, kind="value", plugin="transform", action="code"):
@@ -131,7 +133,7 @@ class RevisionSources(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 research.aggregate("username", {"a": failed}, [self.node()], params, {})
-        with self.assertRaisesRegex(ValueError, "Alle Recherchequellen"):
+        with self.assertRaisesRegex(ValueError, "All research sources failed"):
             research.aggregate("username", {"a": failed}, [self.node()], {}, {})
 
     def test_dedup_preserves_different_facts_queries_and_provenance(self):
@@ -223,7 +225,7 @@ class RevisionSources(unittest.TestCase):
         ):
             r = extra.blackbird("username", [self.node()], {}, {})
         self.assertEqual(len(r["outputs"]), 1)
-        self.assertIn("blackbird-venv", cmd.call_args.args[0][0])
+        self.assertEqual(cmd.call_args.args[0][0], tools.python("blackbird"))
         self.assertFalse(work[0].exists())
 
     def test_ignorant_retains_unique_facts_and_unknowns(self):
@@ -283,7 +285,7 @@ class RevisionSources(unittest.TestCase):
             self.assertEqual(sum((len(g["members"]) for g in groups)), len(outputs))
             self.assertTrue(all((g["members"] for g in groups)))
 
-    def test_actor_lock_serializes_concurrent_projects(self):
+    def test_tools_in_different_projects_run_in_parallel(self):
         p = self.project("location", "location", "normalize")
         q = self.project("location", "location", "normalize")
         entered = threading.Event()
@@ -318,13 +320,14 @@ class RevisionSources(unittest.TestCase):
             one.start()
             self.assertTrue(entered.wait(2))
             two.start()
-            time.sleep(0.04)
-            self.assertEqual(peak, 1)
+            deadline = time.monotonic() + 2
+            while peak < 2 and time.monotonic() < deadline:
+                time.sleep(0.01)
             release.set()
             one.join(3)
             two.join(3)
         self.assertEqual(len(results), 2)
-        self.assertEqual(peak, 1)
+        self.assertEqual(peak, 2)
 
     def test_location_new_result_original_unchanged_and_selection_target(self):
         p = self.project("location", "location", "normalize")
@@ -469,7 +472,8 @@ class RevisionSources(unittest.TestCase):
             self.assertTrue(
                 any(
                     (
-                        "Title" in o["label"] and o["data"]["value"] == "Fixture PDF"
+                        "Title" in o["label"]
+                        and o["data"].get("value") == "Fixture PDF"
                         for o in result["outputs"]
                     )
                 )
@@ -478,8 +482,16 @@ class RevisionSources(unittest.TestCase):
                 {o["group_id"] for o in result["outputs"]}, {"image", "pdf"}
             )
             self.assertTrue(
-                all((set(o["data"]) == {"value"} for o in result["outputs"]))
+                all(
+                    set(o["data"]) == {"value"}
+                    or (
+                        o["type"] == "datetime"
+                        and set(o["data"]) == {"date", "time", "timezone"}
+                    )
+                    for o in result["outputs"]
+                )
             )
+            self.assertTrue(any(o["type"] == "datetime" for o in result["outputs"]))
             self.assertEqual(before, {p: p.read_bytes() for p in before})
 
     def test_metadata_list_elements_and_original_file_names(self):
@@ -538,10 +550,6 @@ class RevisionSources(unittest.TestCase):
             }
         )
 
-    @unittest.skipUnless(
-        Path("/run/argus/worker.sock").exists(),
-        "Requires enabled namespace worker runtime",
-    )
     def test_community_template_hash_and_file_context(self):
         folder = app.ROOT / "examples" / "community-plugin"
         manifest = json.loads((folder / "argus-repository.json").read_text())
@@ -635,6 +643,7 @@ class UploadAndDocumentTests(unittest.TestCase):
             self.assertEqual(response.read(), pdf.getvalue())
             self.assertIsNone(response.headers.get("Content-Disposition"))
 
+    @unittest.skipUnless(shutil.which("exiftool"), "ExifTool executable absent locally")
     def test_office_and_audio_fixtures_metadata(self):
         import zipfile
         import wave
@@ -684,14 +693,17 @@ class UploadAndDocumentTests(unittest.TestCase):
             )
             self.assertTrue(
                 any(
-                    (o["data"]["value"] == "Fixture Office" for o in result["outputs"])
+                    (
+                        o["data"].get("value") == "Fixture Office"
+                        for o in result["outputs"]
+                    )
                 ),
                 json.dumps(result, ensure_ascii=False),
             )
             self.assertTrue(
                 any(
                     (
-                        "SampleRate" in o["label"] and o["data"]["value"] == "8000"
+                        "SampleRate" in o["label"] and o["data"].get("value") == "8000"
                         for o in result["outputs"]
                     )
                 )

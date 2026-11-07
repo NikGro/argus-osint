@@ -8,7 +8,6 @@ import { Settings, LogViewer } from './settings.jsx';
 import { Databases } from './databases.jsx';
 import { Help } from './help.jsx';
 import { Report } from './report.jsx';
-import { t, language, setLanguage } from '../i18n.js';
 import { pollJob } from '../jobs-client.js';
 import { VERSION } from '../version.js';
 
@@ -28,7 +27,7 @@ class ErrorBoundary extends React.Component {
       <main className="intro">
         <h1>ARGUS</h1>
         <p role="alert">{this.state.error.message}</p>
-        <Button onClick={() => location.reload()}>{t('ui.reload')}</Button>
+        <Button onClick={() => location.reload()}>{'Reload'}</Button>
       </main>
     ) : (
       this.props.children
@@ -58,16 +57,8 @@ function Application() {
         );
     };
     app.safely(async () => {
-      try {
-        const data = await c.api('/api/settings');
-        s.preferencesState.appSettings = data.settings;
-        ui.languages = data.languages;
-        await setLanguage(data.settings.language);
-      } finally {
-        // Show the interface (and any error toast) even if loading the language failed.
-        ui.languageReady = true;
-        app.redraw();
-      }
+      const data = await c.api('/api/settings');
+      s.preferencesState.appSettings = data.settings;
       await c.refreshCatalog();
       await c.home();
       ui.ready = true;
@@ -165,23 +156,16 @@ function Application() {
     s.pluginsState.pendingPluginDirty.size;
   const connected = s.shellState.backendOnline;
   const status = error
-    ? t('ui.save_failed')
+    ? 'Save failed'
     : saving
-      ? t('ui.saving')
+      ? 'Saving …'
       : pending
-        ? t('ui.pending_save')
+        ? 'Pending save'
         : !connected
-          ? t('ui.backend_unavailable')
+          ? 'Backend unavailable'
           : ['workspace', 'settingsView', 'pluginsView', 'databasesView'].includes(ui.view)
-            ? t('ui.saved')
-            : t('ui.connected');
-  // Render nothing translated until the language pack is loaded, so no raw keys flash.
-  if (!ui.languageReady)
-    return (
-      <p className="loading-state" role="status" aria-busy="true">
-        ARGUS …
-      </p>
-    );
+            ? 'Saved'
+            : 'Connected';
   return (
     <>
       <header>
@@ -201,8 +185,8 @@ function Application() {
             className="icon-text"
             onClick={async () => {
               const title = await c.askText(
-                t('ui.edit_project_title'),
-                t('ui.project_title'),
+                'Edit project title',
+                'Project title',
                 s.workspaceState.project.title
               );
               if (title?.trim()) {
@@ -212,7 +196,7 @@ function Application() {
               }
             }}
           >
-            {t('ui.edit_project_title')}
+            {'Edit project title'}
           </Button>
         </div>
         <nav hidden={ui.view === 'workspace'}>
@@ -223,7 +207,7 @@ function Application() {
             className={ui.view === 'home' ? 'active' : ''}
             onClick={c.home}
           >
-            {t('ui.projects')}
+            {'Projects'}
           </Button>
           <Button
             app={app}
@@ -235,7 +219,7 @@ function Application() {
               c.show('databasesView');
             }}
           >
-            {t('ui.databases')}
+            {'Databases'}
           </Button>
           <Button
             app={app}
@@ -244,7 +228,7 @@ function Application() {
             className={ui.view === 'pluginsView' ? 'active' : ''}
             onClick={c.pluginsHome}
           >
-            {t('ui.plugins')}
+            {'Plugins'}
           </Button>
         </nav>
         {ui.view !== 'workspace' && (
@@ -256,7 +240,7 @@ function Application() {
             only
             onClick={c.settingsHome}
           >
-            {t('ui.settings')}
+            {'Settings'}
           </Button>
         )}
         {ui.view !== 'workspace' && (
@@ -271,13 +255,13 @@ function Application() {
               c.show('helpView');
             }}
           >
-            {t('ui.help')}
+            {'Help'}
           </Button>
         )}
         <span id="status" role="status" title={error || status}>
           <span id="statusText">
             <span className="status-measure" aria-hidden="true">
-              {ui.view === 'workspace' ? t('ui.saved') : status}
+              {ui.view === 'workspace' ? 'Saved' : status}
             </span>
             <span className="status-current">{status}</span>
           </span>
@@ -295,7 +279,7 @@ function Application() {
       </header>
       {!ui.ready && (
         <p className="loading-state" role="status">
-          {t('ui.loading')}
+          {'Loading …'}
         </p>
       )}
       <StableHome app={app} revision={ui.view === 'home' ? revision : -1} />
@@ -315,7 +299,7 @@ function Application() {
       <Modal app={app} />
       {ui.message && (
         <div id="toast" role="status">
-          {t(ui.message)}
+          {ui.message}
         </div>
       )}
     </>
@@ -333,28 +317,24 @@ function Home({ app }) {
     <main id="home" hidden={app.ui.view !== 'home'}>
       <div className="intro">
         <h1>
-          {t('ui.connect_information')}
+          {'Connect information.'}
           <br />
-          {t('ui.preserve_findings')}
+          {'Preserve findings.'}
         </h1>
-        <p>{t('ui.a_graph_for_data_research_actions_and_traceable_results')}</p>
+        <p>{'A graph for data, research actions and traceable results.'}</p>
         <Button
           app={app}
           id="newProject"
           className="primary"
           icon="plus"
           onClick={async () => {
-            const title = await c.askText(
-              t('ui.create_project_b5b443d7'),
-              t('ui.project_title'),
-              ''
-            );
+            const title = await c.askText('Create project', 'Project title', '');
             if (!title?.trim()) return;
             const project = await c.api('/api/projects', { title: title.trim() });
             await c.openProject(project.id);
           }}
         >
-          {t('ui.create_project_b5b443d7')}
+          {'Create project'}
         </Button>
       </div>
       <section className="home-tools">
@@ -367,7 +347,7 @@ function Home({ app }) {
               app.redraw();
             }}
           >
-            {t('ui.active_projects')}
+            {'Active projects'}
           </Button>
           <Button
             icon="archive"
@@ -377,12 +357,12 @@ function Home({ app }) {
               app.redraw();
             }}
           >
-            {t('ui.archive')}
+            {'Archive'}
           </Button>
         </div>
         <input
           type="search"
-          placeholder={t('ui.search_projects')}
+          placeholder={'Search projects …'}
           value={library.homeQueries[library.homeMode]}
           onChange={(event) => {
             library.homeQueries[library.homeMode] = event.target.value;
@@ -390,19 +370,17 @@ function Home({ app }) {
           }}
         />
         <span>
-          {visible.length} {t('ui.projects')}
+          {visible.length} {visible.length === 1 ? 'project' : 'projects'}
         </span>
       </section>
       <div id="projectList" className="tiles">
         {visible.map((project) => (
           <article key={project.id} className="tile project-tile" data-project={project.id}>
             <small>
-              {new Date(project.archived_at || project.updated_at).toLocaleString(language)}
+              {new Date(project.archived_at || project.updated_at).toLocaleString('en')}
             </small>
             <h2 title={project.title}>{project.title}</h2>
-            <p className="project-kind">
-              {t(project.archived_at ? 'Archiviert' : 'Aktives Projekt')}
-            </p>
+            <p className="project-kind">{project.archived_at ? 'Archived' : 'Active project'}</p>
             <div className="tile-actions">
               <Button
                 app={app}
@@ -412,7 +390,7 @@ function Home({ app }) {
                   project.archived_at ? c.setArchived(project, false) : c.openProject(project.id)
                 }
               >
-                {t(project.archived_at ? 'Wiederherstellen' : 'Öffnen')}
+                {project.archived_at ? 'Restore' : 'Open'}
               </Button>
               <Button
                 app={app}
@@ -420,8 +398,8 @@ function Home({ app }) {
                 only
                 onClick={async () => {
                   const title = await c.askText(
-                    t('ui.edit_project_title'),
-                    t('ui.project_title'),
+                    'Edit project title',
+                    'Project title',
                     project.title
                   );
                   if (title?.trim()) {
@@ -434,7 +412,7 @@ function Home({ app }) {
                   }
                 }}
               >
-                {t('ui.edit_title')}
+                {'Edit title'}
               </Button>
               <Button
                 app={app}
@@ -447,12 +425,12 @@ function Home({ app }) {
                   project.archived_at ? c.deleteProject(project) : c.setArchived(project, true)
                 }
               >
-                {t(project.archived_at ? 'Löschen' : 'Archivieren')}
+                {project.archived_at ? 'Delete' : 'Archive'}
               </Button>
             </div>
           </article>
         ))}
-        {!visible.length && <p className="empty-state">{t('ui.no_matching_projects_found')}</p>}
+        {!visible.length && <p className="empty-state">{'No matching projects found.'}</p>}
       </div>
     </main>
   );

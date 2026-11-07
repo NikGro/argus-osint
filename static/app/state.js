@@ -1,3 +1,4 @@
+import { ZOOM_BASE } from './zoom.js';
 function createState() {
   return {
     workspaceState: {
@@ -27,7 +28,7 @@ function createState() {
       pan: {
         x: 60,
         y: 70,
-        scale: 1
+        scale: ZOOM_BASE
       },
       drag: null,
       keyboardNode: null,
@@ -39,7 +40,7 @@ function createState() {
       pinchGesture: null,
       gestureBlocked: false,
       leftCollapsed: false,
-      rightCollapsed: true
+      rightCollapsed: false
     },
     executionState: {
       preflighting: /* @__PURE__ */ new Set(),
@@ -63,9 +64,7 @@ function createState() {
       repositories: []
     },
     preferencesState: {
-      appSettings: {
-        language: 'de'
-      },
+      appSettings: {},
       settingsPromise: null,
       settingsError: '',
       settingsDirty: false,

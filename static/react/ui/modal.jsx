@@ -1,7 +1,7 @@
+import { fieldNames } from '../../app/labels.js';
 import React, { useRef, useState, useEffect } from 'react';
 import { Button, Check } from './controls.jsx';
 import { Field } from './fields.jsx';
-import { t } from '../../i18n.js';
 
 export function Modal({ app }) {
   const request = app.ui.dialog;
@@ -34,8 +34,8 @@ export function Modal({ app }) {
       }}
       aria-labelledby="react-dialog-title"
     >
-      <h2 id="react-dialog-title">{t(request.title)}</h2>
-      {request.message && <p>{t(request.message)}</p>}
+      <h2 id="react-dialog-title">{request.title}</h2>
+      {request.message && <p>{request.message}</p>}
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -48,7 +48,7 @@ export function Modal({ app }) {
                   (field.type === 'checkbox' && !values[field.key]))
             )
           ) {
-            setError(t('ui.complete_all_required_fields'));
+            setError('Complete all required fields.');
             return;
           }
           app.settle(
@@ -65,7 +65,7 @@ export function Modal({ app }) {
       >
         {request.mode === 'text' && (
           <Field
-            label={t(request.label)}
+            label={request.label}
             value={values.value || ''}
             onChange={(value) => setValues({ value })}
           />
@@ -73,7 +73,7 @@ export function Modal({ app }) {
         {request.fields?.map((field) => (
           <Field
             key={field.key}
-            label={t(field.label || field.key)}
+            label={fieldNames[field.label] || field.label || fieldNames[field.key] || field.key}
             value={
               values[field.key] ??
               field.default ??
@@ -126,16 +126,14 @@ export function Modal({ app }) {
           </p>
         )}
         <div className="dialog-actions">
-          <Button onClick={() => app.settle(null)}>{t('ui.cancel')}</Button>
+          <Button onClick={() => app.settle(null)}>{'Cancel'}</Button>
           {!request.choices && request.mode !== 'notice' && (
             <button type="submit" className="primary">
-              {t(
-                request.mode === 'confirm'
-                  ? 'Bestätigen'
-                  : request.mode === 'fields'
-                    ? 'Fortsetzen'
-                    : 'Übernehmen'
-              )}
+              {request.mode === 'confirm'
+                ? 'Confirm'
+                : request.mode === 'fields'
+                  ? 'Continue'
+                  : 'Apply'}
             </button>
           )}
         </div>

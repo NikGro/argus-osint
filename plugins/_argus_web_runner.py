@@ -4,6 +4,7 @@ import contextlib
 from html.parser import HTMLParser
 import json
 import re
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -48,10 +49,23 @@ def get_page(url, timeout):
     return page, response["url"]
 
 
-def browser_page(url, timeout):
-    from core.isolation import invoke
-
-    payload = invoke("browser", {"url": url, "timeout": timeout}, timeout=timeout + 25)
+def browser_page(url, timeout, browser):
+    if not browser:
+        raise ValueError("Browser not installed.")
+    completed = subprocess.run(
+        browser["command"],
+        input=json.dumps({"url": url, "timeout": timeout}).encode(),
+        capture_output=True,
+        env={
+            "PATH": "/usr/local/bin:/usr/bin:/bin",
+            "LANG": "C.UTF-8",
+            **browser["env"],
+        },
+        check=False,
+    )
+    if completed.returncode:
+        raise ValueError("Browser request failed.")
+    payload = json.loads(completed.stdout)
     if int(payload.get("status", 200)) >= 400:
         raise ValueError("Public page HTTP " + str(payload["status"]))
     return payload["html"], payload["url"]
@@ -182,9 +196,9 @@ def extract_page(page, url):
         or meta.get("description")
     )
     if title:
-        facts["Seitentitel"] = title[:3000]
+        facts["Page title"] = title[:3000]
     if description:
-        facts["Seitenbeschreibung"] = description[:12000]
+        facts["Page description"] = description[:12000]
     nodes = []
 
     def visit(value, depth=0):
@@ -214,33 +228,33 @@ def extract_page(page, url):
     for node in nodes:
         for field, label in [
             ("name", "Name"),
-            ("alternateName", "Benutzername"),
-            ("description", "Biografie"),
-            ("identifier", "Profil-ID"),
-            ("jobTitle", "Beruf"),
-            ("homeLocation", "Wohnort"),
-            ("location", "Ort"),
-            ("address", "Adresse"),
-            ("knowsLanguage", "Sprachen"),
-            ("sameAs", "Verknüpfte Profile"),
+            ("alternateName", "Username"),
+            ("description", "Biography"),
+            ("identifier", "Profile ID"),
+            ("jobTitle", "Occupation"),
+            ("homeLocation", "Home location"),
+            ("location", "Location"),
+            ("address", "Address"),
+            ("knowsLanguage", "Languages"),
+            ("sameAs", "Linked profiles"),
         ]:
             value = node.get(field)
             if value is not None and value != "":
                 facts.setdefault(label, value)
-        image(node.get("image"), "Profilbild")
+        image(node.get("image"), "Profile image")
     for value in parser.avatars:
-        image(value, "Profilbild")
+        image(value, "Profile image")
     for key in ("og:image", "og:image:url", "twitter:image", "twitter:image:src"):
         value = meta.get(key)
         if value:
             image(
                 value,
                 (
-                    "Profilbild"
+                    "Profile image"
                     if re.search(
                         r"avatar|profile[_-]?image|jtv_user_pictures", value, re.I
                     )
-                    else "Vorschaubild"
+                    else "Preview image"
                 ),
             )
     return facts
@@ -251,51 +265,51 @@ def collect(payload):
 
     url = public_url(payload["url"])
     warnings = []
-    browser_enabled = bool(payload.get("browser_enabled", True))
+    browser_enabled = bool(payload.get("browser_enabled", True)) and bool(
+        payload.get("browser")
+    )
     browser = False
     try:
         page, final = get_page(url, int(payload["request_timeout"]))
         if blocked(page):
-            raise ValueError("Die Profilseite liefert eine Bot-Prüfung.")
+            raise ValueError("The profile page presents a bot challenge.")
     except (AppError, OSError, ValueError) as exc:
         if isinstance(exc, urllib.error.HTTPError) and exc.code not in (403, 503):
-            raise ValueError(
-                "Profilseite nicht verfügbar: HTTP " + str(exc.code)
-            ) from exc
+            raise ValueError("Profile page unavailable: HTTP " + str(exc.code)) from exc
         if not browser_enabled:
-            raise ValueError(
-                str(exc) + " Eingebauter Browser ist deaktiviert."
-            ) from exc
-        page, final = browser_page(url, int(payload.get("browser_timeout", 60)))
+            raise ValueError(str(exc) + " The built-in browser is disabled.") from exc
+        page, final = browser_page(
+            url, int(payload.get("browser_timeout", 60)), payload.get("browser")
+        )
         browser = True
     if any(
         part in ("login", "signin", "signup", "auth", "oauth")
         for part in urlsplit(final).path.lower().split("/")
     ):
         raise ValueError(
-            "Die Profilseite leitet zur Anmeldung weiter; keine öffentlichen Profildaten verfügbar."
+            "The profile page redirects to login; no public profile data is available."
         )
     if blocked(page):
         raise ValueError(
-            "Die Bot-Prüfung wurde nicht gelöst; keine Profildaten ausgewertet."
+            "The bot challenge was not solved; no profile data was evaluated."
         )
     facts = extract_page(page, final)
     # Title alone is not meaningful profile enrichment; a configured browser may render the page.
     if (
         browser_enabled
         and not browser
-        and not any(k not in ("Seitentitel",) for k in facts)
+        and not any(k not in ("Page title",) for k in facts)
     ):
         try:
             rendered, rendered_url = browser_page(
-                url, int(payload.get("browser_timeout", 60))
+                url, int(payload.get("browser_timeout", 60)), payload.get("browser")
             )
             if not blocked(rendered):
                 facts.update(extract_page(rendered, rendered_url))
                 browser = True
         except (AppError, OSError, ValueError) as exc:
             warnings.append(str(exc))
-    if not any(k not in ("Seitentitel",) for k in facts):
+    if not any(k not in ("Page title",) for k in facts):
         facts = {}
     return {
         "facts": facts,

@@ -15,13 +15,12 @@ and temporary data; unit cases create their own resources.
 | Worker security | `test_worker_security.py`, the dedicated root-container `worker_runtime_probe.py` |
 | Images, video and synthetic DeepFace responses | `test_image_overlays_failures.py`, `test_video.py`, `test_deepface_adapter.py` |
 | Databases, imports and record outputs | `test_datasets.py` |
-| Localization | `test_locales.py` |
+| English migration of stored projects | `test_english_migration.py` |
 | Production frontend contracts | `npm run test:frontend` imports the production ESM bundle |
 | Real browser interaction | `test_browser_workflows.py` runs `browser_workspace.py` with temporary data and mocked research |
 
 The table is a navigation aid, not an exhaustive coverage guarantee. Add tests
-beside the relevant behavior. Old iteration-specific frontend specifications
-are text files in `history/` and do not count as passing checks. The fixed Node
+beside the relevant behavior. The fixed Node
 runner entry `test_frontend_uuid.cjs` remains an adapter for existing tooling;
 its imported contract files are named by behavior.
 
@@ -36,7 +35,7 @@ python -m ruff check .
 
 Outside the image, real ExifTool and Holehe integration tests skip with explicit
 reasons if their required tools/modules are unavailable. Mocked adapter tests
-still run. Linux-only `resource` and namespace/seccomp checks need Linux.
+still run. Linux-only `resource` checks need Linux.
 Record skips as unverified; they are not passed checks.
 
 CI runs on pushes and pull requests. It checks formatting/lint, frontend build

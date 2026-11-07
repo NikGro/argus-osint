@@ -84,7 +84,7 @@ def main(payload):
                 )
             except Exception as exc:
                 result["warnings"].append(
-                    f"Overlay für Bild {index + 1} nicht vollständig verfügbar ({type(exc).__name__})."
+                    f"Overlay for image {index + 1} is incomplete ({type(exc).__name__})."
                 )
     return result
 

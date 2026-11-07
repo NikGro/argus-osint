@@ -1,5 +1,6 @@
 """Consensus discovery adapter: confirmed identities only; incomplete checks remain warnings."""
 
+from core import tools
 import json
 import subprocess
 from pathlib import Path
@@ -49,29 +50,29 @@ def run(kind, inputs, params, context):
         try:
             number = phonenumbers.parse(value, params.get("phone_region") or None)
             if not phonenumbers.is_possible_number(number):
-                raise ValueError("Ungültige Telefonnummer.")
+                raise ValueError("Invalid phone number.")
             value = phonenumbers.format_number(
                 number, phonenumbers.PhoneNumberFormat.E164
             )
         except phonenumbers.NumberParseException as exc:
-            raise ValueError("Ungültige Telefonnummer.") from exc
+            raise ValueError("Invalid phone number.") from exc
         node = {**node, "data": {**node["data"], "value": value}}
     sites = params.get("consensus_sites", [])
     if not isinstance(sites, list) or any(
         not isinstance(s, str) or not s.strip() or s.startswith("-") for s in sites
     ):
-        raise ValueError("Ungültige Consensus-Websites.")
+        raise ValueError("Invalid Consensus websites.")
     with tempfile.TemporaryDirectory(prefix="argus-consensus-") as folder:
         checkpoint = Path(folder) / "findings.jsonl"
         warnings = []
         try:
             output, _ = bounded_run(
                 [
-                    "/opt/argus-tools/consensus-venv/bin/python",
+                    tools.python("consensus"),
                     "-I",
                     str(Path(__file__).with_name("_consensus_runner.py")),
                 ],
-                int(params.get("run_timeout", 300)),
+                None,
                 {
                     "kind": "user" if kind == "username" else kind,
                     "value": value,
@@ -86,7 +87,7 @@ def run(kind, inputs, params, context):
             status = json.loads(output)
             if status.get("exit_code") or status.get("truncated"):
                 warnings.append(
-                    "Consensus konnte den Abruf nicht vollständig abschließen; bisherige Ergebnisse bleiben erhalten."
+                    "Consensus could not complete retrieval; existing results are preserved."
                 )
         except AppError:
             raise
@@ -94,7 +95,7 @@ def run(kind, inputs, params, context):
             if not checkpoint.exists():
                 raise
             warnings.append(
-                "Consensus: Zeit- oder Prozesslimit erreicht; bisherige Ergebnisse bleiben erhalten."
+                "Consensus: time or process limit reached; results so far are kept."
             )
         rows = []
         if checkpoint.exists():
@@ -102,7 +103,7 @@ def run(kind, inputs, params, context):
                 try:
                     rows.append(json.loads(line))
                 except ValueError:
-                    warnings.append("Consensus: unvollständige letzte Ergebniszeile.")
+                    warnings.append("Consensus: incomplete final result line.")
         result = parse_findings(rows, node, kind)
         result["warnings"].extend(warnings)
         return result

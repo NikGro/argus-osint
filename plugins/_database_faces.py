@@ -1,40 +1,37 @@
 """Explicit image/database verification; no comparison is run at import time."""
 
-import time
 from uuid import uuid4
 from core.datasets import row_outputs
 from core.execution_context import checkpoint
 from core.errors import AppError
-from plugins.database_search import connected_database, column_prompt
+from plugins._database import connected_database, column_prompt
 
 
 def search(inputs, params, context, verify):
     source, database = connected_database(inputs, context)
     reference = next((n for n in inputs if n["type"] == "image"), None)
     if len(inputs) != 2 or not reference:
-        raise ValueError("Eine Datenbank und ein Referenzbild verbinden.")
+        raise ValueError("Connect a database and one reference image.")
     fields = [f for f in database["fields"] if f["type"] == "image"]
     if not fields:
-        raise ValueError("Die Datenbank enthält keine Bildspalte.")
+        raise ValueError("The database has no image column.")
     field = next((f for f in fields if f["id"] == params.get("column_id")), None)
     if not field:
         return column_prompt(database, images=True)
     limit = params.get("max_comparisons", 100)
     if type(limit) is not int or not 1 <= limit <= 1000:
-        raise ValueError("Ungültiges Vergleichslimit.")
+        raise ValueError("Invalid comparison limit.")
     outputs = []
     warnings = []
     compared = 0
     failed = 0
     matches = 0
-    start = time.monotonic()
-    timeout = params.get("run_timeout", 300)
     capacity = min(4800, 5000 - context.get("node_count", 0) - 1)
     if capacity < 1:
         return {
             "outputs": [],
             "warnings": [
-                "Vergleichslimit oder Zeitlimit erreicht; die Datenbank wurde nicht vollständig durchsucht."
+                "Comparison limit reached; the database was not searched completely."
             ],
         }
     exhausted = False
@@ -45,9 +42,7 @@ def search(inputs, params, context, verify):
         for item in images:
             if not isinstance(item, dict) or not item.get("file_id"):
                 continue
-            if compared >= limit or (
-                timeout != 0 and time.monotonic() - start > timeout
-            ):
+            if compared >= limit:
                 exhausted = True
                 break
             candidate = {"id": row["id"], "type": "image", "data": item}
@@ -62,16 +57,10 @@ def search(inputs, params, context, verify):
             try:
                 # Store overlays only for matching rows; rejected candidates must
                 # not leave unreferenced artifacts in the project directory.
-                remaining = (
-                    max(10, int(timeout - (time.monotonic() - start))) if timeout else 0
-                )
                 result = verify(
                     "verify",
                     [reference, candidate],
-                    {
-                        **params,
-                        "run_timeout": min(timeout, remaining) if timeout else 0,
-                    },
+                    params,
                     {**context, "store_file": buffer_file},
                 )
             except AppError:
@@ -135,17 +124,17 @@ def search(inputs, params, context, verify):
             break
     if exhausted:
         warnings.append(
-            "Vergleichslimit oder Zeitlimit erreicht; die Datenbank wurde nicht vollständig durchsucht."
+            "Comparison limit reached; the database was not searched completely."
         )
     if failed:
         warnings.append(
-            "Einige Datenbankbilder konnten nicht verglichen werden. Die Ergebnisse sind unvollständig."
+            "Some database images could not be compared. Results are incomplete."
         )
     if not outputs:
         outputs = [
             {
                 "type": "value",
-                "label": "Treffer",
+                "label": "Matches",
                 "data": {"value": str(matches)},
                 "source_input": source["id"],
                 "source": {

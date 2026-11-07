@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import { Button, Icon } from './controls.jsx';
 import { Field } from './fields.jsx';
 import { Select } from './select.jsx';
-import { t } from '../../i18n.js';
 
 export function SortList({
   items,
@@ -99,7 +98,7 @@ export function SortList({
                     })
                   }
                 >
-                  {t('ui.expand_settings')}
+                  {'Expand settings'}
                 </Button>
               )}
               <span
@@ -107,7 +106,7 @@ export function SortList({
                 role="button"
                 tabIndex={0}
                 draggable
-                aria-label={t('ui.move_source')}
+                aria-label={'Move source'}
                 onDragStart={(event) => {
                   const boxTop = list.current.getBoundingClientRect().top;
                   const rows = [...list.current.children].map((row) => {
@@ -155,7 +154,7 @@ export function SortList({
                   className="danger-filled"
                   onClick={() => onChange(items.filter((_, i) => i !== index))}
                 >
-                  {t('ui.remove')}
+                  {'Remove'}
                 </Button>
               )}
               {moveButtons && (
@@ -167,7 +166,7 @@ export function SortList({
                     disabled={index === 0}
                     onClick={() => move(index, index - 1)}
                   >
-                    {t('ui.move_up')}
+                    {'Move up'}
                   </Button>
                   <Button
                     icon="chevron-down"
@@ -176,7 +175,7 @@ export function SortList({
                     disabled={index === items.length - 1}
                     onClick={() => move(index, index + 1)}
                   >
-                    {t('ui.move_down')}
+                    {'Move down'}
                   </Button>
                 </>
               )}
@@ -200,7 +199,7 @@ export function SearchProfiles({ catalog, value = [], onChange }) {
       );
   const available = [
     ...entries.filter((item) => item.id !== 'custom'),
-    { id: 'custom', label: t('ui.custom_websites') }
+    { id: 'custom', label: 'Custom websites' }
   ]
     .filter((item) => !value.some((selected) => selected.id === item.id && item.id !== 'custom'))
     .filter((item) =>
@@ -211,12 +210,12 @@ export function SearchProfiles({ catalog, value = [], onChange }) {
   return (
     <div className="research-profiles">
       <Select
-        label={t('ui.add_search_profile')}
+        label={'Add search profile'}
         value=""
-        placeholder={t('ui.add_search_profile_a2a8ee86')}
+        placeholder={'Add search profile …'}
         options={available.map((item) => ({
           value: item.id,
-          label: t(item.label || item.name || item.id)
+          label: item.label || item.name || item.id
         }))}
         onChange={(id) => {
           if (id)
@@ -235,20 +234,18 @@ export function SearchProfiles({ catalog, value = [], onChange }) {
       />
       <SortList
         items={value}
-        label={t('ui.search_profiles_9375fc35')}
+        label={'Search profiles'}
         onChange={onChange}
         renderItem={(item, index) => (
           <>
             <span>
-              {t(
-                entries.find((entry) => entry.id === item.id)?.label ||
-                  entries.find((entry) => entry.id === item.id)?.name ||
-                  (item.id === 'custom' ? 'Eigene Websites' : item.id)
-              )}
+              {entries.find((entry) => entry.id === item.id)?.label ||
+                entries.find((entry) => entry.id === item.id)?.name ||
+                (item.id === 'custom' ? 'Custom websites' : item.id)}
             </span>
             {item.id === 'custom' && (
               <Field
-                label={t('ui.websites')}
+                label={'Websites'}
                 value={item.sites || []}
                 onChange={(sites) =>
                   onChange(value.map((row, i) => (i === index ? { ...row, sites } : row)))
@@ -259,7 +256,7 @@ export function SearchProfiles({ catalog, value = [], onChange }) {
         )}
       />
       {!value.length && (
-        <p className="source-help">{t('ui.without_search_profiles_all_websites_are_searched')}</p>
+        <p className="source-help">{'Without search profiles, all websites are searched.'}</p>
       )}
     </div>
   );

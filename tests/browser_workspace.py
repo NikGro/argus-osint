@@ -17,7 +17,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.service import Service
 import shutil
-from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 
 ROOT = Path(__file__).resolve().parents[1]
 temp = tempfile.TemporaryDirectory()
@@ -27,19 +27,37 @@ port = sock.getsockname()[1]
 sock.close()
 base = "http://127.0.0.1:" + str(port)
 logfile = tempfile.TemporaryFile()
-process = subprocess.Popen(
+APPLICATION_PYTHON = os.environ.get(
+    "ARGUS_APPLICATION_PYTHON",
+    (
+        "/usr/local/bin/python"
+        if Path("/usr/local/bin/python").exists()
+        else sys.executable
+    ),
+)
+SERVER_ENV = {
+    **os.environ,
+    "DATA_DIR": temp.name,
+    "HOST": "127.0.0.1",
+    "PORT": str(port),
+    "ARGUS_PLUGIN_SOURCE": str(ROOT),
+}
+# ARGUS starts without plugins; install the natives from this checkout first.
+subprocess.run(
     [
-        os.environ.get(
-            "ARGUS_APPLICATION_PYTHON",
-            (
-                "/usr/local/bin/python"
-                if Path("/usr/local/bin/python").exists()
-                else sys.executable
-            ),
-        ),
-        str(ROOT / "server.py"),
+        APPLICATION_PYTHON,
+        "-c",
+        "from pathlib import Path; from core.plugin_manager import Manager; "
+        "import os; d = Path(os.environ['DATA_DIR']); m = Manager(d / 'workbench.sqlite3', d); "
+        "[m.install_now(p, with_tools=False) for p in m.native]",
     ],
-    env={**os.environ, "DATA_DIR": temp.name, "HOST": "127.0.0.1", "PORT": str(port)},
+    cwd=ROOT,
+    env=SERVER_ENV,
+    check=True,
+)
+process = subprocess.Popen(
+    [APPLICATION_PYTHON, str(ROOT / "server.py")],
+    env=SERVER_ENV,
     stdout=logfile,
     stderr=logfile,
     start_new_session=True,
@@ -108,8 +126,8 @@ doc = {
         },
     ],
     "edges": [
-        {"id": "e1", "source": "a", "target": "m", "label": "Eingabe"},
-        {"id": "e2", "source": "b", "target": "m", "label": "Eingabe"},
+        {"id": "e1", "source": "a", "target": "m", "label": "Input"},
+        {"id": "e2", "source": "b", "target": "m", "label": "Input"},
     ],
     "groups": [],
     "runs": [],
@@ -207,11 +225,27 @@ def choose(label):
 
 def select_node(id):
     click("#fit")
-    element = css('.node[data-id="' + id + '"] > rect:first-child')
-    box = element.rect
-    ActionChains(driver).move_to_element_with_offset(
-        element, -box["width"] / 2 + 40, -box["height"] / 2 + 20
-    ).click().perform()
+    selected = '.node[data-id="' + id + '"].selected'
+    # Top-left first (clear of glances); the node centre if a group frame took the click.
+    for dx, dy in ((40, 20), (None, None)):
+        element = css('.node[data-id="' + id + '"] > .node-frame')
+        box = element.rect
+        chain = ActionChains(driver)
+        if dx is None:
+            chain.move_to_element(element)
+        else:
+            chain.move_to_element_with_offset(
+                element, -box["width"] / 2 + dx, -box["height"] / 2 + dy
+            )
+        chain.click().perform()
+        try:
+            WebDriverWait(driver, 3).until(
+                lambda d: d.find_elements(By.CSS_SELECTOR, selected)
+            )
+            return
+        except TimeoutException:
+            driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+    raise AssertionError("Node could not be selected: " + id)
 
 
 def select_group(id):
@@ -229,29 +263,12 @@ try:
     )
     if os.environ.get("ARGUS_BROWSER_SCENARIO") != "instagram":
         click("#settingsTab")
-        text_button("Tag hinzufügen").click()
+        text_button("Add tag").click()
         field = css("dialog[open] input[type=text]")
         field.send_keys("NSFW")
         click("dialog[open] button[type=submit]")
         wait.until(lambda d: len(api("/api/settings")["settings"]["tags"]) == 1)
         checks.append("global tag create/autosave")
-        click("#settingsView .react-field [role=combobox]")
-        search = css(".react-select-popup input")
-        assert driver.switch_to.active_element == search
-        search.send_keys("English")
-        choose("English")
-        wait.until(
-            lambda d: api("/api/settings")["settings"]["language"] == "en"
-            and d.find_element(By.TAG_NAME, "html").get_attribute("lang") == "en"
-        )
-        click("#settingsView .react-field [role=combobox]")
-        css(".react-select-popup input").send_keys("Deutsch")
-        choose("Deutsch")
-        wait.until(
-            lambda d: api("/api/settings")["settings"]["language"] == "de"
-            and d.find_element(By.TAG_NAME, "html").get_attribute("lang") == "de"
-        )
-        checks.append("searchable language dropdown and immediate typing")
         click("#brandHome")
         click('[data-project="' + pid + '"] .primary')
         select_node("a")
@@ -261,8 +278,11 @@ try:
             )
         )
         click(".verification-section [role=combobox]")
-        css(".react-select-popup input").send_keys("verifiziert")
-        choose("Verifiziert")
+        search = css(".react-select-popup input")
+        assert driver.switch_to.active_element == search
+        search.send_keys("verified")
+        choose("Verified")
+        checks.append("searchable dropdown and immediate typing")
         click(".node-tags-section [role=combobox]")
         choose("NSFW")
         wait.until(
@@ -285,14 +305,14 @@ try:
         assert css("#inspector .danger-filled svg")
         checks.append("consistent edge and arrowhead highlighting with delete icon")
         select_node("m")
-        text_button("Tool ausführen", css("#inspector")).click()
+        text_button("Run tool", css("#inspector")).click()
         wait.until(
             lambda d: d.find_elements(By.CSS_SELECTOR, ".manual-dialog [role=combobox]")
         )
         click(".manual-dialog [role=combobox]")
         css(".react-select-popup input").send_keys("Grace")
         choose("b: Grace")
-        text_button("Fortsetzen", css(".manual-dialog")).click()
+        text_button("Continue", css(".manual-dialog")).click()
         wait.until(lambda d: len(api("/api/projects/" + pid)["document"]["nodes"]) == 5)
         merged = next(
             (
@@ -323,7 +343,7 @@ try:
             assert handle.value_of_css_property("cursor") == "ew-resize"
         checks.append("single sidebar borders and full-width detail Quick Actions")
         click("#actorSortToggle")
-        assert "Kategorie" in css("#actorSort").text
+        assert "category" in css("#actorSort").text
         click("#actorSort")
         choose("A–Z")
         assert not driver.find_elements(
@@ -454,7 +474,7 @@ try:
             "id": "ig-edge",
             "source": "ig-profile",
             "target": "ig-actor",
-            "label": "Eingabe",
+            "label": "Input",
         }
     )
     api(
@@ -472,7 +492,7 @@ try:
     click("#inspector .tool-run-section>.primary")
     wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "dialog[open].manual-dialog"))
     css("dialog[open] input[type=checkbox]").click()
-    text_button("Plugin-Einstellungen", css("dialog[open]")).click()
+    text_button("Plugin settings", css("dialog[open]")).click()
     wait.until(
         lambda d: not d.find_element(By.ID, "pluginsView").get_attribute("hidden")
     )

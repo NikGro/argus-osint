@@ -1,8 +1,8 @@
+from core import tools
 import json
 from pathlib import Path
 import re
 import shutil
-import sys
 import tempfile
 from urllib.parse import urlsplit
 from plugins._process import bounded_run
@@ -26,7 +26,7 @@ def positive_outputs(rows, node, tool, kind, identity_only=False):
                     + str(row.get("reason", ""))
                 )
             continue
-        name = str(row.get("site_name", row.get("name", "Anbieter")))
+        name = str(row.get("site_name", row.get("name", "Provider")))
         if identity_only:
             from plugins._profile import make_profile
 
@@ -57,9 +57,9 @@ def positive_outputs(rows, node, tool, kind, identity_only=False):
                 {
                     **common,
                     "type": "url",
-                    "label": name + " · Profiladresse",
+                    "label": name + " · Profile URL",
                     "data": {"value": url},
-                    "relation": "Benutzername gefunden",
+                    "relation": "Username found",
                 }
             )
         if kind == "email":
@@ -67,10 +67,10 @@ def positive_outputs(rows, node, tool, kind, identity_only=False):
                 {
                     **common,
                     "type": "value",
-                    "label": "Konto besteht?",
+                    "label": "Account exists?",
                     "fact_key": "registration",
-                    "data": {"value": "Ja"},
-                    "relation": "Registrierungsbefund",
+                    "data": {"value": "Yes"},
+                    "relation": "Registration finding",
                 }
             )
         facts = {
@@ -81,7 +81,7 @@ def positive_outputs(rows, node, tool, kind, identity_only=False):
         if isinstance(metadata, list):
             for m in metadata:
                 if isinstance(m, dict):
-                    facts[str(m.get("name", "Angabe"))] = m.get(
+                    facts[str(m.get("name", "Detail"))] = m.get(
                         "value", m.get("data", "")
                     )
         for key, value in facts.items():
@@ -95,11 +95,11 @@ def user_scanner(kind, inputs, params, context):
     validate(kind, value)
     output, stderr = bounded_run(
         [
-            sys.executable,
+            tools.python("user_scanner"),
             "-I",
             str(Path(__file__).with_name("_user_scanner_runner.py")),
         ],
-        int(params.get("run_timeout", 300)),
+        None,
         {
             "kind": kind,
             "value": value,
@@ -112,7 +112,7 @@ def user_scanner(kind, inputs, params, context):
     )
     rows = json.loads(output)
     if not isinstance(rows, list):
-        raise ValueError("User-Scanner-Format nicht unterstützt.")
+        raise ValueError("Unsupported User Scanner format.")
     result = positive_outputs(
         rows, node, "User Scanner", kind, bool(params.get("identity_only"))
     )
@@ -125,12 +125,10 @@ def blackbird(kind, inputs, params, context):
     value = str(node["data"].get("value", "")).strip()
     validate(kind, value)
     if "/" in value or chr(92) in value:
-        raise ValueError(
-            "Blackbird unterstützt diese Schreibweise der E-Mail-Adresse nicht."
-        )
+        raise ValueError("Blackbird does not support this email address format.")
     with tempfile.TemporaryDirectory(prefix="argus-blackbird-") as folder:
         work = Path(folder) / "tool"
-        shutil.copytree("/opt/argus-tools/blackbird", work)
+        shutil.copytree(tools.source("blackbird"), work)
         # Keep source targeting and parser policy in this process's private copy.
         from plugins._profile import provider_key
 
@@ -148,7 +146,7 @@ def blackbird(kind, inputs, params, context):
                     ) as response:
                         catalogue = response.read(8 * 1024 * 1024 + 1)
                     if len(catalogue) > 8 * 1024 * 1024:
-                        raise ValueError("Blackbird-Katalog zu groß.")
+                        raise ValueError("Blackbird catalogue is too large.")
                     file.write_bytes(catalogue)
                 else:
                     continue
@@ -164,7 +162,7 @@ def blackbird(kind, inputs, params, context):
                     == ("email-data.json" if kind == "email" else "wmn-data.json")
                     and not data["sites"]
                 ):
-                    raise ValueError("Blackbird unterstützt diesen Anbieter nicht.")
+                    raise ValueError("Blackbird does not support this provider.")
             if params.get("_profile_mode"):
                 tags = params.get("_profile_tags", [])
                 sites = {
@@ -180,7 +178,7 @@ def blackbird(kind, inputs, params, context):
                     "email-data.json" if kind == "email" else "wmn-data.json"
                 ):
                     raise ValueError(
-                        "Blackbird: Keine Websites für das gewählte Suchprofil."
+                        "Blackbird: No websites match the selected search profile."
                     )
             if params.get("identity_only"):
                 for site in data["sites"]:
@@ -189,7 +187,7 @@ def blackbird(kind, inputs, params, context):
         if params.get("identity_only"):
             (work / "data" / "wmn-metadata.json").write_text(json.dumps({"sites": {}}))
         command = [
-            "/opt/argus-tools/blackbird-venv/bin/python",
+            tools.python("blackbird"),
             str(work / "blackbird.py"),
             "--username" if kind == "username" else "--email",
             value,
@@ -200,20 +198,18 @@ def blackbird(kind, inputs, params, context):
             "--max-concurrent-requests",
             "20",
         ]
-        stdout, stderr = bounded_run(
-            command, int(params.get("run_timeout", 300)), cwd=work
-        )
+        stdout, stderr = bounded_run(command, None, cwd=work)
         files = list((work / "results").rglob("*.json"))
         rows = []
         for file in files:
             if file.stat().st_size > 8 * 1024 * 1024:
-                raise ValueError("Blackbird-Bericht zu groß.")
+                raise ValueError("Blackbird report is too large.")
             data = json.loads(file.read_text())
             if isinstance(data, list):
                 rows.extend(data)
         # Upstream writes no JSON when there are zero positive results.
         if not files and "No accounts were found" not in stdout:
-            raise ValueError("Blackbird lieferte keinen Ergebnisbericht.")
+            raise ValueError("Blackbird returned no results report.")
     result = positive_outputs(
         rows, node, "Blackbird", kind, bool(params.get("identity_only"))
     )
@@ -237,13 +233,13 @@ def validate(kind, value):
         if len(value) > 254 or not re.fullmatch(
             r"[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+", value
         ):
-            raise ValueError("Ungültige E-Mail-Adresse.")
+            raise ValueError("Invalid email address.")
     elif (
         not re.fullmatch(r"[\w.@+\-]{1,100}", value)
         or value.startswith("-")
         or value in (".", "..")
     ):
-        raise ValueError("Ungültiger Benutzername.")
+        raise ValueError("Invalid username.")
 
 
 def ignorant(inputs, params, context):
@@ -257,10 +253,14 @@ def ignorant(inputs, params, context):
             raw if raw.startswith("+") or region else "+" + raw, region
         )
     except phonenumbers.NumberParseException as exc:
-        raise ValueError("Ungültige Telefonnummer.") from exc
+        raise ValueError("Invalid phone number.") from exc
     output, _ = bounded_run(
-        [sys.executable, "-I", str(Path(__file__).with_name("_ignorant_runner.py"))],
-        int(params.get("run_timeout", 300)),
+        [
+            tools.python("ignorant"),
+            "-I",
+            str(Path(__file__).with_name("_ignorant_runner.py")),
+        ],
+        None,
         {
             "phone": str(number.national_number),
             "country_code": str(number.country_code),
@@ -272,7 +272,7 @@ def ignorant(inputs, params, context):
     outputs = []
     warnings = []
     for row in rows:
-        name = str(row.get("name", "Anbieter"))
+        name = str(row.get("name", "Provider"))
         source = {"tool": "Ignorant", "service": name, "result": row}
         if row.get("rateLimit") or row.get("error") or row.get("exists") is None:
             warnings.append(
@@ -301,10 +301,10 @@ def ignorant(inputs, params, context):
         outputs.append(
             {
                 "type": "value",
-                "label": "Konto besteht?",
+                "label": "Account exists?",
                 "fact_key": "registration",
-                "data": {"value": "Ja"},
-                "relation": "Registrierungsbefund",
+                "data": {"value": "Yes"},
+                "relation": "Registration finding",
                 "source_input": node["id"],
                 "source": source,
             }

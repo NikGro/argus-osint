@@ -15,7 +15,8 @@ from core.tool_contracts import result_state, validate_result
 MAX_NODES = 5000
 MAX_LOG_CHARACTERS = 4 * 1024 * 1024
 MAX_DIAGNOSTIC_CHARACTERS = 12000
-SAVE_ATTEMPTS = 3
+# Parallel tools save into the same project; each conflict is merged again.
+SAVE_ATTEMPTS = 20
 
 
 def _find(items, predicate):
@@ -53,8 +54,8 @@ class ActorService:
         self.datasets = datasets
 
     def execute(self, pid, body):
-        with self.lock:
-            return self.execute_serial(pid, body)
+        # Tools run in parallel; saving merges concurrent results (see persist).
+        return self.execute_serial(pid, body)
 
     def execute_serial(self, pid, body):
         return _Execution(self, pid, body).execute()
@@ -100,9 +101,11 @@ class ActorService:
             },
         }
         if choice.get("source_input"):
-            from plugins.location import formatted_address
+            from core.node_policy import formatted_address
 
-            node["label"] = formatted_address(node["data"]) or node.get("label", "Ort")
+            node["label"] = formatted_address(node["data"]) or node.get(
+                "label", "Location"
+            )
         choice["chosen"] = True
         choice["selected_index"] = index
         if all(c.get("chosen") for c in run["candidates"]):
@@ -403,13 +406,13 @@ class _Execution:
     def _error_output(self, diagnostic):
         return {
             "type": "error",
-            "label": self.action["name"] + " fehlgeschlagen",
+            "label": self.action["name"] + " failed",
             "data": {
-                "title": "Tool-Ausführung fehlgeschlagen",
+                "title": "Tool execution failed",
                 "message": diagnostic,
             },
             "source_input": self.inputs[0]["id"],
-            "relation": "Ausführungsfehler",
+            "relation": "Execution error",
             "source": {"tool": self.module.PLUGIN["name"], "failed": True},
         }
 

@@ -1,0 +1,25 @@
+{
+  "id": "data_audio",
+  "name": "Audio",
+  "description": "Data node: Audio",
+  "actions": [],
+  "nodes": [
+    {
+      "type": "audio",
+      "name": "Audio",
+      "new_label": "New audio file",
+      "icon": "audio",
+      "category": "Media",
+      "defaults": {
+        "filename": "",
+        "file_id": "",
+        "mime": "",
+        "size": 0,
+        "duration": 0
+      },
+      "display_defaults": {
+        "preview": false
+      }
+    }
+  ]
+}

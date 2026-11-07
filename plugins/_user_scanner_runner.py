@@ -43,7 +43,7 @@ async def collect(payload):
                 continue
             modules.append((module, category, name))
     if (selected or sites or categories) and not modules:
-        raise ValueError("User Scanner unterstützt diesen Anbieter nicht.")
+        raise ValueError("User Scanner does not support this provider.")
     sem = asyncio.Semaphore(12)
 
     async def check(entry):

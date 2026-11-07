@@ -1,0 +1,1049 @@
+{
+  "plugins": [
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "consensus_sites": [],
+              "maigret_sites": [],
+              "max_results": 500,
+              "request_timeout": 12,
+              "search_profiles": {},
+              "sherlock_sites": [],
+              "source_order": [
+                "consensus",
+                "sherlock",
+                "maigret",
+                "user_scanner",
+                "blackbird"
+              ],
+              "top_sites": 100,
+              "use_blackbird": false,
+              "use_consensus": true,
+              "use_maigret": false,
+              "use_sherlock": false,
+              "use_user_scanner": false
+            },
+            "external": true,
+            "external_notice": "The input is sent to the enabled research sources.",
+            "id": "lookup",
+            "inputs": [
+              "username"
+            ],
+            "name": "Research username",
+            "settings_only": [
+              "consensus_sites",
+              "sherlock_sites",
+              "maigret_sites",
+              "top_sites"
+            ]
+          }
+        ],
+        "category": "Research",
+        "description": "Find profiles; retrieve additional information using Generic Deep Research.",
+        "id": "username",
+        "name": "Username"
+      },
+      "files": {
+        "plugins/username.py": "1aee6b429df150a5cdfa132200983671078e283f757acdbddceaa2a8f2d1eae6"
+      },
+      "id": "username",
+      "module": "plugins/username.py",
+      "tools": [
+        "consensus",
+        "sherlock",
+        "maigret",
+        "user_scanner",
+        "blackbird"
+      ]
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "consensus_sites": [],
+              "holehe_sites": [],
+              "max_results": 500,
+              "request_timeout": 12,
+              "search_profiles": {},
+              "source_order": [
+                "consensus",
+                "holehe",
+                "user_scanner",
+                "blackbird"
+              ],
+              "use_blackbird": false,
+              "use_consensus": true,
+              "use_holehe": false,
+              "use_user_scanner": false
+            },
+            "external": true,
+            "external_notice": "The input is sent to the enabled research sources.",
+            "id": "lookup",
+            "inputs": [
+              "email"
+            ],
+            "name": "Research email",
+            "settings_only": [
+              "consensus_sites",
+              "holehe_sites"
+            ]
+          }
+        ],
+        "category": "Research",
+        "description": "Find profiles; retrieve additional information using Generic Deep Research.",
+        "id": "email",
+        "name": "Email"
+      },
+      "files": {
+        "plugins/email.py": "f653fad5a83d4dfa937b4f1b3523cbae2e6a7b00dd17bad891bc4c1a994cbfea"
+      },
+      "id": "email",
+      "module": "plugins/email.py",
+      "tools": [
+        "consensus",
+        "holehe",
+        "user_scanner",
+        "blackbird"
+      ]
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "consensus_sites": [],
+              "disabled_scanners": [],
+              "googlecse_api_key": "",
+              "googlecse_cx": "",
+              "max_results": 500,
+              "numverify_api_key": "",
+              "phone_region": "",
+              "request_timeout": 12,
+              "search_profiles": {},
+              "source_order": [
+                "consensus",
+                "phoneinfoga",
+                "ignorant"
+              ],
+              "use_consensus": true,
+              "use_ignorant": false,
+              "use_phoneinfoga": true
+            },
+            "external": true,
+            "external_notice": "The input is sent to the enabled research sources.",
+            "id": "lookup",
+            "inputs": [
+              "phone",
+              "value"
+            ],
+            "name": "Research phone number",
+            "settings_only": [
+              "consensus_sites",
+              "disabled_scanners",
+              "numverify_api_key",
+              "googlecse_api_key",
+              "googlecse_cx"
+            ]
+          }
+        ],
+        "category": "Research",
+        "description": "Combined research with selectable sources and deduplication.",
+        "id": "phone",
+        "name": "Phone number"
+      },
+      "files": {
+        "plugins/phone.py": "33b3fe0ef0bf6c85afad3261960acd55a22246f6e08546f3c26c2fb673510d45"
+      },
+      "id": "phone",
+      "module": "plugins/phone.py",
+      "tools": [
+        "consensus",
+        "phoneinfoga",
+        "ignorant"
+      ]
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "argus_browser_enabled": true,
+              "argus_browser_timeout": 60,
+              "identifier_kind": "auto",
+              "max_results": 500,
+              "request_timeout": 12,
+              "source_order": [
+                "argus",
+                "user_scanner",
+                "maigret",
+                "blackbird",
+                "holehe",
+                "ignorant"
+              ],
+              "use_argus": true,
+              "use_blackbird": true,
+              "use_holehe": true,
+              "use_ignorant": true,
+              "use_maigret": true,
+              "use_user_scanner": true
+            },
+            "external": true,
+            "external_notice": "The profile identifier is sent to enabled sources for the selected provider only.",
+            "generic_profile": true,
+            "id": "lookup",
+            "inputs": [
+              "profile"
+            ],
+            "name": "Generic Deep Research"
+          }
+        ],
+        "category": "Research",
+        "description": "Fetch additional information for one profile and group individual data nodes.",
+        "icon": "argus",
+        "id": "deep_research",
+        "name": "Generic Deep Research"
+      },
+      "files": {
+        "plugins/deep_research.py": "b6ba3ed15f462f52cabb2c2ed7293c0db762551e8807dccc841c355e37fa4434"
+      },
+      "id": "deep_research",
+      "module": "plugins/deep_research.py",
+      "tools": [
+        "maigret",
+        "user_scanner",
+        "blackbird",
+        "holehe",
+        "ignorant",
+        "flaresolverr"
+      ]
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "browser_enabled": true,
+              "browser_timeout": 60,
+              "comments_limit": 20,
+              "followers_limit": 100,
+              "following_limit": 100,
+              "highlight_items_limit": 20,
+              "highlights_limit": 10,
+              "include_contacts": true,
+              "include_followers": true,
+              "include_following": true,
+              "include_highlights": false,
+              "include_posts": false,
+              "include_profile": true,
+              "include_recovery": true,
+              "include_stories": true,
+              "login_password": "",
+              "login_username": "",
+              "posts_limit": 20,
+              "request_timeout": 15,
+              "sessionid": "",
+              "stories_limit": 20,
+              "use_toutatis": true
+            },
+            "external": true,
+            "external_notice": "Retrieve Instagram data with the permissions of the optional saved session. Media are saved as links; stories are not marked as viewed.",
+            "id": "lookup",
+            "inputs": [
+              "profile"
+            ],
+            "max_inputs": 1,
+            "name": "Instagram Deep Research",
+            "parameter_help": "0 = no item limit. The project limit of 5,000 nodes still applies.",
+            "parameter_schema": {
+              "browser_enabled": {
+                "label": "Built-in browser fallback"
+              },
+              "browser_timeout": {
+                "label": "Browser timeout (seconds)"
+              },
+              "comments_limit": {
+                "label": "Comments per post"
+              },
+              "followers_limit": {
+                "label": "Followers limit"
+              },
+              "following_limit": {
+                "label": "Following limit"
+              },
+              "highlight_items_limit": {
+                "label": "Stories per highlight"
+              },
+              "highlights_limit": {
+                "label": "Highlights limit"
+              },
+              "login_password": {
+                "label": "Instagram login password"
+              },
+              "login_username": {
+                "label": "Instagram login username"
+              },
+              "posts_limit": {
+                "label": "Posts limit"
+              },
+              "request_timeout": {
+                "label": "Request timeout (seconds)"
+              },
+              "sessionid": {
+                "label": "Instagram session ID (optional, plugin settings only)"
+              },
+              "stories_limit": {
+                "label": "Current stories limit"
+              },
+              "use_toutatis": {
+                "label": "Look up masked recovery details (Toutatis)"
+              }
+            },
+            "parameter_sections": [
+              {
+                "key": "profile",
+                "label": "General profile information",
+                "limits": [],
+                "toggle": "include_profile"
+              },
+              {
+                "key": "contacts",
+                "label": "Contact details",
+                "limits": [],
+                "toggle": "include_contacts"
+              },
+              {
+                "key": "recovery",
+                "label": "Masked account recovery details",
+                "limits": [],
+                "toggle": "include_recovery"
+              },
+              {
+                "key": "followers",
+                "label": "Followers",
+                "limits": [
+                  "followers_limit"
+                ],
+                "toggle": "include_followers"
+              },
+              {
+                "key": "following",
+                "label": "Following",
+                "limits": [
+                  "following_limit"
+                ],
+                "toggle": "include_following"
+              },
+              {
+                "key": "posts",
+                "label": "Posts",
+                "limits": [
+                  "posts_limit",
+                  "comments_limit"
+                ],
+                "toggle": "include_posts"
+              },
+              {
+                "key": "highlights",
+                "label": "Highlight stories",
+                "limits": [
+                  "highlights_limit",
+                  "highlight_items_limit"
+                ],
+                "toggle": "include_highlights"
+              },
+              {
+                "key": "stories",
+                "label": "Current stories",
+                "limits": [
+                  "stories_limit"
+                ],
+                "toggle": "include_stories"
+              }
+            ],
+            "providers": [
+              "instagram"
+            ],
+            "settings_only": [
+              "sessionid",
+              "login_username",
+              "login_password",
+              "use_toutatis"
+            ]
+          }
+        ],
+        "auth_fields": [
+          [
+            "login_username",
+            "login_password"
+          ],
+          [
+            "sessionid"
+          ]
+        ],
+        "category": "Research",
+        "connection_action": {
+          "id": "login",
+          "label": "Log in to Instagram"
+        },
+        "description": "Retrieve Instagram profiles, contacts, account lists, posts and stories.",
+        "icon": "instagram",
+        "id": "instagram",
+        "name": "Instagram Deep Research"
+      },
+      "files": {
+        "plugins/instagram.py": "7a9d234258f3de06e6a8cbe73ed618d6a3122183041c3678111f6b29c52f712c"
+      },
+      "id": "instagram",
+      "module": "plugins/instagram.py",
+      "tools": [
+        "instagram",
+        "flaresolverr"
+      ]
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "align": true,
+              "anti_spoofing": false,
+              "column_id": "",
+              "custom_threshold": false,
+              "detector_backend": "opencv",
+              "distance_metric": "cosine",
+              "enforce_detection": true,
+              "expand_percentage": 0,
+              "include_overlays": true,
+              "max_comparisons": 100,
+              "model_name": "SFace",
+              "normalization": "base",
+              "resize_large_images": false,
+              "threshold": 0.4
+            },
+            "external": false,
+            "id": "verify",
+            "input_roles": [
+              [
+                "image"
+              ],
+              [
+                "image",
+                "database"
+              ]
+            ],
+            "inputs": [
+              "image",
+              "database"
+            ],
+            "max_inputs": 2,
+            "min_inputs": 2,
+            "name": "Compare images with DeepFace",
+            "parameter_schema": {
+              "detector_backend": {
+                "enum": [
+                  "opencv",
+                  "ssd",
+                  "yunet",
+                  "centerface",
+                  "skip"
+                ],
+                "secret": false
+              },
+              "distance_metric": {
+                "enum": [
+                  "cosine",
+                  "euclidean",
+                  "euclidean_l2",
+                  "angular"
+                ],
+                "secret": false
+              },
+              "expand_percentage": {
+                "control": "range",
+                "max": 100,
+                "min": 0,
+                "secret": false,
+                "step": 1
+              },
+              "model_name": {
+                "enum": [
+                  "SFace",
+                  "VGG-Face",
+                  "Facenet",
+                  "Facenet512",
+                  "OpenFace",
+                  "DeepFace",
+                  "DeepID",
+                  "ArcFace",
+                  "GhostFaceNet"
+                ],
+                "secret": false
+              },
+              "normalization": {
+                "enum": [
+                  "base",
+                  "raw",
+                  "Facenet",
+                  "Facenet2018",
+                  "VGGFace",
+                  "VGGFace2",
+                  "ArcFace"
+                ],
+                "secret": false
+              },
+              "threshold": {
+                "control": "range",
+                "max": 100,
+                "min": 0,
+                "secret": false,
+                "step": 0.01
+              }
+            }
+          }
+        ],
+        "category": "Image analysis",
+        "description": "Compare two images; output scores and images with detection overlays.",
+        "icon": "face-compare",
+        "id": "deepface",
+        "name": "DeepFace"
+      },
+      "files": {
+        "plugins/deepface_tool.py": "71d35ff36130802a7187372b2b5a0f4a7fb0f55de3683cf066e2c789707a3d53"
+      },
+      "id": "deepface",
+      "module": "plugins/deepface_tool.py",
+      "tools": [
+        "deepface"
+      ]
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "case_sensitive": false,
+              "column_id": "",
+              "match_mode": "exact",
+              "max_results": 50
+            },
+            "external": false,
+            "id": "search",
+            "input_roles": [
+              [
+                "database"
+              ],
+              [
+                "email",
+                "phone",
+                "username",
+                "url",
+                "value"
+              ]
+            ],
+            "inputs": [
+              "database",
+              "email",
+              "phone",
+              "username",
+              "url",
+              "value"
+            ],
+            "max_inputs": 2,
+            "min_inputs": 2,
+            "name": "Search database",
+            "parameter_schema": {
+              "case_sensitive": {
+                "label": "Case sensitive"
+              },
+              "match_mode": {
+                "enum": [
+                  "exact",
+                  "contains",
+                  "starts_with"
+                ],
+                "label": "Match mode",
+                "labels": {
+                  "contains": "Contains",
+                  "exact": "Exact",
+                  "starts_with": "Starts with"
+                }
+              },
+              "max_results": {
+                "max": 200,
+                "min": 1,
+                "step": 1
+              }
+            },
+            "settings_only": []
+          }
+        ],
+        "category": "Databases",
+        "description": "Find matching records in a selected column.",
+        "icon": "database-search",
+        "id": "database_search",
+        "name": "Search database"
+      },
+      "files": {
+        "plugins/database_search.py": "5258188cbace191d40d93322649c0ffbbb76708d1fa41dfdc84c01999912dbad"
+      },
+      "id": "database_search",
+      "module": "plugins/database_search.py",
+      "tools": []
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "nominatim_url": "",
+              "photon_url": "https://photon.komoot.io",
+              "source_order": [
+                "photon",
+                "nominatim"
+              ],
+              "use_nominatim": true,
+              "use_photon": true
+            },
+            "external": true,
+            "external_notice": "Place details are sent to enabled address services. Configure a Nominatim endpoint suitable for privacy and its usage terms.",
+            "id": "normalize",
+            "inputs": [
+              "location"
+            ],
+            "name": "Normalize and complete place"
+          }
+        ],
+        "category": "Places and time",
+        "description": "Normalize a place using Photon and a configurable Nominatim endpoint.",
+        "id": "location",
+        "name": "Normalize and complete place"
+      },
+      "files": {
+        "plugins/location.py": "3b6518244c626bd4d59e2d38adeb26f3af05b628b18d2c41b701dc108eb1b8c6"
+      },
+      "id": "location",
+      "module": "plugins/location.py",
+      "tools": []
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "external": false,
+            "id": "extract",
+            "inputs": [
+              "image",
+              "video",
+              "audio",
+              "file"
+            ],
+            "name": "Extract metadata"
+          }
+        ],
+        "category": "Data processing",
+        "description": "Extract local metadata from images, PDFs, documents and media.",
+        "id": "metadata",
+        "name": "Extract metadata"
+      },
+      "files": {
+        "plugins/metadata.py": "187b0ffee24d6ff0e1583993750e23509f304fc510b35728d44ba0f63fbc6f26"
+      },
+      "id": "metadata",
+      "module": "plugins/metadata.py",
+      "tools": []
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "crop_enabled": true,
+              "crop_height": 1.0,
+              "crop_width": 1.0,
+              "crop_x": 0.0,
+              "crop_y": 0.0
+            },
+            "external": false,
+            "icon": "crop",
+            "id": "crop",
+            "inputs": [
+              "image"
+            ],
+            "max_inputs": 1,
+            "min_inputs": 1,
+            "name": "Crop photo",
+            "parameter_schema": {
+              "crop_height": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "crop_width": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "crop_x": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "crop_y": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              }
+            }
+          }
+        ],
+        "category": "Media",
+        "description": "Choose a rectangle visually and save a cropped copy of a photo.",
+        "icon": "crop",
+        "id": "image_crop",
+        "name": "Crop photo"
+      },
+      "files": {
+        "plugins/image_crop.py": "cc64106a26435166b544afc77d34d76433d8d8fc06c394a8436e3fbca963d22a"
+      },
+      "id": "image_crop",
+      "module": "plugins/image_crop.py",
+      "tools": []
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "crop_enabled": false,
+              "crop_height": 1.0,
+              "crop_width": 1.0,
+              "crop_x": 0.0,
+              "crop_y": 0.0,
+              "end_seconds": 2.0,
+              "start_seconds": 0.0
+            },
+            "external": false,
+            "icon": "video-trim",
+            "id": "trim",
+            "inputs": [
+              "video"
+            ],
+            "max_inputs": 1,
+            "min_inputs": 1,
+            "name": "Trim video",
+            "parameter_schema": {
+              "crop_height": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "crop_width": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "crop_x": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "crop_y": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "end_seconds": {
+                "max": 86400,
+                "min": 0.01,
+                "secret": false,
+                "step": 0.01
+              },
+              "start_seconds": {
+                "max": 86400,
+                "min": 0,
+                "secret": false,
+                "step": 0.01
+              }
+            }
+          },
+          {
+            "default_params": {
+              "alignment_min": 0.7,
+              "burst_seconds": 2.0,
+              "max_frames": 24,
+              "scale_factor": 1,
+              "start_seconds": 0.0
+            },
+            "external": false,
+            "icon": "video-analysis",
+            "id": "fuse",
+            "inputs": [
+              "video"
+            ],
+            "max_inputs": 1,
+            "min_inputs": 1,
+            "name": "Fuse video frames into an image",
+            "parameter_schema": {
+              "alignment_min": {
+                "max": 0.99,
+                "min": 0.1,
+                "secret": false,
+                "step": 0.01
+              },
+              "burst_seconds": {
+                "max": 3,
+                "min": 0.2,
+                "secret": false,
+                "step": 0.1
+              },
+              "crop_height": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "crop_width": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "crop_x": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "crop_y": {
+                "max": 1,
+                "min": 0,
+                "secret": false,
+                "step": 0.001
+              },
+              "max_frames": {
+                "max": 32,
+                "min": 2,
+                "secret": false,
+                "step": 1
+              },
+              "scale_factor": {
+                "enum": [
+                  1,
+                  2
+                ],
+                "secret": false
+              },
+              "start_seconds": {
+                "max": 86400,
+                "min": 0,
+                "secret": false,
+                "step": 0.01
+              }
+            }
+          }
+        ],
+        "category": "Media",
+        "description": "Trim a video into a new copy, or fuse a short sequence into a still image on the CPU.",
+        "icon": "video-analysis",
+        "id": "video",
+        "name": "Video tools"
+      },
+      "files": {
+        "plugins/video.py": "746fef781c3c9ad80931dbe5f77dd40bd18a3cc9323c8693a4f74b4349ca19a0"
+      },
+      "id": "video",
+      "module": "plugins/video.py",
+      "tools": [
+        "media"
+      ]
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "end_seconds": 10.0,
+              "start_seconds": 0.0
+            },
+            "external": false,
+            "icon": "audio",
+            "id": "trim",
+            "inputs": [
+              "audio"
+            ],
+            "max_inputs": 1,
+            "min_inputs": 1,
+            "name": "Trim audio",
+            "parameter_schema": {
+              "end_seconds": {
+                "label": "End (seconds)",
+                "max": 86400,
+                "min": 0.01,
+                "secret": false,
+                "step": 0.01
+              },
+              "start_seconds": {
+                "label": "Start (seconds)",
+                "max": 86400,
+                "min": 0,
+                "secret": false,
+                "step": 0.01
+              }
+            }
+          }
+        ],
+        "category": "Media",
+        "description": "Trim an audio file into a new copy.",
+        "icon": "audio",
+        "id": "audio",
+        "name": "Audio tools"
+      },
+      "files": {
+        "plugins/audio.py": "3dd548f170f92157ad42a0ba14cad397ffc9eb639a86e56280a690f40558eb3e"
+      },
+      "id": "audio",
+      "module": "plugins/audio.py",
+      "tools": []
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
+              "bounds": "",
+              "country": "DE",
+              "download_data": true,
+              "max_candidates": 5,
+              "start_uncertainty_minutes": 0
+            },
+            "external": true,
+            "icon": "audio-location",
+            "id": "locate",
+            "inputs": [
+              "audio",
+              "datetime"
+            ],
+            "max_inputs": 2,
+            "min_inputs": 2,
+            "name": "Estimate recording location",
+            "parameter_help": "Connect the audio file and a date/time node with the recording start. Optional search area as west, south, east, north in decimal degrees. Downloading the flight data can take many gigabytes and hours; downloaded data stays cached until the plugin is removed.",
+            "parameter_schema": {
+              "bounds": {
+                "label": "Search area (optional)"
+              },
+              "country": {
+                "enum": [
+                  "DE",
+                  "US",
+                  "FR",
+                  "ES",
+                  "IT"
+                ],
+                "label": "Country"
+              },
+              "download_data": {
+                "label": "Download flight data"
+              },
+              "max_candidates": {
+                "label": "Maximum location candidates",
+                "max": 20,
+                "min": 1,
+                "step": 1
+              },
+              "start_uncertainty_minutes": {
+                "label": "Latest start (+ minutes)",
+                "max": 720,
+                "min": 0,
+                "step": 1
+              }
+            }
+          }
+        ],
+        "category": "Media",
+        "description": "Estimate where an audio recording was made from the Doppler shifts of passing aircraft and historical ADS-B flight tracks. Private, noncommercial use only (PolyForm Noncommercial).",
+        "icon": "audio-location",
+        "id": "dopplergeist",
+        "name": "Locate audio with Dopplergeist"
+      },
+      "files": {
+        "plugins/dopplergeist.py": "c2c28665a9b867379e0f37efab632e6377e0e45573b81b5ee4971950bcaa6b1f"
+      },
+      "id": "dopplergeist",
+      "module": "plugins/dopplergeist.py",
+      "tools": [
+        "dopplergeist"
+      ]
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {},
+            "id": "merge",
+            "inputs": [
+              "*"
+            ],
+            "min_inputs": 2,
+            "name": "Merge data",
+            "same_type": true
+          }
+        ],
+        "category": "Data processing",
+        "description": "Merge data nodes of the same type into a new node; resolve conflicts individually.",
+        "icon": "merge",
+        "id": "merge",
+        "name": "Merge data"
+      },
+      "files": {
+        "plugins/merge.py": "4cf6412fc49730f87e8d4596a51cc08b033245a6ac1f3a6e1174bbd2d7ebdaef"
+      },
+      "id": "merge",
+      "module": "plugins/merge.py",
+      "tools": []
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "execution": "browser",
+            "external": false,
+            "id": "code",
+            "inputs": [
+              "*"
+            ],
+            "name": "JavaScript transform",
+            "parameter_schema": {
+              "code": {
+                "code": true,
+                "label": "JavaScript",
+                "multiline": true
+              }
+            }
+          }
+        ],
+        "description": "JavaScript in a browser worker; turn inputs into data nodes.",
+        "id": "transform",
+        "name": "Data transform"
+      },
+      "files": {
+        "plugins/transform.py": "c6d2f3a2c1cd8ee786178dc9a14aa92b15e2cb2d8d539a5237215b4474175e0b"
+      },
+      "id": "transform",
+      "module": "plugins/transform.py",
+      "tools": []
+    }
+  ],
+  "repository": "NikGro/argus-osint",
+  "schema_version": 1
+}

@@ -1,4 +1,3 @@
-import { t } from '../i18n.js';
 var groups_default = {
   name: 'groups',
   dependencies: [
@@ -9,7 +8,6 @@ var groups_default = {
     'inspectGroup',
     'makeRoomForGroup',
     'nodeRect',
-    'pluginText',
     'render',
     'uid'
   ],
@@ -26,7 +24,6 @@ var groups_default = {
     inspectGroup,
     makeRoomForGroup,
     nodeRect,
-    pluginText,
     render,
     uid
   }) {
@@ -255,12 +252,7 @@ var groups_default = {
       render();
     }
     function groupTitle(group) {
-      const plugin = pluginsState.catalog.find((p) => p.id === group.plugin);
-      if (group.label_key) return pluginText(plugin, group.label_key);
-      // Tool runs name their groups ("Suchprotokoll", "<tool> · <time>"); translate those
-      // until the user renames the group.
-      if (group.run_id && !group.label_custom) return pluginText(plugin, group.label);
-      return group.label;
+      return group.label_key || group.label;
     }
     function groupAncestors(id) {
       const byId = new Map(workspaceState.project.document.groups.map((g) => [g.id, g])),
@@ -347,8 +339,8 @@ var groups_default = {
         !selectionState.selectedGroup &&
         !selectionState.selectedGroups.size
       )
-        throw Error(t('ui.select_nodes_first'));
-      const label = await askText(t('ui.create_group'), t('ui.group_label'), t('ui.new_group'));
+        throw Error('Select nodes first.');
+      const label = await askText('Create group', 'Group label', 'New group');
       if (!label) return;
       const doc = workspaceState.project.document,
         groupIds = new Set(

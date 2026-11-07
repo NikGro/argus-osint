@@ -19,13 +19,15 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: pip install -r requirements-dev.txt
+      # The plugin manifest check imports the plugins and their runtime dependencies.
+      - run: pip install -r requirements.txt -r requirements-dev.txt
       - run: npm ci
       - run: ruff check .
       - run: black --check core plugins scripts tests server.py
       - run: npm run lint
       - run: npm run format:check
       - run: npm run build:check
+      - run: python scripts/build_plugin_manifest.py --check
       - run: npm run test:frontend
   runtime:
     runs-on: ubuntu-24.04
@@ -39,15 +41,25 @@ jobs:
           tags: argus:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Prepare test-only browser dependencies
+      - name: Prepare test image with every research tool
+        # The release image ships no tools; the test image installs all of them
+        # with the production recipes into a read-only tool directory.
         run: |
-          printf 'FROM argus:ci\nUSER root\nCOPY requirements-test.txt /tmp/requirements-test.txt\nRUN pip install --no-cache-dir -r /tmp/requirements-test.txt\nUSER workbench\n' > Dockerfile.ci
+          cat > Dockerfile.ci <<'EOF'
+          FROM argus:ci
+          USER root
+          COPY requirements-test.txt /tmp/requirements-test.txt
+          RUN pip install --no-cache-dir -r /tmp/requirements-test.txt
+          ENV ARGUS_TOOLS_DIR=/opt/argus-tools
+          RUN python -c "from core import tools; [tools.install(t, print) for t in tools.RECIPES]"
+          USER workbench
+          EOF
           docker build -f Dockerfile.ci -t argus-tests:ci .
       - name: Require integration dependencies in the test image
         run: |
           docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
             --entrypoint python argus-tests:ci \
-            -c "import holehe.core, httpx, trio; import shutil; assert shutil.which('exiftool'), 'ExifTool missing from CI image'; print('Required integration dependencies available')"
+            -c "import shutil, subprocess; from core import tools; missing = [t for t in tools.RECIPES if not tools.installed(t)]; assert not missing, missing; subprocess.run([tools.python('holehe'), '-c', 'import holehe.core'], check=True); assert shutil.which('exiftool'), 'ExifTool missing from CI image'; print('All research tools installed')"
       - name: Complete offline Python and real Chromium suite
         id: python
         run: |
@@ -55,19 +67,25 @@ jobs:
           mkdir -p artifacts
           docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
             --entrypoint python -e DATA_DIR=/tmp/argus-test-data \
-            -v "$PWD/tests:/app/tests:ro" argus-tests:ci \
+            -v "$PWD/tests:/app/tests:ro" -v "$PWD/plugins:/app/plugins:ro" argus-tests:ci \
             -m unittest discover -s /app/tests -v 2>&1 | tee artifacts/python-tests.log
-      - name: Verify privileged bootstrap and zero-capability worker
+      - name: Start the release image with the Compose permissions
         if: ${{ !cancelled() && (steps.python.outcome == 'success' || steps.python.outcome == 'failure') }}
         run: |
-          docker run --rm --network none --user root --cap-drop ALL \
-            --cap-add SETPCAP --cap-add SETUID --cap-add SETGID \
-            --cap-add SYS_ADMIN --cap-add NET_ADMIN --cap-add CHOWN --cap-add KILL \
-            --security-opt no-new-privileges \
-            --security-opt apparmor=unconfined \
-            --security-opt "seccomp=$PWD/deploy/seccomp-argus.json" \
-            --entrypoint python -v "$PWD/tests:/app/tests:ro" argus-tests:ci \
-            /app/tests/worker_runtime_probe.py
+          docker run -d --name argus-smoke --user 0:0 --cap-drop ALL \
+            --cap-add NET_ADMIN --cap-add NET_RAW --cap-add SETUID --cap-add SETGID \
+            --cap-add CHOWN --cap-add DAC_OVERRIDE --cap-add KILL --device /dev/net/tun \
+            --security-opt no-new-privileges argus:ci
+          healthy=0
+          for attempt in $(seq 1 60); do
+            if docker exec argus-smoke python -c "import json, urllib.request; h = json.load(urllib.request.urlopen('http://127.0.0.1:8080/api/health', timeout=2)); assert h['queue_worker_alive'], h; print(h)"; then healthy=1; break; fi
+            sleep 1
+          done
+          docker logs argus-smoke 2>&1 | tail -20
+          test "$healthy" = 1
+          # The application runs unprivileged; the image ships no tools or native plugins.
+          docker exec argus-smoke sh -c 'test "$(stat -c %u /data/tools)" = 10001 && test ! -e /app/plugins/username.py'
+          docker rm -f argus-smoke
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -75,7 +93,7 @@ jobs:
           path: artifacts/
   release:
     needs: [quality, runtime]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Publish ARGUS v26.10.4-beta.1'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'Publish ARGUS v26.11.1-beta.1')
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -84,4 +102,4 @@ jobs:
       - name: Publish validated beta
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create v26.10.4-beta.1 --target "$GITHUB_SHA" --prerelease --title "ARGUS 26.10.4 Beta 1" --notes-file RELEASE_NOTES.md
+        run: gh release create v26.11.1-beta.1 --target "$GITHUB_SHA" --prerelease --title "ARGUS 26.11.1 Beta 1" --notes-file RELEASE_NOTES.md

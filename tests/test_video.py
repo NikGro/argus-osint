@@ -1,5 +1,6 @@
 """Offline synthetic media only; no face models, network research or user projects."""
 
+import tool_stubs  # external tools count as installed
 import hashlib
 from pathlib import Path
 import random
@@ -96,9 +97,7 @@ class VideoTools(unittest.TestCase):
         )
         self.assertEqual(hashlib.sha256(self.input.read_bytes()).hexdigest(), before)
 
-    @unittest.skipUnless(
-        Path(video.FUSION_PYTHON).exists(), "Requires bundled CPU media runtime"
-    )
+    @unittest.skipUnless(tool_stubs.real("media"), "Requires the media tool")
     def test_cpu_fusion_produces_png_with_alignment_provenance(self):
         result = video.run(
             "fuse",

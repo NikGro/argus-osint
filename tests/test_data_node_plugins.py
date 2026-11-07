@@ -1,5 +1,6 @@
+import tool_stubs  # external tools count as installed
+from core import tools
 import importlib.util
-import shutil
 import unittest
 from unittest.mock import patch
 from plugins import holehe, phoneinfoga
@@ -27,13 +28,13 @@ class NewPluginTests(unittest.TestCase):
             all(
                 (
                     output.get("source", {}).get("service") == "found"
-                    or "Suchprotokoll" in output["label"]
+                    or "Search record" in output["label"]
                     for output in result["outputs"]
                 )
             )
         )
-        self.assertEqual(result["outputs"][0]["label"], "Konto besteht?")
-        self.assertEqual(result["outputs"][0]["data"]["value"], "Ja")
+        self.assertEqual(result["outputs"][0]["label"], "Account exists?")
+        self.assertEqual(result["outputs"][0]["data"]["value"], "Yes")
         self.assertTrue(
             all((set(output["data"]) == {"value"} for output in result["outputs"]))
         )
@@ -55,14 +56,9 @@ class NewPluginTests(unittest.TestCase):
 
     def test_phoneinfoga_separates_search_links_and_fields_and_redacts_keys(self):
         sample = "Results for local\nCountry: US\nE164: +12025550123\nResults for googlesearch\nURL: https://www.google.com/search?q=12025550123\nThe following scanners returned errors:\nnumverify: rejected SECRET\n1 scanner(s) succeeded\n"
-        with (
-            patch.object(
-                phoneinfoga.shutil, "which", return_value="/usr/bin/phoneinfoga"
-            ),
-            patch.object(
-                phoneinfoga, "bounded_run", return_value=(sample, "")
-            ) as command,
-        ):
+        with patch.object(
+            phoneinfoga, "bounded_run", return_value=(sample, "")
+        ) as command:
             result = phoneinfoga.run(
                 "scan",
                 [{"id": "p", "data": {"value": "+1 (202) 555-0123"}}],
@@ -71,7 +67,14 @@ class NewPluginTests(unittest.TestCase):
             )
         self.assertEqual(
             command.call_args.args[0],
-            ["/usr/bin/phoneinfoga", "scan", "-n", "+12025550123", "--disable", "ovh"],
+            [
+                tools.executable("phoneinfoga", "phoneinfoga"),
+                "scan",
+                "-n",
+                "+12025550123",
+                "--disable",
+                "ovh",
+            ],
         )
         self.assertNotIn("SECRET", str(result))
         self.assertTrue(result["warnings"])
@@ -90,7 +93,7 @@ class NewPluginTests(unittest.TestCase):
         )
 
     @unittest.skipUnless(
-        shutil.which("phoneinfoga"), "PhoneInfoga binary unavailable locally"
+        tool_stubs.real("phoneinfoga"), "PhoneInfoga binary unavailable locally"
     )
     def test_real_phoneinfoga_binary_on_a_reserved_number_with_external_scanners_disabled(
         self,
@@ -163,8 +166,8 @@ class NewPluginTests(unittest.TestCase):
             next((row for row in rows if row["name"] == "failed"))["exists"]
         )
 
-    def test_language_setting_and_backend_health_are_actual_api_responses(self):
-        app.save_settings({"language": "en"})
-        self.assertEqual(app.settings()["language"], "en")
+    def test_settings_and_backend_health_are_actual_api_responses(self):
+        # Old clients may still send a language; ARGUS ignores it.
         app.save_settings({"language": "de"})
+        self.assertNotIn("language", app.settings())
         self.assertTrue(app.settings()["geocoder_enabled"])

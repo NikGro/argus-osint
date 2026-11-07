@@ -2,6 +2,7 @@
 
 from core.errors import DomainError
 import json
+from core.system_resources import MAX_WORKERS
 import re
 
 
@@ -16,9 +17,9 @@ class SettingsRepository:
     def load(self):
         result = {
             "tags": [],
-            "language": "de",
             "geocoder_enabled": True,
             "geocoder_provider": "photon",
+            "parallel_workers": 1,
         }
         with self.connect() as conn:
             row = conn.execute(
@@ -26,6 +27,8 @@ class SettingsRepository:
             ).fetchone()
         if row:
             result.update(json.loads(row[0]))
+        # ARGUS is English-only; older installations stored a language.
+        result.pop("language", None)
         result["node_display_defaults"] = self.manager.display_defaults(
             result.get("node_display_defaults", {})
         )
@@ -33,35 +36,21 @@ class SettingsRepository:
             (p["id"] == "location" for p in self.manager.installed())
         )
         result["geocoder_provider"] = "photon"
-        self.tag_preferences.update(
-            {"tags": result.get("tags", []), "language": result["language"]}
-        )
-        return result
-
-    def languages(self):
-        result = []
-        for file in sorted((self.root / "static" / "locales").glob("*.json")):
-            try:
-                data = json.loads(file.read_text(encoding="utf-8"))
-                result.append(
-                    {
-                        "code": file.stem,
-                        "name": data.get("_meta", {}).get("name", file.stem),
-                    }
-                )
-            except (OSError, ValueError, TypeError, AttributeError):
-                continue
+        self.tag_preferences.update({"tags": result.get("tags", [])})
         return result
 
     def save(self, body):
-        if body.get("language") not in {item["code"] for item in self.languages()}:
-            raise DomainError("validation.9d3b3b01e2")
         with self.connect() as conn:
             row = conn.execute(
                 "SELECT settings FROM application_settings WHERE id=1"
             ).fetchone()
             value = json.loads(row[0]) if row else {}
-            value["language"] = body["language"]
+            value.pop("language", None)
+            if "parallel_workers" in body:
+                workers = body["parallel_workers"]
+                if type(workers) is not int or not 1 <= workers <= MAX_WORKERS:
+                    raise DomainError("validation.parallel_workers")
+                value["parallel_workers"] = workers
             if "tags" in body:
                 tags = body["tags"]
                 if not isinstance(tags, list) or len(tags) > 200:

@@ -1,5 +1,6 @@
 """No inference: validation and result mapping use a stubbed subprocess response."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import json
 from pathlib import Path
 import tempfile
@@ -27,7 +28,6 @@ class DeepFaceAdapter(unittest.TestCase):
             {"model_name": "unknown"},
             {"threshold": float("nan")},
             {"align": "true"},
-            {"run_timeout": 1000},
             {"expand_percentage": 0.5},
         ):
             with self.subTest(params=params), self.assertRaises(ValueError):

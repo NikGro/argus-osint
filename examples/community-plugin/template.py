@@ -2,25 +2,25 @@
 
 PLUGIN = {
     "id": "example",
-    "name": "Information zusammenfassen",
-    "category": "Datenbearbeitung",
-    "description": "Kleine lokale Beispielaktion ohne externe Abfragen.",
+    "name": "Summarize information",
+    "category": "Data processing",
+    "description": "Small local example action without external requests.",
     "actions": [
         {
             "id": "summarize",
-            "name": "Information zusammenfassen",
+            "name": "Summarize information",
             "inputs": ["*"],
             "external": False,
-            "default_params": {"prefix": "Angabe"},
+            "default_params": {"prefix": "Detail"},
             "input_prompt": {
-                "title": "Bezeichnung wählen",
+                "title": "Choose a label",
                 "fields": [
                     {
                         "key": "prefix",
-                        "label": "Präfix",
+                        "label": "Prefix",
                         "type": "text",
                         "required": True,
-                        "default": "Angabe",
+                        "default": "Detail",
                     }
                 ],
             },
@@ -31,7 +31,7 @@ PLUGIN = {
 
 def run(action, inputs, params, context):
     if action != "summarize":
-        raise ValueError("Unbekannte Aktion.")
+        raise ValueError("Unknown action.")
     outputs = []
     for node in inputs:
         for key, value in node["data"].items():
@@ -40,11 +40,11 @@ def run(action, inputs, params, context):
             outputs.append(
                 {
                     "type": "value",
-                    "label": str(params.get("prefix", "Angabe")) + " · " + key,
+                    "label": str(params.get("prefix", "Detail")) + " · " + key,
                     "data": {"value": str(value)},
                     "source_input": node["id"],
                     "group": node["label"],
-                    "relation": "Angabe",
+                    "relation": "Detail",
                     "source": {"tool": "Community example", "attribute": key},
                 }
             )
@@ -53,5 +53,5 @@ def run(action, inputs, params, context):
     return {
         "outputs": outputs,
         "warnings": [],
-        "log": "Lokale Beispielaktion abgeschlossen.",
+        "log": "Local example action finished.",
     }

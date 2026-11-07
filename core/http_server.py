@@ -1,10 +1,8 @@
 """HTTP transport adapter for an explicit application instance."""
 
-from core.messages import text as localized
 from core.http_routes import dispatch
 import json
 import mimetypes
-from pathlib import Path
 import threading
 import hashlib
 from uuid import uuid4
@@ -56,6 +54,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def handle_one_request(self):
         self.body_reserved = False
+        self.body_read = False
         try:
             return super().handle_one_request()
         finally:
@@ -154,6 +153,12 @@ class Handler(BaseHTTPRequestHandler):
         )
         for name, value in getattr(self, "response_headers", {}).items():
             self.send_header(name, value)
+        if not getattr(self, "body_read", True) and self.headers.get(
+            "Content-Length", "0"
+        ) not in ("", "0"):
+            # An unread request body would be parsed as the next request on
+            # this keep-alive connection; close it instead.
+            self.close_connection = True
         if self.close_connection:
             self.send_header("Connection", "close")
         csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'self'"
@@ -259,6 +264,7 @@ class Handler(BaseHTTPRequestHandler):
         length = self.content_length(128 * 1024 * 1024 if raw else 48 * 1024 * 1024)
         self.reserve_body()
         data = self.rfile.read(length)
+        self.body_read = True
         if len(data) != length:
             raise AppError("invalid_request", 400)
         if raw:
@@ -293,13 +299,16 @@ class Handler(BaseHTTPRequestHandler):
                 "status": "ok",
                 "database": "ok",
                 "version": self.app.APP_VERSION,
-                "worker_isolation": Path("/run/argus/worker.sock").exists(),
-                "queue_worker_alive": bool(
-                    self.app.JOBS.thread and self.app.JOBS.thread.is_alive()
-                ),
+                "queue_worker_alive": self.app.JOBS.alive() > 0,
+                "queue_workers": self.app.JOBS.alive(),
                 "last_worker_error": self.app.JOBS.last_worker_error,
             },
         )
+
+    def get_system_resources(self, path):
+        from core.system_resources import detect
+
+        return self.send(200, {**detect(), "workers": self.app.JOBS.workers})
 
     def get_session(self, path):
         return self.send(200, {"csrf_token": self.access_session["csrf"]})
@@ -340,12 +349,9 @@ class Handler(BaseHTTPRequestHandler):
                 query.get("lon", [""])[0],
                 query.get("q", [""])[0],
                 query.get("provider", ["osm"])[0],
-                self.app.settings().get("language", "en"),
             )
         except (AppError, OSError, ValueError, KeyError, TypeError):
-            preview = self.app.MAPS.unavailable(
-                self.app.settings().get("language", "en")
-            )
+            preview = self.app.MAPS.unavailable()
         return self.send(200, preview, "text/html; charset=utf-8")
 
     def get_media(self, path):
@@ -382,9 +388,7 @@ class Handler(BaseHTTPRequestHandler):
         )
 
     def get_settings(self, path):
-        return self.send(
-            200, {"settings": self.app.settings(), "languages": self.app.languages()}
-        )
+        return self.send(200, {"settings": self.app.settings()})
 
     def get_system_logs(self, path):
         from urllib.parse import parse_qs
@@ -531,7 +535,7 @@ class Handler(BaseHTTPRequestHandler):
             self.app.FILES.upload_stream(
                 self.rfile,
                 length,
-                self.headers.get("X-File-Name", "Datei"),
+                self.headers.get("X-File-Name", "File"),
                 project_id=project_id,
             ),
         )
@@ -560,6 +564,7 @@ class Handler(BaseHTTPRequestHandler):
         return self.send(200, self.app.VPN.rotate())
 
     def post_clear_system_logs(self, path):
+        self.body()
         self.app.SYSTEM_LOGS.clear()
         return self.send(200, {"cleared": True})
 
@@ -617,11 +622,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_create_project(self, path):
         body = self.body()
-        title = str(
-            body.get(
-                "title", localized(self.app.settings()["language"], "ui.new_project")
-            )
-        )[:200]
+        title = str(body.get("title", "New project"))[:200]
         doc = body.get(
             "document",
             {"nodes": [], "edges": [], "groups": [], "runs": [], "report_notes": ""},

@@ -2,9 +2,9 @@
 
 import copy
 import json
-import math
 import re
 from core.errors import AppError
+from plugins._typed import typed_fact
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 
@@ -49,18 +49,15 @@ def fact_outputs(value, label, common, path=()):
         ]
     if value is None or value == "":
         return []
-    text = str(value)
-    url = urlsplit(text)
+    kind, data = typed_fact(".".join((label, *path)), value)
     return [
         {
             **common,
-            "type": (
-                "url" if url.scheme in ("http", "https") and url.hostname else "value"
-            ),
+            "type": kind,
             "label": " · ".join((label, *path)),
             "fact_key": ".".join((label, *path)),
-            "data": {"value": text},
-            "relation": common.get("relation", "Profilangabe"),
+            "data": data,
+            "relation": common.get("relation", "Profile information"),
         }
     ]
 
@@ -69,7 +66,7 @@ def deduplicate(outputs):
     unique = {}
     for original in outputs:
         item = copy.deepcopy(original)
-        if item.get("relation") == "Suchprotokoll" or "Suchprotokoll" in item.get(
+        if item.get("relation") == "Search record" or "Search record" in item.get(
             "label", ""
         ):
             continue
@@ -165,19 +162,17 @@ def deduplicate(outputs):
 
 def aggregate(kind, providers, inputs, params, context):
     if len(inputs) != 1:
-        raise ValueError("Genau einen Eingabeknoten anschließen.")
-    timeout = int(params.get("run_timeout", 300))
+        raise ValueError("Connect exactly one input node.")
+    # No overall run time limit: ARGUS gives research tools the time they need.
+    # Each website request keeps its own timeout so a dead host cannot hang a run.
     request = int(params.get("request_timeout", 12))
     limit = int(params.get("max_results", 500))
-    if not 10 <= timeout <= 300 or not 2 <= request <= 30 or not 1 <= limit <= 1000:
-        raise ValueError(
-            "Zeitlimit: 10–300 Sekunden; je Website: 2–30 Sekunden; Ergebnisse: 1–1000."
-        )
+    if not 2 <= request <= 30 or not 1 <= limit <= 1000:
+        raise ValueError("Per website: 2–30 seconds; results: 1–1000.")
     if any(not isinstance(params.get("use_" + name, True), bool) for name in providers):
-        raise ValueError("Recherchequellen müssen ein- oder ausgeschaltet sein.")
+        raise ValueError("Research sources must be enabled or disabled.")
     params = {
         **params,
-        "run_timeout": timeout,
         "request_timeout": request,
         "max_results": limit,
         "identity_only": True,
@@ -188,17 +183,14 @@ def aggregate(kind, providers, inputs, params, context):
         or any(not isinstance(name, str) or name not in providers for name in order)
         or len(order) != len(set(order))
     ):
-        raise ValueError("Ungültige Quellenreihenfolge.")
+        raise ValueError("Invalid source order.")
     order = order + [name for name in providers if name not in order]
     enabled = [
         (name, providers[name]) for name in order if params.get("use_" + name, True)
     ]
     if not enabled:
-        raise ValueError(
-            "Mindestens eine Recherchequelle in den Plugin-Einstellungen aktivieren."
-        )
+        raise ValueError("Enable at least one research source in the plugin settings.")
     from plugins._search_profiles import plans
-    import time
 
     # Validate every enabled provider before making the first external request.
     planned = [(name, fn, plans(kind, name, params)) for name, fn in enabled]
@@ -207,16 +199,7 @@ def aggregate(kind, providers, inputs, params, context):
     logs = []
     success = 0
     for name, fn, scopes in planned:
-        deadline = time.monotonic() + timeout
         for scope in scopes:
-            remaining = math.ceil(deadline - time.monotonic())
-            if remaining < 10:
-                warnings.append(
-                    name
-                    + ": Zeitlimit erreicht; weitere Suchprofile wurden nicht ausgeführt."
-                )
-                break
-            scope["run_timeout"] = remaining
             try:
                 result = fn(inputs, scope, context)
                 success += 1
@@ -239,7 +222,7 @@ def aggregate(kind, providers, inputs, params, context):
                 warnings.append(message)
                 logs.append(message)
     if not success:
-        raise ValueError("Alle Recherchequellen fehlgeschlagen: " + "; ".join(warnings))
+        raise ValueError("All research sources failed: " + "; ".join(warnings))
     from plugins._profile import discovery_outputs
 
     profiles = discovery_outputs(outputs, inputs[0], kind)
@@ -251,9 +234,9 @@ def aggregate(kind, providers, inputs, params, context):
     result = deduplicate(profiles + technical)
     if len(result) > limit:
         warnings.append(
-            "Ausgabe auf "
+            "Output limited to "
             + str(limit)
-            + " Knoten begrenzt; vollständiges Protokoll bleibt in den Logs."
+            + " nodes; the full transcript remains in the logs."
         )
     return {
         "outputs": result[:limit],

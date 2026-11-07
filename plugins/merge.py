@@ -6,14 +6,14 @@ import json
 
 PLUGIN = {
     "id": "merge",
-    "name": "Daten zusammenführen",
-    "category": "Datenbearbeitung",
+    "name": "Merge data",
+    "category": "Data processing",
     "icon": "merge",
-    "description": "Gleichartige Daten-Nodes zu einem neuen Node zusammenführen; Konflikte einzeln auswählen.",
+    "description": "Merge data nodes of the same type into a new node; resolve conflicts individually.",
     "actions": [
         {
             "id": "merge",
-            "name": "Daten zusammenführen",
+            "name": "Merge data",
             "inputs": ["*"],
             "same_type": True,
             "min_inputs": 2,
@@ -51,12 +51,10 @@ def put(target, path, value):
 
 def run(action, inputs, params, context):
     if action != "merge" or len(inputs) < 2 or len(inputs) > 100:
-        raise ValueError("Zwei bis 100 Daten-Nodes anschließen.")
+        raise ValueError("Connect between two and 100 data nodes.")
     kind = inputs[0]["type"]
     if kind == "actor" or any(n["type"] != kind for n in inputs):
-        raise ValueError(
-            "Nur Daten-Nodes desselben Typs können zusammengeführt werden."
-        )
+        raise ValueError("Only data nodes of the same type can be merged.")
     fingerprint = hashlib.sha256(
         json.dumps(
             [(n["id"], n["type"], n["data"]) for n in inputs],
@@ -122,7 +120,7 @@ def run(action, inputs, params, context):
             "outputs": [],
             "input_request": {
                 "kind": "merge",
-                "title": "Konflikte beim Zusammenführen",
+                "title": "Resolve merge conflicts",
                 "fingerprint": fingerprint,
                 "fields": request,
             },
@@ -143,10 +141,10 @@ def run(action, inputs, params, context):
         "outputs": [
             {
                 "type": kind,
-                "label": "Zusammengeführt · " + inputs[0].get("label", kind),
+                "label": "Merged · " + inputs[0].get("label", kind),
                 "data": base,
                 "tags": tags,
-                "relation": "Zusammengeführt",
+                "relation": "Merged",
                 "source": {
                     "tool": "Argus Merge",
                     "inputs": [n["id"] for n in inputs],

@@ -1,15 +1,15 @@
 {
   "id": "data_location",
-  "name": "Ort",
-  "description": "Daten-Node: Ort",
+  "name": "Location",
+  "description": "Data node: Location",
   "actions": [],
   "nodes": [
     {
       "type": "location",
-      "name": "Ort",
-      "new_label": "Neuer Ort",
+      "name": "Location",
+      "new_label": "New place",
       "icon": "map",
-      "category": "Orte und Zeit",
+      "category": "Places and time",
       "defaults": {
         "country_code": "",
         "country": "",
@@ -67,65 +67,5 @@
         }
       ]
     }
-  ],
-  "translations": {
-    "de": {
-      "Ort": "Ort",
-      "Daten-Node: Ort": "Daten-Node: Ort",
-      "Neuer Ort": "Neuer Ort",
-      "Orte und Zeit": "Orte und Zeit",
-      "Ländercode": "Ländercode",
-      "Land": "Land",
-      "admin_area_1": "admin_area_1",
-      "admin_area_2": "admin_area_2",
-      "admin_area_3": "admin_area_3",
-      "Stadt / Ort": "Stadt / Ort",
-      "Stadtteil / Untergeordneter Ort": "Stadtteil / Untergeordneter Ort",
-      "Postleitzahl": "Postleitzahl",
-      "Straße": "Straße",
-      "Hausnummer": "Hausnummer",
-      "Gebäude": "Gebäude",
-      "Wohnung / Einheit": "Wohnung / Einheit",
-      "Postfach": "Postfach",
-      "Vollständige Adresse": "Vollständige Adresse",
-      "Ursprüngliche Ortsangabe": "Ursprüngliche Ortsangabe",
-      "Genauigkeit": "Genauigkeit",
-      "coordinate_role": "coordinate_role",
-      "Breitengrad": "Breitengrad",
-      "Längengrad": "Längengrad",
-      "Glance: Kartenvorschau": "Glance: Kartenvorschau",
-      "Quick Action: Google Maps": "Quick Action: Google Maps",
-      "Quick Action: Apple Maps": "Quick Action: Apple Maps",
-      "Quick Action: OpenStreetMap": "Quick Action: OpenStreetMap"
-    },
-    "en": {
-      "Ort": "Location",
-      "Daten-Node: Ort": "Data node: Location",
-      "Neuer Ort": "New location",
-      "Orte und Zeit": "Places and time",
-      "Ländercode": "Country code",
-      "Land": "Country",
-      "admin_area_1": "admin_area_1",
-      "admin_area_2": "admin_area_2",
-      "admin_area_3": "admin_area_3",
-      "Stadt / Ort": "City / Town",
-      "Stadtteil / Untergeordneter Ort": "District / Sub-locality",
-      "Postleitzahl": "Postal code",
-      "Straße": "Street",
-      "Hausnummer": "House number",
-      "Gebäude": "Building",
-      "Wohnung / Einheit": "Apartment / Unit",
-      "Postfach": "PO box",
-      "Vollständige Adresse": "Formatted address",
-      "Ursprüngliche Ortsangabe": "Original location input",
-      "Genauigkeit": "Granularity",
-      "coordinate_role": "coordinate_role",
-      "Breitengrad": "Latitude",
-      "Längengrad": "Longitude",
-      "Glance: Kartenvorschau": "Glance: map preview",
-      "Quick Action: Google Maps": "Quick Action: Google Maps",
-      "Quick Action: Apple Maps": "Quick Action: Apple Maps",
-      "Quick Action: OpenStreetMap": "Quick Action: OpenStreetMap"
-    }
-  }
+  ]
 }

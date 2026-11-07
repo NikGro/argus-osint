@@ -29,6 +29,26 @@ def command(arguments, **kwargs):
     )
 
 
+def iptables_variant():
+    """nftables-backed iptables when the kernel has it, legacy otherwise.
+
+    Debian's default iptables uses nftables, which older host kernels such as
+    Synology DSM 7 (Linux 4.4) do not provide.
+    """
+    for suffix in ("", "-legacy"):
+        try:
+            subprocess.run(
+                ["iptables" + suffix, "-S", "OUTPUT"],
+                check=True,
+                capture_output=True,
+                timeout=5,
+            )
+            return suffix
+        except (OSError, subprocess.SubprocessError):
+            continue
+    return ""
+
+
 def endpoint(host, port, protocol):
     try:
         address = ipaddress.IPv4Address(host)
@@ -278,10 +298,13 @@ class Network:
         )[0]
 
     def firewall(self, profiles, enabled):
-        for family in ("iptables", "ip6tables"):
+        if not hasattr(self, "variant"):
+            self.variant = iptables_variant()
+        for name in ("iptables", "ip6tables"):
+            family = name + self.variant
             command(
                 [family + "-restore", "--noflush"],
-                input=firewall_rules(profiles, enabled, family == "ip6tables").encode(),
+                input=firewall_rules(profiles, enabled, name == "ip6tables").encode(),
             )
             exists = subprocess.run(
                 [family, "-C", "OUTPUT", "-j", "ARGUS_VPN"],
@@ -416,9 +439,11 @@ class Controller:
                 "interval_seconds": 900,
             }
         )
+        # busy counts the tools that currently hold the tunnel. Several tools
+        # share one connection; a rotation waits until none of them runs.
         self.active, self.busy, self.pending, self.stopped = (
             None,
-            False,
+            0,
             self.settings["enabled"],
             False,
         )
@@ -447,7 +472,7 @@ class Controller:
             if action == "configure":
                 if self.busy or self.switching:
                     raise ValueError(
-                        "Wait for the running tool or VPN change before changing VPN settings"
+                        "Wait for the running tools or VPN change before changing VPN settings"
                     )
                 settings = request["settings"]
                 if (
@@ -511,21 +536,23 @@ class Controller:
                 acquired = (
                     self.state == "connected"
                     and not self.pending
-                    and not self.busy
                     and not self.switching
                 )
                 if acquired:
-                    self.busy = True
+                    self.busy += 1
                 return {**self.status(), "acquired": acquired}
             elif action == "release":
-                self.busy = False
+                self.busy = max(0, self.busy - 1)
                 if (
                     request.get("rotate", True)
                     and self.settings["rotation_enabled"]
                     and self.settings["rotation_mode"] == "actor"
                 ):
+                    # New tools wait while pending; the switch happens once the
+                    # last running tool has released the tunnel.
                     self.pending = True
-                    self.state = "connecting"
+                    if not self.busy:
+                        self.state = "connecting"
             elif action == "rotate":
                 self.pending = True
                 if not self.busy:

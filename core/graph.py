@@ -23,6 +23,7 @@ TYPES = {
     "value",
     "image",
     "video",
+    "audio",
 }
 LOCATION_DEFAULTS = {
     key: ""
@@ -59,6 +60,7 @@ NODE_DEFAULTS = {
     "marker": {},
     "image": {"filename": "", "file_id": "", "url": ""},
     "video": {"filename": "", "file_id": "", "mime": "", "size": 0, "duration": 0},
+    "audio": {"filename": "", "file_id": "", "mime": "", "size": 0, "duration": 0},
     "file": {"filename": "", "file_id": "", "mime": "", "size": 0},
 }
 
@@ -284,7 +286,7 @@ class GraphSchema:
             raise DomainError("validation.6161428e7a")
         for field in ("nodes", "edges", "groups", "runs"):
             if not isinstance(doc.get(field), list):
-                raise ValueError(field + " muss eine Liste sein.")
+                raise ValueError(field + " must be a list.")
         if len(doc["nodes"]) > 5000 or len(doc["edges"]) > 15000:
             raise DomainError("validation.5fea98af5a")
         ids = set()

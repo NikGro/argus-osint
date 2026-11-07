@@ -1,5 +1,6 @@
 """Offline regression cases. No face model, Instagram account or OSINT service is invoked."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import copy
 import hashlib
 import io

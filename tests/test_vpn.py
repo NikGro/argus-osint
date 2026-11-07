@@ -110,6 +110,38 @@ class GatewayState(unittest.TestCase):
                 "PrivateKey", Path(directory, "settings.sealed").read_text()
             )
 
+    def test_parallel_tools_share_the_tunnel_and_rotation_waits_for_all(self):
+        with tempfile.TemporaryDirectory() as directory:
+            network = Mock()
+            network.healthy.return_value = True
+            controller = Controller(directory, network)
+            controller.status = lambda: {"state": controller.state}
+            controller.request(
+                {
+                    "action": "configure",
+                    "settings": {
+                        "enabled": True,
+                        "rotation_enabled": True,
+                        "rotation_mode": "actor",
+                        "interval_seconds": 60,
+                        "profiles": [profile("one"), profile("two")],
+                    },
+                }
+            )
+            controller.tick()
+            self.assertTrue(controller.request({"action": "acquire"})["acquired"])
+            self.assertTrue(controller.request({"action": "acquire"})["acquired"])
+            controller.request({"action": "release"})
+            # Rotation is due, but the second tool still uses the tunnel.
+            self.assertEqual(controller.state, "connected")
+            self.assertFalse(controller.request({"action": "acquire"})["acquired"])
+            controller.tick()
+            self.assertEqual(controller.active["id"], "one")
+            controller.request({"action": "release"})
+            controller.tick()
+            self.assertEqual(controller.active["id"], "two")
+            self.assertTrue(controller.request({"action": "acquire"})["acquired"])
+
     def test_total_failure_keeps_enabled_firewall_and_queue_closed(self):
         with tempfile.TemporaryDirectory() as directory:
             network = Mock()

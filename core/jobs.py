@@ -34,7 +34,15 @@ def fingerprint(project, actor_id):
 
 class Jobs:
     def __init__(
-        self, connect, projects, execute, now, connect_plugin=None, start=True, vpn=None
+        self,
+        connect,
+        projects,
+        execute,
+        now,
+        connect_plugin=None,
+        start=True,
+        vpn=None,
+        workers=1,
     ):
         self.connect, self.projects, self.execute, self.now = (
             connect,
@@ -44,13 +52,14 @@ class Jobs:
         )
         self.connect_plugin = connect_plugin
         self.vpn = vpn
-        self.vpn_waiting = False
+        self.waiting = 0
+        self.workers = max(1, int(workers))
+        self.threads = []
         self.condition = threading.Condition()
         self.ephemeral = {}
         self.cancellations = {}
         self.stopped = False
         self.last_worker_error = None
-        self.thread = None
         with connect() as conn:
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS actor_jobs (id TEXT PRIMARY KEY,project_id TEXT NOT NULL,actor_id TEXT NOT NULL,request_key TEXT NOT NULL,fingerprint TEXT NOT NULL,signature TEXT NOT NULL,request TEXT NOT NULL,state TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,run_id TEXT,error_code TEXT,UNIQUE(project_id,request_key))"
@@ -66,14 +75,43 @@ class Jobs:
         if start:
             self.start()
 
+    @property
+    def vpn_waiting(self):
+        return self.waiting > 0
+
+    @property
+    def thread(self):
+        """The first worker; kept for health checks and older callers."""
+        return self.threads[0] if self.threads else None
+
+    def alive(self):
+        return sum(1 for thread in self.threads if thread.is_alive())
+
     def start(self):
-        if self.thread is not None and self.thread.is_alive():
-            return
         self.stopped = False
-        self.thread = threading.Thread(
-            target=self.worker, name="argus-actor-worker", daemon=True
-        )
-        self.thread.start()
+        self.resize(self.workers)
+
+    def resize(self, workers):
+        """Runs this many tools at once. Extra workers finish their tool first."""
+        self.workers = max(1, int(workers))
+        if self.stopped:
+            return
+        with self.condition:
+            self.threads = [t for t in self.threads if t.is_alive()]
+            used = {t.index for t in self.threads}
+            for index in range(self.workers):
+                if index in used:
+                    continue
+                thread = threading.Thread(
+                    target=self.worker,
+                    args=(index,),
+                    name=f"argus-actor-worker-{index + 1}",
+                    daemon=True,
+                )
+                thread.index = index
+                self.threads.append(thread)
+                thread.start()
+            self.condition.notify_all()
 
     def close(self):
         self.stopped = True
@@ -81,8 +119,8 @@ class Jobs:
             cancellation.set()
         with self.condition:
             self.condition.notify_all()
-        if self.thread is not None:
-            self.thread.join(timeout=5)
+        for thread in list(self.threads):
+            thread.join(timeout=5)
 
     def submit(self, pid, body, key):
         if not isinstance(key, str) or not 16 <= len(key) <= 128:
@@ -253,11 +291,15 @@ class Jobs:
             self.ephemeral.pop(jid, None)
         return self.get(jid)
 
-    def worker(self):
+    def retired(self, index):
+        return self.stopped or index >= self.workers
+
+    def worker(self, index=0):
         """An infrastructure/cleanup exception must not silently kill the FIFO."""
-        while not self.stopped:
+        slot = {}
+        while not self.retired(index):
             try:
-                self._work_loop()
+                self._work_loop(index, slot)
             except Exception:
                 self.last_worker_error = self.now()
                 logging.getLogger("argus.jobs").exception(
@@ -265,9 +307,10 @@ class Jobs:
                 )
                 try:
                     with self.connect() as conn:
+                        # Only this worker's job; the others are still running.
                         conn.execute(
-                            "UPDATE actor_jobs SET state='interrupted',error_code='execution_interrupted',updated_at=? WHERE state IN ('running','cancelling')",
-                            (self.now(),),
+                            "UPDATE actor_jobs SET state='interrupted',error_code='execution_interrupted',updated_at=? WHERE id=? AND state IN ('running','cancelling')",
+                            (self.now(), slot.pop("id", None)),
                         )
                 except Exception:
                     logging.getLogger("argus.jobs").exception(
@@ -276,8 +319,10 @@ class Jobs:
                 with self.condition:
                     self.condition.wait(timeout=2)
 
-    def _work_loop(self):
-        while not self.stopped:
+    def _work_loop(self, index=0, slot=None):
+        # slot holds this worker's running job id for crash recovery.
+        slot = {} if slot is None else slot
+        while not self.retired(index):
             with self.connect() as conn:
                 conn.execute("BEGIN IMMEDIATE")
                 row = conn.execute(
@@ -293,6 +338,7 @@ class Jobs:
                     self.condition.wait(timeout=1)
                 continue
             jid, pid, actor_id, expected, request = row
+            slot["id"] = jid
             event = self.cancellations.setdefault(jid, threading.Event())
             context = CANCEL_EVENT.set(event)
             state, run_id, error, result = "failed", None, None, None
@@ -300,11 +346,13 @@ class Jobs:
             try:
                 payload = json.loads(request)
                 if self.vpn:
-                    self.vpn_waiting = True
+                    with self.condition:
+                        self.waiting += 1
                     try:
                         acquired = self.vpn.before_actor(event)
                     finally:
-                        self.vpn_waiting = False
+                        with self.condition:
+                            self.waiting -= 1
                 if payload.get("_kind") == "connection":
                     result = self.connect_plugin(
                         payload.get("id"),
@@ -376,3 +424,4 @@ class Jobs:
                             jid,
                         ),
                     )
+                slot.pop("id", None)

@@ -8,6 +8,7 @@ from pathlib import Path
 import time
 from urllib.parse import urlencode
 from core.errors import AppError
+from core import tools
 from core.public_network import request
 
 
@@ -17,17 +18,16 @@ class Maps:
         self.directory.mkdir(exist_ok=True)
         self.previews = {}
 
-    def preview(self, lat, lon, query, provider="osm", language="en"):
-        key = (str(lat), str(lon), str(query), provider, language)
+    def preview(self, lat, lon, query, provider="osm"):
+        key = (str(lat), str(lon), str(query), provider)
         cached = self.previews.get(key)
         if cached and time.monotonic() - cached[0] < 600:
             return cached[1]
-        if provider == "google" and Path("/run/argus/worker.sock").exists():
+        if provider == "google" and tools.installed("flaresolverr"):
             try:
-                from core.isolation import invoke
+                from plugins._browser import fetch
 
-                result = invoke(
-                    "browser",
+                result = fetch(
                     {
                         "url": "https://www.google.com/maps/search/?"
                         + urlencode(
@@ -35,8 +35,7 @@ class Maps:
                         ),
                         "timeout": 35,
                         "screenshot": True,
-                    },
-                    timeout=55,
+                    }
                 )
                 picture = result.get("image_base64")
                 if picture and len(picture) < 8 * 1024 * 1024:
@@ -90,7 +89,7 @@ class Maps:
             (1 - math.asinh(math.tan(math.radians(latitude))) / math.pi) / 2 * count
         )
         self.tile(14, x, max(0, min(count - 1, y)))
-        caption = "Kartenvorschau" if language == "de" else "Map preview"
+        caption = "Map preview"
         html = (
             f'<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/map-view.css"></head><body data-lat="{latitude}" data-lon="{longitude}"><div id="tiles"></div><span id="marker">●</span><div id="zoom"><button id="in" aria-label="Zoom in">+</button><button id="out" aria-label="Zoom out">−</button></div><small>© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> · {caption}</small><script type="module" src="/map-view.js"></script></body></html>'
         ).encode()
@@ -101,12 +100,8 @@ class Maps:
         return html
 
     @staticmethod
-    def unavailable(language="en"):
-        message = (
-            "Karten-Vorschau derzeit nicht verfügbar."
-            if language == "de"
-            else "Map preview is currently unavailable."
-        )
+    def unavailable():
+        message = "Map preview is currently unavailable."
         return (
             '<!doctype html><html><meta charset="utf-8"><link rel="stylesheet" href="/map-view.css"><body class="map-unavailable"><p role="status">'
             + message

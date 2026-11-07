@@ -6,24 +6,10 @@ from core.crop import CROP_DEFAULTS, CROP_SCHEMA, crop_box
 
 PLUGIN = {
     "id": "image_crop",
-    "name": "Photo crop",
+    "name": "Crop photo",
     "icon": "crop",
     "category": "Media",
     "description": "Choose a rectangle visually and save a cropped copy of a photo.",
-    "translations": {
-        "de": {
-            "Photo crop": "Foto zuschneiden",
-            "Crop photo": "Foto zuschneiden",
-            "Media": "Medien",
-            "Choose a rectangle visually and save a cropped copy of a photo.": "Einen Bildausschnitt auswählen und als neue Bilddatei speichern.",
-        },
-        "en": {
-            "Photo crop": "Photo crop",
-            "Crop photo": "Crop photo",
-            "Media": "Media",
-            "Choose a rectangle visually and save a cropped copy of a photo.": "Choose a rectangle visually and save a cropped copy of a photo.",
-        },
-    },
     "actions": [
         {
             "id": "crop",

@@ -1,3 +1,4 @@
+import { ZOOM_BASE } from './zoom.js';
 var projects_default = {
   name: 'projects',
   dependencies: [
@@ -36,11 +37,10 @@ var projects_default = {
       canvasState.pan = {
         x: 60,
         y: 70,
-        scale: 1
+        scale: ZOOM_BASE
       };
       show('workspace');
       selectionState.inspectorSelectionKey = '';
-      canvasState.rightCollapsed = true;
       panelVisibility();
       updateStatus();
       workspaceState.lastServerSnapshot = structuredClone(workspaceState.project.document);

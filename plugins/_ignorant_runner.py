@@ -13,7 +13,7 @@ async def collect(payload):
     if selected:
         functions = [f for f in functions if f.__name__.lower() in selected]
         if not functions:
-            raise ValueError("Anbieter wird von Ignorant nicht unterstützt.")
+            raise ValueError("This provider is not supported by Ignorant.")
     async with httpx.AsyncClient(
         timeout=payload["request_timeout"], trust_env=False
     ) as client:
@@ -34,7 +34,7 @@ async def collect(payload):
                         {
                             "name": function.__name__,
                             "exists": None,
-                            "error": "Kein Ergebnis",
+                            "error": "No result",
                         }
                     ]
             except Exception as exc:

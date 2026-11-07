@@ -2,9 +2,12 @@
 
 import json
 import math
+import os
 from pathlib import Path
 import tempfile
 from plugins._process import bounded_run
+from core import tools
+from plugins._helpers import helper
 
 MODELS = [
     "SFace",
@@ -41,7 +44,6 @@ DEFAULTS = {
     "anti_spoofing": False,
     "include_overlays": True,
     "resize_large_images": False,
-    "run_timeout": 300,
     "column_id": "",
     "max_comparisons": 100,
 }
@@ -70,25 +72,19 @@ SCHEMA.update(
             "step": 0.01,
             "control": "range",
         },
-        "run_timeout": {
-            "secret": False,
-            "min": 0,
-            "max": 900,
-            "step": 10,
-            "control": "range",
-        },
     }
 )
 PLUGIN = {
     "id": "deepface",
+    "tools": ["deepface"],
     "icon": "face-compare",
     "name": "DeepFace",
-    "category": "Bildanalyse",
-    "description": "Zwei Bilder vergleichen; Scores und Bilder mit Erkennungs-Overlays ausgeben.",
+    "category": "Image analysis",
+    "description": "Compare two images; output scores and images with detection overlays.",
     "actions": [
         {
             "id": "verify",
-            "name": "Bilder mit DeepFace vergleichen",
+            "name": "Compare images with DeepFace",
             "inputs": ["image", "database"],
             "min_inputs": 2,
             "max_inputs": 2,
@@ -110,7 +106,7 @@ def validated(params):
         ("normalization", NORMALIZATIONS),
     ]:
         if values[key] not in choices:
-            raise ValueError("Ungültige DeepFace-Option: " + key)
+            raise ValueError("Invalid DeepFace option: " + key)
     for key in (
         "align",
         "enforce_detection",
@@ -120,11 +116,10 @@ def validated(params):
         "resize_large_images",
     ):
         if not isinstance(values[key], bool):
-            raise ValueError("Ungültiger Schalter: " + key)
+            raise ValueError("Invalid toggle: " + key)
     for key, low, high in [
         ("expand_percentage", 0, 100),
         ("threshold", 0, 100),
-        ("run_timeout", 0, 900),
     ]:
         number = values[key]
         if (
@@ -133,12 +128,9 @@ def validated(params):
             or not math.isfinite(number)
             or not low <= number <= high
         ):
-            raise ValueError("Ungültiger Zahlenwert: " + key)
+            raise ValueError("Invalid numeric value: " + key)
     if int(values["expand_percentage"]) != values["expand_percentage"]:
-        raise ValueError("Bildausschnitt-Erweiterung muss ganzzahlig sein.")
-    if values["run_timeout"] != 0 and values["run_timeout"] < 10:
-        key = "run_timeout"
-        raise ValueError("Ungültiger Zahlenwert: " + key)
+        raise ValueError("Face crop expansion must be an integer.")
     return values
 
 
@@ -152,7 +144,7 @@ def run(action, inputs, params, context):
         or len(inputs) != 2
         or any(n.get("type") != "image" for n in inputs)
     ):
-        raise ValueError("Genau zwei Bild-Nodes verbinden.")
+        raise ValueError("Connect exactly two image nodes.")
     values = validated(params)
     # Resolve uploaded files only. URLs are never sent to the library or downloaded here.
     paths = [str(context["resolve_file"](n["data"].get("file_id", ""))) for n in inputs]
@@ -167,12 +159,12 @@ def run(action, inputs, params, context):
                         "warnings": [],
                         "input_request": {
                             "kind": "deepface_resize",
-                            "title": "Großes Bild für DeepFace",
-                            "message": "Mindestens ein Bild hat mehr als 40 Megapixel. Eine verkleinerte Arbeitskopie verwenden? Die Originale bleiben unverändert.",
+                            "title": "Large image for DeepFace",
+                            "message": "At least one image exceeds 40 megapixels. Use a smaller working copy? The originals remain unchanged.",
                             "fields": [
                                 {
                                     "key": "resize_large_images",
-                                    "label": "Arbeitskopie auf höchstens 40 Megapixel reduzieren",
+                                    "label": "Reduce the working copy to at most 40 megapixels",
                                     "type": "checkbox",
                                     "default": True,
                                     "required": True,
@@ -186,30 +178,31 @@ def run(action, inputs, params, context):
     with tempfile.TemporaryDirectory(prefix="argus-deepface-") as folder:
         stdout, _ = bounded_run(
             [
-                "/opt/argus-tools/deepface-venv/bin/python",
+                tools.python("deepface"),
                 "-I",
-                str(Path(__file__).with_name("_deepface_runner.py")),
+                helper("_deepface_runner.py"),
             ],
-            int(values["run_timeout"]) if values["run_timeout"] else None,
+            None,
             {"paths": paths, "params": values, "artifact_dir": folder},
             extra_env={
                 "DEEPFACE_HOME": str(cache),
                 "DEEPFACE_BACKEND_ENGINE": "onnx",
                 "TF_CPP_MIN_LOG_LEVEL": "3",
                 "CUDA_VISIBLE_DEVICES": "-1",
-                "OMP_NUM_THREADS": "2",
-                "TF_NUM_INTRAOP_THREADS": "2",
+                # Use the machine's cores; ARGUS supplies the compute.
+                "OMP_NUM_THREADS": str(os.cpu_count() or 2),
+                "TF_NUM_INTRAOP_THREADS": str(os.cpu_count() or 2),
                 "TF_NUM_INTEROP_THREADS": "2",
             },
         )
         result = json.loads(stdout)
         if not isinstance(result, dict) or not isinstance(result.get("verified"), bool):
-            raise ValueError("DeepFace lieferte kein gültiges Vergleichsergebnis.")
+            raise ValueError("DeepFace returned no valid comparison result.")
         for key in ("distance", "threshold"):
             if not isinstance(result.get(key), (float, int)) or not math.isfinite(
                 result[key]
             ):
-                raise ValueError("DeepFace lieferte keinen gültigen Zahlenwert: " + key)
+                raise ValueError("DeepFace returned an invalid numeric value: " + key)
         for annotation in result.get("annotations", []):
             index = annotation.get("image_index")
             if (
@@ -217,10 +210,10 @@ def run(action, inputs, params, context):
                 or index not in (0, 1)
                 or annotation.get("file") != f"overlay-{index + 1}.jpg"
             ):
-                raise ValueError("Ungültige Overlay-Datei.")
+                raise ValueError("Invalid overlay file.")
             if not callable(context.get("store_file")):
                 result.setdefault("warnings", []).append(
-                    "Overlay-Dateien konnten nicht im Projekt gespeichert werden."
+                    "Overlay files could not be saved in the project."
                 )
                 break
             try:
@@ -250,10 +243,10 @@ def run(action, inputs, params, context):
                 )
             except Exception as exc:
                 result.setdefault("warnings", []).append(
-                    f"Overlay für Bild {index + 1} konnte nicht gespeichert werden ({type(exc).__name__})."
+                    f"Overlay for image {index + 1} could not be saved ({type(exc).__name__})."
                 )
     if not isinstance(result.get("verified"), bool):
-        raise ValueError("DeepFace lieferte kein gültiges Vergleichsergebnis.")
+        raise ValueError("DeepFace returned no valid comparison result.")
     source = {
         "tool": "DeepFace",
         "version": "0.0.102",
@@ -262,9 +255,9 @@ def run(action, inputs, params, context):
         "result": result,
     }
     fields = [
-        ("Ergebnis", "Match" if result["verified"] else "No match"),
+        ("Result", "Match" if result["verified"] else "No match"),
         ("Distanz", result["distance"]),
-        ("Schwellenwert", result["threshold"]),
+        ("Threshold", result["threshold"]),
     ]
     if result.get("confidence") is not None:
         fields.append(("Konfidenz (%)", result["confidence"]))

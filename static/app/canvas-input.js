@@ -1,5 +1,11 @@
 import ArgusRouting from '../graph-routing.js';
-import { t } from '../i18n.js';
+import {
+  clampScale,
+  scaleToPercent,
+  percentToScale,
+  ZOOM_MIN_PERCENT,
+  ZOOM_MAX_PERCENT
+} from './zoom.js';
 
 /** Transient SVG overlays (selection frame, connection preview) live outside React state. */
 function svg(tag, attributes) {
@@ -161,7 +167,7 @@ var canvas_input_default = {
       else render();
     }
     function zoomAt(x, y, scale) {
-      const next = Math.max(0.15, Math.min(2.5, scale));
+      const next = clampScale(scale);
       canvasState.pan.x = x - ((x - canvasState.pan.x) * next) / canvasState.pan.scale;
       canvasState.pan.y = y - ((y - canvasState.pan.y) * next) / canvasState.pan.scale;
       canvasState.pan.scale = next;
@@ -172,14 +178,14 @@ var canvas_input_default = {
       zoomAt(
         box.width / 2,
         box.height / 2,
-        nextZoomPercent(canvasState.pan.scale * 100, direction) / 100
+        percentToScale(nextZoomPercent(scaleToPercent(canvasState.pan.scale), direction))
       );
     }
     function nextZoomPercent(percent, direction) {
       return Math.max(
-        15,
+        ZOOM_MIN_PERCENT,
         Math.min(
-          250,
+          ZOOM_MAX_PERCENT,
           direction > 0
             ? (Math.floor((percent + 1e-7) / 5) + 1) * 5
             : (Math.ceil((percent - 1e-7) / 5) - 1) * 5
@@ -366,12 +372,8 @@ var canvas_input_default = {
       if (canvasState.pinchGesture && canvasState.touchPointers.size >= 2) {
         const metrics = touchMetrics(),
           box = $('graph').getBoundingClientRect();
-        canvasState.pan.scale = Math.max(
-          0.15,
-          Math.min(
-            2.5,
-            (canvasState.pinchGesture.scale * metrics.distance) / canvasState.pinchGesture.distance
-          )
+        canvasState.pan.scale = clampScale(
+          (canvasState.pinchGesture.scale * metrics.distance) / canvasState.pinchGesture.distance
         );
         canvasState.pan.x =
           metrics.x - box.left - canvasState.pinchGesture.worldX * canvasState.pan.scale;
@@ -497,7 +499,7 @@ var canvas_input_default = {
         target,
         source_port: 'right',
         target_port: state.port.startsWith('left') ? state.port : state.targetPort,
-        label: t('ui.connected_to')
+        label: 'connected to'
       });
       change();
       render();

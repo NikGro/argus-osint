@@ -1,7 +1,11 @@
 """Offline contract coverage for profiles, review metadata, merge and native web enrichment."""
 
 import copy
+import tool_stubs  # external tools count as installed
+from core import tools
+from plugins._browser import browser_command
 import json
+import os
 import subprocess
 import unittest
 from pathlib import Path
@@ -110,9 +114,7 @@ class CatalogueBrowserContracts(unittest.TestCase):
                     }
                 )
         finally:
-            app.save_settings(
-                {"language": before["language"], "tags": before.get("tags", [])}
-            )
+            app.save_settings({"tags": before.get("tags", [])})
 
     def test_merge_completes_person_and_never_changes_inputs(self):
         inputs = [
@@ -256,8 +258,8 @@ class CatalogueBrowserContracts(unittest.TestCase):
     def test_native_page_metadata_yields_specific_image_and_bio(self):
         html = '<meta property="og:description" content="Public biography"><meta property="og:image" content="https://cdn.example.invalid/jtv_user_pictures/profile_image.png"><script type="application/ld+json">{"@type":"ProfilePage","mainEntity":{"@type":"Person","name":"Fixture","description":"Structured bio"}}</script>'
         facts = web.extract_page(html, "https://example.invalid/fixture")
-        self.assertEqual(facts["Biografie"], "Structured bio")
-        self.assertIn("Profilbild", facts)
+        self.assertEqual(facts["Biography"], "Structured bio")
+        self.assertIn("Profile image", facts)
         self.assertEqual(facts["Name"], "Fixture")
 
     def test_native_page_handles_malformed_json_and_labels_general_preview(self):
@@ -265,7 +267,7 @@ class CatalogueBrowserContracts(unittest.TestCase):
             '<meta property="og:image" content="/card.jpg"><script type="application/ld+json">{not valid</script>',
             "https://example.invalid/fixture",
         )
-        self.assertEqual(facts["Vorschaubild"], "https://example.invalid/card.jpg")
+        self.assertEqual(facts["Preview image"], "https://example.invalid/card.jpg")
 
     def test_deep_empty_run_outputs_visible_error_not_a_missing_account_claim(self):
         params = {
@@ -282,7 +284,7 @@ class CatalogueBrowserContracts(unittest.TestCase):
         self.assertEqual(result["outputs"][0]["type"], "error")
         self.assertFalse(result["group_outputs"])
         self.assertFalse(result["failed"])
-        self.assertIn("nicht existiert", result["outputs"][0]["data"]["message"])
+        self.assertIn("does not exist", result["outputs"][0]["data"]["message"])
 
     def test_deep_failed_run_keeps_failure_status_and_explanation(self):
         params = {
@@ -316,27 +318,16 @@ class CatalogueBrowserContracts(unittest.TestCase):
         self.assertGreater(len(registry.catalogue()), 8000)
 
     @unittest.skipUnless(
-        Path("/opt/argus-tools/flaresolverr-venv/bin/python").exists(),
-        "Embedded browser is installed by Docker build",
-    )
-    @unittest.skipUnless(
-        Path("/run/argus/worker.sock").exists(),
-        "Requires enabled namespace worker runtime; no unrestricted browser fallback",
+        tool_stubs.real("flaresolverr"), "Embedded browser tool is not installed"
     )
     def test_embedded_browser_executes_offline_javascript(self):
-        python = Path("/opt/argus-tools/flaresolverr-venv/bin/python")
-        if not python.exists():
-            return
+        browser = browser_command()
         result = subprocess.run(
-            [
-                str(python),
-                "-I",
-                str(Path(app.ROOT) / "plugins/_browser_runner.py"),
-                "--self-test",
-            ],
+            [*browser["command"], "--self-test"],
             capture_output=True,
             text=True,
             timeout=75,
+            env={**os.environ, **browser["env"]},
         )
         self.assertEqual(result.returncode, 0, result.stderr[-3000:])
         payload = json.loads(result.stdout)
@@ -344,13 +335,12 @@ class CatalogueBrowserContracts(unittest.TestCase):
         self.assertFalse(payload["external_requests"])
 
     @unittest.skipUnless(
-        Path("/opt/argus-tools/flaresolverr-venv/bin/python").exists(),
-        "Chromium is installed by Docker build",
+        tool_stubs.real("flaresolverr"), "Embedded browser tool is not installed"
     )
     def test_actual_chromium_ui_workflow_without_external_requests(self):
         result = subprocess.run(
             [
-                "/opt/argus-tools/flaresolverr-venv/bin/python",
+                tools.python("flaresolverr"),
                 str(Path(app.ROOT) / "tests/browser_workspace.py"),
             ],
             capture_output=True,

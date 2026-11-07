@@ -26,8 +26,8 @@ def validate_descriptor(item):
             raise DomainError("validation.43f8cee274")
         if node["type"] in TYPES:
             raise DomainError("validation.7538f070be")
-    if not isinstance(item.get("translations", {}), dict):
-        raise DomainError("validation.676a37ad81")
+    # Older community manifests may still carry translations; ARGUS is English-only.
+    item.pop("translations", None)
     if not isinstance(item.get("auth_fields", []), list) or any(
         (
             not isinstance(group, list)
@@ -70,7 +70,7 @@ def validate_descriptor(item):
                     )
                 )
             ):
-                raise ValueError("Ungültige Plugin-Metadaten: " + field)
+                raise ValueError("Invalid plugin metadata: " + field)
         if not isinstance(action.get("default_params", {}), dict):
             raise DomainError("validation.e1c551aed4")
         if not isinstance(action.get("generic_profile", False), bool):

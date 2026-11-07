@@ -1,5 +1,7 @@
 """Release-facing contracts: encrypted credentials, graph persistence and Instagram auth."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
+from plugins._helpers import helper
 import copy
 import importlib.util
 import json
@@ -101,7 +103,7 @@ class CredentialContracts(unittest.TestCase):
             "fixture-p@ss",
         )
         manager.uninstall("instagram")
-        manager.install("instagram")
+        manager.install_now("instagram", with_tools=False)
         self.assertEqual(
             manager.action_params("instagram", "lookup")["login_password"],
             "fixture-p@ss",
@@ -214,7 +216,7 @@ class GraphReleaseContracts(unittest.TestCase):
                 "type": "username",
                 "data": {"value": "fixture"},
                 "group_path": [
-                    {"id": "followers", "label": "Follower"},
+                    {"id": "followers", "label": "Followers"},
                     {"id": "user1", "label": "fixture"},
                 ],
             },
@@ -222,7 +224,7 @@ class GraphReleaseContracts(unittest.TestCase):
                 "type": "url",
                 "data": {"value": "https://www.instagram.com/fixture/"},
                 "group_path": [
-                    {"id": "followers", "label": "Follower"},
+                    {"id": "followers", "label": "Followers"},
                     {"id": "user1", "label": "fixture"},
                 ],
             },
@@ -280,7 +282,7 @@ class InstagramLoginContracts(unittest.TestCase):
     def auth(self):
         spec = importlib.util.spec_from_file_location(
             "fixture_instagram_auth",
-            Path(instagram.__file__).with_name("_instagram_auth.py"),
+            Path(helper("_instagram_auth.py")),
         )
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -423,7 +425,7 @@ class InstagramCollectionContracts(unittest.TestCase):
     def worker(self):
         spec = importlib.util.spec_from_file_location(
             "fixture_instagram_worker",
-            Path(instagram.__file__).with_name("_instagram_runner.py"),
+            Path(helper("_instagram_runner.py")),
         )
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -571,7 +573,7 @@ class InstagramCollectionContracts(unittest.TestCase):
         self.assertTrue(
             any(
                 (
-                    len(o.get("group_path", [])) == 4 and o["label"] == "Kommentar"
+                    len(o.get("group_path", [])) == 4 and o["label"] == "Comment"
                     for o in result["outputs"]
                 )
             )
@@ -604,7 +606,7 @@ class InstagramCollectionContracts(unittest.TestCase):
         self.assertTrue(
             any(
                 (
-                    o["type"] == "error" and o["label"] == "Teilabruf"
+                    o["type"] == "error" and o["label"] == "Partial result"
                     for o in partial["outputs"]
                 )
             )
@@ -636,10 +638,6 @@ class PluginMetadataContracts(unittest.TestCase):
                 Manager.validate_descriptor(descriptor)
         Manager.validate_descriptor(copy.deepcopy(instagram.PLUGIN))
 
-    @unittest.skipUnless(
-        Path("/run/argus/worker.sock").exists(),
-        "Requires enabled namespace worker runtime",
-    )
     def test_community_connection_action_uses_same_verified_runner(self):
         from core.plugin_manager import CommunityPlugin
 

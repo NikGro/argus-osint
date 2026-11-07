@@ -2,7 +2,14 @@ import React, { useId, useRef, useState, useEffect } from 'react';
 import { Button, Check } from './controls.jsx';
 import { Select } from './select.jsx';
 import { DateTimeInput, ColorSwatch } from './pickers.jsx';
-import { t } from '../../i18n.js';
+
+/** Initial textarea height: the text's own lines plus wrapping, within 3–14 rows. */
+function multilineRows(text, minimum) {
+  const lines = String(text)
+    .split('\n')
+    .reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / 38)), 0);
+  return Math.min(14, Math.max(minimum, lines + 1));
+}
 
 export function Field({
   label,
@@ -99,14 +106,21 @@ export function Field({
           label={label}
           value={value}
           disabled={disabled}
+          placeholder={schema.placeholder}
           options={schema.enum.map((item) => ({
             value: item,
-            label: schema.labels?.[item] || t(String(item))
+            label: schema.labels?.[item] || String(item)
           }))}
           onChange={onChange}
         />
-      ) : object || multiline ? (
-        <textarea {...shared} rows={object ? 4 : 3} spellCheck={false} />
+      ) : object || multiline || schema.multiline ? (
+        <textarea
+          {...shared}
+          rows={object ? 4 : multilineRows(display, schema.code ? 8 : schema.multiline ? 4 : 3)}
+          spellCheck={!!schema.multiline && !schema.code}
+          className={schema.code ? 'code-input' : undefined}
+          wrap={schema.code ? 'off' : undefined}
+        />
       ) : numeric && schema.control === 'range' ? (
         <div className="range-field">
           <input
@@ -154,7 +168,7 @@ export function Field({
                   onChange(next);
                 }}
               >
-                {t(direction === 1 ? 'Zahl erhöhen' : 'Zahl verringern')}
+                {direction === 1 ? 'Increase value' : 'Decrease value'}
               </Button>
             ))}
           </span>
@@ -170,7 +184,7 @@ export function Field({
       )}
       {invalid && (
         <p id={id + '-error'} className="field-error" role="alert">
-          {t('ui.please_enter_a_valid_email_address')}
+          {'Please enter a valid email address.'}
         </p>
       )}
       {help && <p className="source-help">{help}</p>}
@@ -182,11 +196,10 @@ export function Fields({
   values,
   onChange,
   schema = {},
-  label = (key) => t(key),
+  label = (key) => key,
   exclude = [],
   help = {},
-  sections = [],
-  translate = t
+  sections = []
 }) {
   const grouped = new Set(
     sections.flatMap((section) => [section.toggle, ...(section.limits || [])])
@@ -202,7 +215,7 @@ export function Fields({
               checked={values[section.toggle]}
               onChange={(value) => onChange(section.toggle, value)}
             >
-              {translate(section.label || section.key)}
+              {section.label || section.key}
             </Check>
             {(section.limits || []).some((key) => key in values && !exclude.includes(key)) && (
               <div className="parameter-limits">
@@ -211,7 +224,7 @@ export function Fields({
                   .map((key) => (
                     <Field
                       key={key}
-                      label={label(key)}
+                      label={schema[key]?.label || label(key)}
                       value={values[key]}
                       schema={schema[key]}
                       disabled={!values[section.toggle]}
@@ -229,10 +242,10 @@ export function Fields({
             <Field
               key={key}
               fieldKey={key}
-              label={label(key)}
+              label={schema[key]?.label || label(key)}
               value={value}
               schema={schema[key]}
-              help={help[key] && translate(help[key])}
+              help={help[key]}
               secret={schema[key]?.secret || /password|token|secret|api_key|sessionid/.test(key)}
               onChange={(next) => onChange(key, next)}
             />
@@ -250,12 +263,12 @@ export function Facts({ value }) {
         .filter(([, item]) => item !== null && item !== '')
         .map(([key, item]) => (
           <React.Fragment key={key}>
-            <dt>{t(key)}</dt>
+            <dt>{key}</dt>
             <dd>
               {typeof item === 'object' ? (
                 <details>
                   <summary>
-                    {Array.isArray(item) ? item.length + t('ui.entries') : t('ui.show_details')}
+                    {Array.isArray(item) ? item.length + ' entries' : 'Show details'}
                   </summary>
                   <Facts value={item} />
                 </details>

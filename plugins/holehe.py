@@ -1,22 +1,22 @@
+from core import tools
 import json
-from pathlib import Path
 import re
-import sys
 from plugins._process import bounded_run
 from plugins._research import fact_outputs
+from plugins._helpers import helper
 
 PLUGIN = {
     "id": "holehe",
-    "name": "Check E-Mail - Holehe",
-    "description": "E-Mail-Adressen auf Registrierung bei unterstützten Anbietern prüfen.",
+    "name": "Check email - Holehe",
+    "description": "Check email registration with supported providers.",
     "actions": [
         {
             "id": "lookup",
-            "name": "E-Mail mit Holehe prüfen",
+            "name": "Check email with Holehe",
             "inputs": ["email"],
             "external": True,
-            "external_notice": "Die E-Mail-Adresse wird an die ausgewählten Anbieter gesendet.",
-            "default_params": {"sites": [], "request_timeout": 12, "run_timeout": 300},
+            "external_notice": "The email address is sent to the selected providers.",
+            "default_params": {"sites": [], "request_timeout": 12},
         }
     ],
 }
@@ -26,7 +26,7 @@ def results(rows, node, identity_only=False):
     outputs = []
     warnings = []
     for row in rows:
-        name = str(row.get("name", "Anbieter"))
+        name = str(row.get("name", "Provider"))
         group = "Holehe · " + name
         if row.get("rateLimit") or row.get("error") or row.get("exists") is None:
             warnings.append(
@@ -53,10 +53,10 @@ def results(rows, node, identity_only=False):
             {
                 **common,
                 "type": "value",
-                "label": "Konto besteht?",
+                "label": "Account exists?",
                 "fact_key": "registration",
-                "data": {"value": "Ja"},
-                "relation": "Registrierungsbefund",
+                "data": {"value": "Yes"},
+                "relation": "Registration finding",
             }
         )
         domain = str(row.get("domain") or "")
@@ -65,9 +65,9 @@ def results(rows, node, identity_only=False):
                 {
                     **common,
                     "type": "url",
-                    "label": name + " · Anbieter",
+                    "label": name + " · provider",
                     "data": {"value": "https://" + domain},
-                    "relation": "Anbieter",
+                    "relation": "Provider",
                 }
             )
         for key in ("emailrecovery", "phoneNumber", "others"):
@@ -94,11 +94,11 @@ def results(rows, node, identity_only=False):
     outputs.append(
         {
             "type": "value",
-            "label": "Holehe · Suchprotokoll",
+            "label": "Holehe · Search record",
             "data": {"value": protocol},
             "source_input": node["id"],
             "source": {"tool": "Holehe", "rows": rows},
-            "relation": "Suchprotokoll",
+            "relation": "Search record",
         }
     )
     return {"outputs": outputs, "warnings": warnings, "log": protocol}
@@ -106,14 +106,14 @@ def results(rows, node, identity_only=False):
 
 def run(action, inputs, params, context):
     if action != "lookup" or len(inputs) != 1:
-        raise ValueError("Holehe benötigt genau eine E-Mail als Eingabe.")
+        raise ValueError("Holehe requires exactly one email input.")
     node = inputs[0]
     email = str(node["data"].get("value", "")).strip()
     if (
         not re.fullmatch(r"[^\s@]{1,128}@[^\s@.]+(?:\.[^\s@.]+)+", email)
         or len(email) > 254
     ):
-        raise ValueError("Ungültige E-Mail-Adresse.")
+        raise ValueError("Invalid email address.")
     sites = params.get("sites", [])
     if (
         not isinstance(sites, list)
@@ -123,19 +123,22 @@ def run(action, inputs, params, context):
             for s in sites
         )
     ):
-        raise ValueError("Ungültige Holehe-Anbieterliste.")
-    timeout = int(params.get("run_timeout", 300))
+        raise ValueError("Invalid Holehe provider list.")
     request_timeout = int(params.get("request_timeout", 12))
-    if not 5 <= timeout <= 300 or not 2 <= request_timeout <= 30:
-        raise ValueError("Ungültiges Suchzeitlimit.")
+    if not 2 <= request_timeout <= 30:
+        raise ValueError("Invalid search timeout.")
     output, _ = bounded_run(
-        [sys.executable, "-I", str(Path(__file__).with_name("_holehe_runner.py"))],
-        timeout,
+        [
+            tools.python("holehe"),
+            "-I",
+            helper("_holehe_runner.py"),
+        ],
+        None,
         {"email": email, "sites": sites, "request_timeout": request_timeout},
     )
     payload = json.loads(output)
     if not isinstance(payload.get("rows"), list):
-        raise ValueError("Ungültiges Holehe-Ergebnis.")
+        raise ValueError("Invalid Holehe result.")
     return results(payload["rows"], node, bool(params.get("identity_only")))
 
 

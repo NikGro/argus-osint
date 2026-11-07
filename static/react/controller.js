@@ -1,7 +1,7 @@
 /** UI-independent command registry. React supplies view callbacks; domains keep their stores. */
 import * as features from '../main.js';
 import { flushSync } from 'react-dom';
-import { t } from '../i18n.js';
+import { scaleToPercent } from '../app/zoom.js';
 
 export function createController() {
   const state = features.createState();
@@ -70,9 +70,8 @@ export function createController() {
       redraw();
     },
     inspectorAvailability(key) {
-      if (key && key !== state.selectionState.inspectorSelectionKey)
-        state.canvasState.rightCollapsed = false;
-      if (!key) state.canvasState.rightCollapsed = true;
+      // The detail panel no longer opens and closes with the selection; only
+      // its toggle collapses it (an empty selection shows the project overview).
       state.selectionState.inspectorSelectionKey = key;
       redraw();
     },
@@ -130,7 +129,7 @@ export function createController() {
         .getElementById('grid')
         ?.setAttribute('patternTransform', `translate(${x} ${y}) scale(${scale})`);
       const zoom = document.getElementById('zoomLevel');
-      if (zoom) zoom.value = Math.round(scale * 100) + '%';
+      if (zoom) zoom.value = Math.round(scaleToPercent(scale)) + '%';
     },
     selectEdge(id, add = false) {
       const selection = state.selectionState,
@@ -160,7 +159,7 @@ export function createController() {
       redraw();
     },
     async deleteProject(project) {
-      if (!(await overrides.askConfirm(t('ui.delete_project'), project.title))) return;
+      if (!(await overrides.askConfirm('Delete project', project.title))) return;
       await methods.api('/api/projects/' + project.id + '/delete', { revision: project.revision });
       state.libraryState.projectIndex = await methods.api('/api/projects');
       redraw();

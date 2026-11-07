@@ -1,7 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './controls.jsx';
-import { language, t } from '../../i18n.js';
 
 /** Themeable popover shared by calendar, time and color controls. */
 function PickerPopover({ anchor, label, onClose, children }) {
@@ -104,12 +103,10 @@ export function DateTimeInput({ type, label, value, onChange, ...inputProps }) {
                   icon="chevron-left"
                   onClick={() => setMonth(new Date(year, index - 1, 1))}
                 >
-                  {t('ui.previous_month')}
+                  {'Previous month'}
                 </Button>
                 <strong>
-                  {new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric' }).format(
-                    month
-                  )}
+                  {new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(month)}
                 </strong>
                 <Button
                   only
@@ -117,13 +114,13 @@ export function DateTimeInput({ type, label, value, onChange, ...inputProps }) {
                   icon="chevron-right"
                   onClick={() => setMonth(new Date(year, index + 1, 1))}
                 >
-                  {t('ui.next_month')}
+                  {'Next month'}
                 </Button>
               </div>
               <div className="calendar-days">
                 {Array.from({ length: 7 }, (_, i) => (
                   <span key={'weekday' + i}>
-                    {new Intl.DateTimeFormat(language, { weekday: 'narrow' }).format(
+                    {new Intl.DateTimeFormat('en', { weekday: 'narrow' }).format(
                       new Date(2026, 0, 5 + i)
                     )}
                   </span>
@@ -158,14 +155,14 @@ export function DateTimeInput({ type, label, value, onChange, ...inputProps }) {
                   setOpen(false);
                 }}
               >
-                {t('ui.today')}
+                {'Today'}
               </Button>
             </>
           ) : (
             <div className="time-columns">
               {[
-                [24, t('ui.hours')],
-                [60, t('ui.minutes')]
+                [24, 'Hours'],
+                [60, 'Minutes']
               ].map(([count, title], part) => (
                 <div key={part}>
                   <strong>{title}</strong>
@@ -278,7 +275,7 @@ function ColorChooser({ value, onChange }) {
           />
         ))}
       </div>
-      {[t('ui.hue'), t('ui.saturation'), t('ui.lightness')].map((name, i) => (
+      {['Hue', 'Saturation', 'Lightness'].map((name, i) => (
         <label className="color-slider" key={i}>
           {name}
           <input

@@ -33,12 +33,12 @@ def input_request(exc):
     if name in ("TwoFactorRequired", "ManualVerificationRequired", "ChallengeRequired"):
         return {
             "kind": "instagram_auth",
-            "title": "Instagram-Anmeldung bestätigen",
-            "message": "Bestätigungscode aus deiner Authenticator-App, E-Mail oder SMS eingeben. Eine zusätzliche Freigabe kann direkt bei Instagram erforderlich sein.",
+            "title": "Confirm Instagram login",
+            "message": "Enter the code from your authenticator app, email or SMS. Additional approval may be required directly on Instagram.",
             "fields": [
                 {
                     "key": "verification_code",
-                    "label": "Instagram-Bestätigungscode",
+                    "label": "Instagram verification code",
                     "type": "password",
                     "required": True,
                     "transient": True,

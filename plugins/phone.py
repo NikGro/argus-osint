@@ -5,16 +5,17 @@ from plugins import _consensus
 
 PLUGIN = {
     "id": "phone",
-    "name": "Telefonnummer",
-    "category": "Recherche",
-    "description": "Gemeinsame Recherche mit einzeln aktivierbaren Quellen und Dublettenerkennung.",
+    "tools": ["consensus", "phoneinfoga", "ignorant"],
+    "name": "Phone number",
+    "category": "Research",
+    "description": "Combined research with selectable sources and deduplication.",
     "actions": [
         {
             "id": "lookup",
-            "name": "Telefonnummer recherchieren",
+            "name": "Research phone number",
             "inputs": ["phone", "value"],
             "external": True,
-            "external_notice": "Die Eingabe wird an die aktivierten Recherchequellen gesendet.",
+            "external_notice": "The input is sent to the enabled research sources.",
             "settings_only": [
                 "consensus_sites",
                 "disabled_scanners",
@@ -30,7 +31,6 @@ PLUGIN = {
                 "use_ignorant": False,
                 "source_order": ["consensus", "phoneinfoga", "ignorant"],
                 "request_timeout": 12,
-                "run_timeout": 300,
                 "max_results": 500,
                 "phone_region": "",
                 "disabled_scanners": [],
@@ -45,7 +45,7 @@ PLUGIN = {
 
 def run(action, inputs, params, context):
     if action != "lookup":
-        raise ValueError("Unbekannte Aktion.")
+        raise ValueError("Unknown action.")
     return aggregate(
         "phone",
         {
@@ -53,7 +53,7 @@ def run(action, inputs, params, context):
             "phoneinfoga": lambda i, p, c: phoneinfoga.run(
                 "scan",
                 i,
-                {**p, "run_timeout": min(int(p.get("run_timeout", 300)), 180)},
+                p,
                 c,
             ),
             "ignorant": extra.ignorant,

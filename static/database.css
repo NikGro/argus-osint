@@ -20,6 +20,13 @@
   color: var(--muted);
   margin: 8px 0 0;
 }
+/* Database actions line up with the page title, not between title and lead. */
+.databases-view > .view-heading {
+  align-items: flex-start;
+}
+.databases-view > .view-heading > .action-row {
+  min-height: calc(32px * 1.25);
+}
 .action-row {
   display: flex;
   align-items: center;
@@ -92,6 +99,15 @@
   width: 32px;
   height: 32px;
   color: var(--accent);
+}
+.database-table-topscroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 4px;
+}
+.database-table-topscroll > div {
+  height: 1px;
 }
 .database-table-wrap {
   max-width: 100%;

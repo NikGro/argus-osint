@@ -1,3 +1,4 @@
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import copy
 import hashlib
 import json
@@ -7,7 +8,6 @@ import threading
 import unittest
 from unittest.mock import patch
 from uuid import uuid4
-from core.application import get_default_application
 from core import graph
 from runtime_fixture import app
 from plugins import location
@@ -182,20 +182,8 @@ class UpdatesTests(unittest.TestCase):
             result[0]["document"]["nodes"][0]["data"]["country"], "Germany"
         )
 
-    def test_language_packs_and_report(self):
-        packs = [
-            json.loads(
-                (app.ROOT / "static" / "locales" / (c + ".json")).read_text(
-                    encoding="utf-8"
-                )
-            )["messages"]
-            for c in ("de", "en")
-        ]
-        self.assertEqual(set(packs[0]), set(packs[1]))
-        with patch.object(
-            get_default_application(), "settings", return_value={"language": "en"}
-        ):
-            output = app.report(self.project()).decode()
+    def test_report_is_english(self):
+        output = app.report(self.project()).decode()
         self.assertIn("Research report", output)
         self.assertIn("Print / Save as PDF", output)
 
@@ -216,14 +204,10 @@ class PluginManagerTests(unittest.TestCase):
         )
         self.manager.uninstall("location")
         self.assertNotIn("location", {p["id"] for p in self.manager.installed()})
-        self.manager.install("location")
+        self.manager.install_now("location", with_tools=False)
         item = next((p for p in self.manager.installed() if p["id"] == "location"))
         self.assertFalse(item["actions"][0]["default_params"]["enrich"])
 
-    @unittest.skipUnless(
-        Path("/run/argus/worker.sock").exists(),
-        "Requires enabled namespace worker runtime",
-    )
     def test_repo_install_is_pinned_verified_and_executable(self):
         source = b"def run(action,inputs,params,context):\n return {'outputs':[{'type':'value','data':{'value':'ok'}}]}\n"
         descriptor = {

@@ -1,5 +1,6 @@
 """Integration coverage for data plugins and all deferred data contracts, offline."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
 from core.errors import AppError
 import copy
 import json
@@ -135,7 +136,7 @@ class SourceRoutingContracts(unittest.TestCase):
         m.uninstall("email")
         item = next((p for p in m.library() if p["id"] == "email"))
         self.assertFalse(item["installed"])
-        m.install("email")
+        m.install_now("email", with_tools=False)
         self.assertTrue(
             next((p for p in m.library() if p["id"] == "email"))["installed"]
         )
@@ -256,11 +257,10 @@ class SourceRoutingContracts(unittest.TestCase):
             app.canonicalize_node(node)
         self.assertEqual(node["data"], {"value": "info", "code": ""})
 
-    def test_owning_plugins_ship_both_languages(self):
+    def test_plugins_carry_no_translations(self):
         m = self.manager()
         for p in m.installed():
-            self.assertTrue(p.get("translations", {}).get("de"), p["id"])
-            self.assertTrue(p.get("translations", {}).get("en"), p["id"])
+            self.assertNotIn("translations", p, p["id"])
 
     def test_cancelled_address_selection_terminal_and_original_unchanged(self):
         original, r, run = self.ambiguous()
@@ -343,8 +343,8 @@ class SourceRoutingContracts(unittest.TestCase):
         out = research.deduplicate(result["outputs"])
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0]["group"], "Instagram")
-        self.assertEqual(out[0]["label"], "Konto besteht?")
-        self.assertEqual(out[0]["data"]["value"], "Ja")
+        self.assertEqual(out[0]["label"], "Account exists?")
+        self.assertEqual(out[0]["data"]["value"], "Yes")
 
     def test_search_urls_omitted_direct_reported_findings_retained(self):
         rows = phoneinfoga.parse_output(

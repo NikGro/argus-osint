@@ -1,2 +1,0 @@
-# Application services; separated from pinned research tools for cacheable Docker builds.
-cryptography==50.0.2

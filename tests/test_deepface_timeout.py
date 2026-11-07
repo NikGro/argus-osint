@@ -1,5 +1,6 @@
 """Synthetic database records and mocked processes only; no face inference."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import threading
 import tempfile
 import unittest
@@ -26,19 +27,13 @@ class DeepFaceTimeout(unittest.TestCase):
                     {"id": str(i), "type": "image", "data": {"file_id": str(i)}}
                     for i in range(2)
                 ],
-                {"run_timeout": 0, "resize_large_images": True},
+                {"resize_large_images": True},
                 {"resolve_file": lambda ident: ident, "credential_dir": folder},
             )
         self.assertIsNone(process.call_args.args[1])
 
-    def test_zero_is_valid_but_invalid_values_are_rejected(self):
-        self.assertEqual(deepface_tool.validated({"run_timeout": 0})["run_timeout"], 0)
-        self.assertEqual(deepface_tool.SCHEMA["run_timeout"]["min"], 0)
-        for value in (-1, 1, 9, 901, True, float("inf")):
-            with self.subTest(value=value), self.assertRaises(ValueError):
-                deepface_tool.validated({"run_timeout": value})
-
-    def test_database_zero_survives_elapsed_time_and_preserves_comparison_limit(self):
+    def test_run_timeout_is_gone_and_database_search_compares_every_row(self):
+        self.assertNotIn("run_timeout", deepface_tool.SCHEMA)
         database = {
             "id": "db",
             "fields": [{"id": "photo", "type": "image"}],
@@ -48,50 +43,41 @@ class DeepFaceTimeout(unittest.TestCase):
             ],
         }
         verify = Mock(return_value={"outputs": []})
-        with (
-            patch.object(
-                _database_faces,
-                "connected_database",
-                return_value=({"id": "db"}, database),
-            ),
-            patch.object(
-                _database_faces.time, "monotonic", side_effect=[0, 10000, 20000, 30000]
-            ),
+        with patch.object(
+            _database_faces,
+            "connected_database",
+            return_value=({"id": "db"}, database),
+        ):
+            _database_faces.search(
+                [{"type": "database"}, {"id": "ref", "type": "image"}],
+                {"column_id": "photo", "max_comparisons": 1000},
+                {},
+                verify,
+            )
+        self.assertEqual(verify.call_count, 3)
+
+    def test_comparison_limit_is_kept(self):
+        database = {
+            "id": "db",
+            "fields": [{"id": "photo", "type": "image"}],
+            "rows": [
+                {"id": str(i), "cells": {"photo": {"file_id": str(i)}}}
+                for i in range(3)
+            ],
+        }
+        verify = Mock(return_value={"outputs": []})
+        with patch.object(
+            _database_faces,
+            "connected_database",
+            return_value=({"id": "db"}, database),
         ):
             result = _database_faces.search(
                 [{"type": "database"}, {"id": "ref", "type": "image"}],
-                {"column_id": "photo", "run_timeout": 0, "max_comparisons": 2},
+                {"column_id": "photo", "max_comparisons": 2},
                 {},
                 verify,
             )
         self.assertEqual(verify.call_count, 2)
-        self.assertTrue(
-            all(call.args[2]["run_timeout"] == 0 for call in verify.call_args_list)
-        )
-        self.assertTrue(result["warnings"])
-
-    def test_finite_database_timeout_stops_before_comparing(self):
-        database = {
-            "fields": [{"id": "photo", "type": "image"}],
-            "rows": [{"cells": {"photo": {"file_id": "x"}}}],
-            "id": "db",
-        }
-        verify = Mock()
-        with (
-            patch.object(
-                _database_faces,
-                "connected_database",
-                return_value=({"id": "db"}, database),
-            ),
-            patch.object(_database_faces.time, "monotonic", side_effect=[0, 11]),
-        ):
-            result = _database_faces.search(
-                [{"type": "database"}, {"type": "image"}],
-                {"column_id": "photo", "run_timeout": 10},
-                {},
-                verify,
-            )
-        verify.assert_not_called()
         self.assertTrue(result["warnings"])
 
     def test_process_without_deadline_still_obeys_cancellation(self):

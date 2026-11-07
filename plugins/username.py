@@ -5,16 +5,17 @@ from plugins import _consensus
 
 PLUGIN = {
     "id": "username",
+    "tools": ["consensus", "sherlock", "maigret", "user_scanner", "blackbird"],
     "name": "Username",
-    "category": "Recherche",
-    "description": "Profile finden; zusätzliche Angaben erst über Generic Deep Research abrufen.",
+    "category": "Research",
+    "description": "Find profiles; retrieve additional information using Generic Deep Research.",
     "actions": [
         {
             "id": "lookup",
-            "name": "Username recherchieren",
+            "name": "Research username",
             "inputs": ["username"],
             "external": True,
-            "external_notice": "Die Eingabe wird an die aktivierten Recherchequellen gesendet.",
+            "external_notice": "The input is sent to the enabled research sources.",
             "settings_only": [
                 "consensus_sites",
                 "sherlock_sites",
@@ -40,7 +41,6 @@ PLUGIN = {
                     "blackbird",
                 ],
                 "request_timeout": 12,
-                "run_timeout": 300,
                 "max_results": 500,
             },
         }
@@ -50,7 +50,7 @@ PLUGIN = {
 
 def run(action, inputs, params, context):
     if action != "lookup":
-        raise ValueError("Unbekannte Aktion.")
+        raise ValueError("Unknown action.")
     return aggregate(
         "username",
         {
@@ -62,7 +62,6 @@ def run(action, inputs, params, context):
                     **p,
                     "sites": p.get("sherlock_sites", []),
                     "max_results": min(int(p.get("max_results", 500)), 300),
-                    "run_timeout": min(int(p.get("run_timeout", 300)), 180),
                 },
                 c,
             ),

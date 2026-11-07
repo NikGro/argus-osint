@@ -1,62 +1,23 @@
-"""Optional isolated-worker supervisor; ordinary app remains unprivileged."""
+"""Container supervisor: starts the VPN controller, then the unprivileged app.
+
+Plugins and their tools run as ordinary child processes of the application
+(UID 10001) inside this container; there is no per-job sandbox. All their
+traffic follows the container's routes, so the VPN firewall applies to them.
+"""
 
 import os
 from pathlib import Path
 import signal
 import subprocess
 import sys
-import threading
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+APP_UID = 10001
 
 
-def main():
-    command = sys.argv[1:] or ["python", "server.py"]
-    if not command[-1].endswith("server.py"):
-        # Explicit maintenance/test commands do not start application services.
-        os.execvp(command[0], command)
-    if os.geteuid() != 0:
-        print(
-            "Integrated VPN/browser/community runtime requires the supplied Compose permissions; starting the unprivileged application. Unavailable isolated features remain disabled.",
-            file=sys.stderr,
-            flush=True,
-        )
-        os.execvp(command[0], command)
-    # Fail closed: an explicitly requested worker configuration must support isolation.
-    subprocess.run(
-        [
-            "/usr/bin/unshare",
-            "--mount",
-            "--net",
-            "--pid",
-            "--fork",
-            "--mount-proc",
-            "/bin/true",
-        ],
-        check=True,
-    )
-    # Namespace support alone is insufficient: some host kernels cannot load
-    # seccomp filters. Check the complete privilege transition in a disposable
-    # child before publishing the broker socket or starting application services.
-    subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "from core.worker_security import harden_worker; harden_worker(20000)",
-        ],
-        cwd=ROOT,
-        check=True,
-        timeout=15,
-    )
-    from core.egress import Proxy, Handler
-    from core.worker_broker import serve
-
-    data = Path(os.environ.get("DATA_DIR", "/data"))
-    home = data / "home"
-    home.mkdir(exist_ok=True)
-    os.chown(home, 10001, 10001)
+def start_vpn(data):
     private = data / ".vpn-private"
     private.mkdir(mode=0o700, exist_ok=True)
     os.chmod(private, 0o700)
@@ -71,27 +32,36 @@ def main():
             raise SystemExit("Integrated VPN controller failed to start")
         try:
             Gateway().call("status")
-            break
+            return vpn
         except Exception:
             time.sleep(0.1)
-    else:
-        vpn.terminate()
-        raise SystemExit("Integrated VPN controller startup timed out")
+    vpn.terminate()
+    raise SystemExit("Integrated VPN controller startup timed out")
 
-    socket = Path("/run/argus-egress.sock")
-    socket.unlink(missing_ok=True)
-    proxy = Proxy(str(socket), Handler)
-    # Workers have distinct per-job UIDs. Proxy.verify_request checks SO_PEERCRED
-    # before parsing HTTP; world-connect permission is not anonymous proxy access.
-    socket.chmod(0o666)
-    threading.Thread(target=proxy.serve_forever, daemon=True).start()
-    threading.Thread(target=serve, daemon=True).start()
+
+def main():
+    command = sys.argv[1:] or ["python", "server.py"]
+    if not command[-1].endswith("server.py"):
+        # Explicit maintenance/test commands do not start application services.
+        os.execvp(command[0], command)
+    if os.geteuid() != 0:
+        print(
+            "Started without root: the integrated VPN needs the supplied Compose permissions and stays unavailable.",
+            file=sys.stderr,
+            flush=True,
+        )
+        os.execvp(command[0], command)
+    data = Path(os.environ.get("DATA_DIR", "/data"))
+    for folder in (data, data / "home", data / "tools", data / "plugins"):
+        folder.mkdir(parents=True, exist_ok=True)
+        os.chown(folder, APP_UID, APP_UID)
+    vpn = start_vpn(data)
     child = subprocess.Popen(
         command,
-        user=10001,
-        group=10001,
+        user=APP_UID,
+        group=APP_UID,
         extra_groups=[],
-        env={**os.environ, "HOME": "/data/home"},
+        env={**os.environ, "HOME": str(data / "home")},
     )
 
     def stop(*_):

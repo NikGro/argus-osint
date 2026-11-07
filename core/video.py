@@ -16,7 +16,7 @@ def probe_video(path, required=True):
                 "-select_streams",
                 "v:0",
                 "-show_entries",
-                "stream=codec_type,width,height,duration:stream_tags=rotate:stream_side_data=rotation:format=format_name,duration",
+                "stream=codec_type,width,height,duration:stream_disposition=attached_pic:stream_tags=rotate:stream_side_data=rotation:format=format_name,duration",
                 "-of",
                 "json",
                 str(path),
@@ -27,6 +27,9 @@ def probe_video(path, required=True):
         )
         info = json.loads(result.stdout)
         stream = info.get("streams", [])[0]
+        if stream.get("disposition", {}).get("attached_pic"):
+            # Cover art in an audio file is not a video.
+            raise ValueError("attached picture")
         duration = float(
             info.get("format", {}).get("duration") or stream.get("duration") or 0
         )
@@ -61,4 +64,56 @@ def probe_video(path, required=True):
     except (OSError, ValueError, KeyError, IndexError, subprocess.SubprocessError):
         if required:
             raise DomainError("validation.9c5a20da87") from None
+        return {}
+
+
+AUDIO_MIMES = (
+    ("mp3", "audio/mpeg"),
+    ("wav", "audio/wav"),
+    ("flac", "audio/flac"),
+    ("ogg", "audio/ogg"),
+    ("webm", "audio/webm"),
+    ("matroska", "audio/webm"),
+    ("mp4", "audio/mp4"),
+    ("mov", "audio/mp4"),
+    ("aac", "audio/aac"),
+)
+
+
+def probe_audio(path):
+    """Duration and MIME type of an audio file, or {} when it is not one."""
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-select_streams",
+                "a:0",
+                "-show_entries",
+                "stream=codec_type,duration:format=format_name,duration",
+                "-of",
+                "json",
+                str(path),
+            ],
+            capture_output=True,
+            timeout=15,
+            check=True,
+        )
+        info = json.loads(result.stdout)
+        stream = info.get("streams", [])[0]
+        duration = float(
+            info.get("format", {}).get("duration") or stream.get("duration") or 0
+        )
+        if stream.get("codec_type") != "audio" or not math.isfinite(duration):
+            return {}
+        if duration <= 0:
+            return {}
+        formats = info.get("format", {}).get("format_name", "").split(",")
+        mime = next(
+            (mime for name, mime in AUDIO_MIMES if name in formats),
+            "application/octet-stream",
+        )
+        return {"duration": duration, "mime": mime}
+    except (OSError, ValueError, KeyError, IndexError, subprocess.SubprocessError):
         return {}

@@ -1,15 +1,15 @@
-# Argus Community-Plugin-Vorlage
+# Community plugin example
 
-Diese drei Dateien in den Root eines eigenen öffentlichen GitHub-Repositories kopieren. In Argus: Plugins → Plugins hinzufügen → Community-Repositories verwalten → Repository-Link hinzufügen → Beispiel installieren.
+Copy these three files into the root of your own public GitHub repository. In ARGUS: **Plugins → Add plugins → Add community repository**, paste the repository link and install the example.
 
-`template.py` enthält `run(action, inputs, params, context)`; die Repository-Liste beschreibt Eingabetypen, Aktionen, Standardparameter und optionale Eingabedialoge. Nach jeder Codeänderung `sha256sum template.py` ausführen und die Prüfsumme im Manifest aktualisieren. Die Installation übernimmt den festgelegten Commit und prüft den SHA-256-Hash.
+`template.py` contains `run(action, inputs, params, context)`; `argus-repository.json` describes input types, actions, default parameters and optional input dialogs. After every code change run `sha256sum template.py` and update the checksum in the manifest: installation pins the commit and verifies the SHA-256 hash.
 
-Eingabetypen: url, email, username, phone, location, image, file, value, datetime, note oder * für alle Datenknoten. Ausgabe: `outputs` mit type, label und data; optional source_input, source, relation und group. Jede einzelne Angabe erhält einen eigenen Value-Node mit `data: {"value": "…"}`. Mindestens zwei Ausgaben gleicher group werden gruppiert. `group_outputs: false` deaktiviert automatische Gruppen. Bestehende Knoten können über `updates: [{id, data, evidence}]` ergänzt werden.
+**Inputs:** `url`, `email`, `username`, `phone`, `location`, `image`, `video`, `audio`, `file`, `value`, `datetime`, `note`, or `*` for every data node.
 
-Dateien: `context['resolve_file'](file_id)` liefert ausschließlich Pfade zu hochgeladenen Dateien der übergebenen Datei-/Bild-Eingaben. Diese Originale nur lesen. Temporäre Berichte im Arbeitsverzeichnis erzeugen. Der Prozess läuft als nicht privilegierter Containerbenutzer, mit Zeit-, Speicher- und Ausgabelimits; er ist keine vollständige Sicherheits-Sandbox. Nur vertrauenswürdigen Code installieren.
+**Outputs:** return `outputs`, each with `type`, `label` and `data`; optionally `source_input`, `source`, `relation` and `group`. Use the matching data type where one exists (for example `username` or `datetime`) and `value` with `data: {"value": "…"}` otherwise. Two or more outputs with the same `group` are grouped; `group_outputs: false` turns automatic groups off. Existing nodes can be extended with `updates: [{id, data, evidence}]`.
 
-Manuelle Eingabe: `input_prompt` in einer Aktion öffnet vor dem Lauf ein modales Formular. Laufzeitabhängig kann `run()` stattdessen `{"outputs": [], "input_request": {"title": "…", "fields": [{"key": "parameter", "label": "…", "type": "text", "required": true}]}}` zurückgeben. Argus pausiert die Warteschlange, speichert die Antwort als Aktorparameter und führt denselben Aktor erneut aus. Deshalb Eingaben prüfen, bevor externe Nebenwirkungen ausgelöst werden. Abbrechen beendet die Fortsetzung; der Aktor kann später erneut gestartet werden.
+**Files:** `context["resolve_file"](file_id)` returns paths only for uploaded files of the file, image, video or audio inputs passed in. Read these originals only and write temporary output to the working directory.
 
-Mehrere Quellen: Im Aktor-default_params `use_quellenname: true` und `source_order: ["quellenname", "andere"]` angeben. Die Oberfläche erzeugt Schalter und die sortierbare Quellenliste. Das Plugin muss die Reihenfolge in run selbst nacheinander abarbeiten. Quellenpriorität und Schalter sind globale Plugin-Einstellungen; andere Parameter können pro Aktor überschrieben werden.
+**Manual input:** an `input_prompt` on an action opens a form before the run. Alternatively `run()` can return `{"outputs": [], "input_request": {"title": "…", "fields": [{"key": "parameter", "label": "…", "type": "text", "required": true}]}}`; ARGUS pauses the queue, stores the answer as a tool parameter and runs the same tool again. Validate input before causing external side effects. Cancelling ends the continuation; the tool can be started again later.
 
-Neue Plugins benötigen keine Abhängigkeit von anderen Plugins. Frontend-Daten bleiben typisiert; plugininterne JSON-Strukturen bleiben im Backend und in der Herkunft.
+**Trust:** community plugins run with the same rights as ARGUS itself, without a sandbox. Install only code you trust.

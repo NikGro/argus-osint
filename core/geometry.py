@@ -9,7 +9,7 @@ LAYOUT = json.loads(
 
 
 def node_bounds(node, preferences=None):
-    preferences = preferences or {"tags": [], "language": "de"}
+    preferences = preferences or {"tags": []}
     appearance = node.get("appearance", {})
     display = node.get("display", {})
     size = LAYOUT.get(node["type"], LAYOUT["base"])
@@ -20,8 +20,18 @@ def node_bounds(node, preferences=None):
         width, height = appearance.get("width", width), appearance.get("height", height)
     if node["type"] == "video" and display.get("preview"):
         height = LAYOUT["videoPreviewHeight"]
+    if node["type"] == "audio" and display.get("preview"):
+        height = LAYOUT["audioPreviewHeight"]
     if node["type"] == "image" and display.get("preview"):
         height = LAYOUT["imagePreviewHeight"]
+    if node["type"] == "error":
+        # Mirrors errorDisplayLines in the frontend: own line breaks, then wrapping.
+        message = str(node.get("data", {}).get("message") or "")
+        lines = sum(
+            max(1, -(-len(part) // size["charsPerLine"]))
+            for part in message.splitlines() or [""]
+        )
+        height = size["height"] + size["line"] * (min(size["maxLines"], lines) - 1)
     if node["type"] == "location":
         from core.node_policy import formatted_address
 
@@ -43,9 +53,7 @@ def node_bounds(node, preferences=None):
             height += LAYOUT["mapHeight"]
     from core.node_metadata import badge_height
 
-    height += badge_height(
-        node, width, preferences.get("tags", []), preferences.get("language", "de")
-    )
+    height += badge_height(node, width, preferences.get("tags", []))
     height += LAYOUT["quickActionHeight"] * sum(
         bool(display.get(key))
         for key in (

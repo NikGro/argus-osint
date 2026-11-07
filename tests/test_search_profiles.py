@@ -1,5 +1,6 @@
 """Offline contracts for ordered provider scopes and partial results."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import copy
 import json
 import tempfile
@@ -50,10 +51,7 @@ class SearchProfiles(unittest.TestCase):
             (folder / "result.json").write_text("{}")
             return ("", "")
 
-        with (
-            patch("plugins.maigret.shutil.which", return_value="maigret"),
-            patch("plugins.maigret.bounded_run", side_effect=run),
-        ):
+        with patch("plugins.maigret.bounded_run", side_effect=run):
             maigret.run("search", [node], scope, {})
 
     def test_order_custom_and_provider_isolation(self):

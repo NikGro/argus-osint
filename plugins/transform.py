@@ -1,14 +1,17 @@
 PLUGIN = {
     "id": "transform",
-    "name": "JSON-Transform",
-    "description": "JavaScript im Browser-Worker; JSON-Eingaben in Datenknoten umformen.",
+    "name": "Data transform",
+    "description": "JavaScript in a browser worker; turn inputs into data nodes.",
     "actions": [
         {
             "id": "code",
-            "name": "JavaScript-Transform",
+            "name": "JavaScript transform",
             "inputs": ["*"],
             "execution": "browser",
             "external": False,
+            "parameter_schema": {
+                "code": {"label": "JavaScript", "multiline": True, "code": True}
+            },
         }
     ],
 }

@@ -10,7 +10,10 @@ import re
 import tempfile
 from urllib.parse import urlsplit
 from plugins._process import bounded_run
+from plugins._browser import browser_command
+from core import tools
 from core.provider_registry import identity
+from plugins._helpers import helper
 
 SECTIONS = {
     "profile": True,
@@ -35,7 +38,6 @@ DEFAULTS = {
     **{"include_" + key: value for key, value in SECTIONS.items()},
     **{key + "_limit": value for key, value in LIMITS.items()},
     "request_timeout": 15,
-    "run_timeout": 300,
     "browser_enabled": True,
     "browser_timeout": 60,
     "use_toutatis": True,
@@ -45,12 +47,13 @@ DEFAULTS = {
 }
 PLUGIN = {
     "id": "instagram",
+    "tools": ["instagram", "flaresolverr"],
     "name": "Instagram Deep Research",
-    "category": "Recherche",
+    "category": "Research",
     "icon": "instagram",
-    "connection_action": {"id": "login", "label": "Bei Instagram anmelden"},
+    "connection_action": {"id": "login", "label": "Log in to Instagram"},
     "auth_fields": [["login_username", "login_password"], ["sessionid"]],
-    "description": "Instagram-Profile gezielt auslesen: Profil, Kontakte, Kontenlisten, Beiträge und Stories.",
+    "description": "Retrieve Instagram profiles, contacts, account lists, posts and stories.",
     "actions": [
         {
             "id": "lookup",
@@ -59,20 +62,20 @@ PLUGIN = {
             "providers": ["instagram"],
             "max_inputs": 1,
             "external": True,
-            "external_notice": "Abruf bei Instagram mit den Rechten der optional hinterlegten Sitzung. Medien werden als Links gespeichert; Stories werden nicht als gesehen markiert.",
+            "external_notice": "Retrieve Instagram data with the permissions of the optional saved session. Media are saved as links; stories are not marked as viewed.",
             "default_params": DEFAULTS,
             "parameter_sections": [
                 {
                     "key": key,
                     "label": {
-                        "profile": "Allgemeine Profilinfos",
-                        "contacts": "Kontaktdaten",
-                        "recovery": "Maskierte Wiederherstellungsangaben",
-                        "followers": "Follower",
-                        "following": "Gefolgte Konten",
-                        "posts": "Beiträge",
-                        "highlights": "Highlight-Stories",
-                        "stories": "Aktuelle Stories",
+                        "profile": "General profile information",
+                        "contacts": "Contact details",
+                        "recovery": "Masked account recovery details",
+                        "followers": "Followers",
+                        "following": "Following",
+                        "posts": "Posts",
+                        "highlights": "Highlight stories",
+                        "stories": "Current stories",
                     }[key],
                     "toggle": "include_" + key,
                     "limits": (
@@ -90,7 +93,26 @@ PLUGIN = {
                 }
                 for key in SECTIONS
             ],
-            "parameter_help": "0 = kein Mengenlimit. Zeitlimit und Projektlimit von 5.000 Nodes bleiben aktiv.",
+            "parameter_help": "0 = no item limit. The project limit of 5,000 nodes still applies.",
+            "parameter_schema": {
+                key: {"label": label}
+                for key, label in {
+                    "followers_limit": "Followers limit",
+                    "following_limit": "Following limit",
+                    "posts_limit": "Posts limit",
+                    "comments_limit": "Comments per post",
+                    "highlights_limit": "Highlights limit",
+                    "highlight_items_limit": "Stories per highlight",
+                    "stories_limit": "Current stories limit",
+                    "request_timeout": "Request timeout (seconds)",
+                    "browser_enabled": "Built-in browser fallback",
+                    "browser_timeout": "Browser timeout (seconds)",
+                    "use_toutatis": "Look up masked recovery details (Toutatis)",
+                    "sessionid": "Instagram session ID (optional, plugin settings only)",
+                    "login_username": "Instagram login username",
+                    "login_password": "Instagram login password",
+                }.items()
+            },
             "settings_only": [
                 "sessionid",
                 "login_username",
@@ -104,7 +126,7 @@ PLUGIN = {
 
 def target(data):
     if identity(data.get("provider", "")) != "instagram":
-        raise ValueError("Ein Instagram-Profil anschließen.")
+        raise ValueError("Connect one Instagram profile.")
     identifier = str(data.get("identifier", "")).strip().lstrip("@")
     url = str(data.get("url", "")).strip()
     username = ""
@@ -119,7 +141,7 @@ def target(data):
             or parsed.username
             or parsed.password
         ):
-            raise ValueError("Keine gültige Instagram-Profil-URL.")
+            raise ValueError("Invalid Instagram profile URL.")
         if len(parts) == 1 and parts[0].lower() not in (
             "accounts",
             "explore",
@@ -137,7 +159,7 @@ def target(data):
             user_id = (parse_qs(parsed.query).get("user_id") or [""])[0]
         else:
             raise ValueError(
-                "Eine Profil-URL verwenden, keine Beitrags-, Login- oder Startseite."
+                "Use a profile URL rather than a post, login or home page."
             )
     if not username and identifier:
         if identifier.isdecimal():
@@ -145,28 +167,28 @@ def target(data):
         else:
             username = identifier
     if username and not re.fullmatch(r"[A-Za-z0-9_.]{1,30}", username):
-        raise ValueError("Ungültiger Instagram-Benutzername.")
+        raise ValueError("Invalid Instagram username.")
     if user_id and not user_id.isdecimal():
-        raise ValueError("Ungültige Instagram-ID.")
+        raise ValueError("Invalid Instagram ID.")
     if not username and not user_id:
         raise ValueError(
-            "Instagram-Profil benötigt Benutzername, Profil-URL oder numerische ID."
+            "An Instagram profile requires a username, profile URL or numeric ID."
         )
     return {"username": username, "user_id": user_id}
 
 
 def run(action, inputs, params, context):
     if action != "lookup" or len(inputs) != 1 or inputs[0]["type"] != "profile":
-        raise ValueError("Genau ein Instagram-Profil anschließen.")
+        raise ValueError("Connect exactly one Instagram profile.")
     settings = {**DEFAULTS, **params}
     lookup = target(inputs[0]["data"])
     if not isinstance(settings["browser_enabled"], bool) or not isinstance(
         settings["use_toutatis"], bool
     ):
-        raise ValueError("Browser muss ein- oder ausgeschaltet sein.")
+        raise ValueError("Browser must be enabled or disabled.")
     for key in SECTIONS:
         if not isinstance(settings["include_" + key], bool):
-            raise ValueError("Bereiche müssen ein- oder ausgeschaltet sein.")
+            raise ValueError("Sections must be enabled or disabled.")
     for key in LIMITS:
         value = settings[key + "_limit"]
         if (
@@ -175,11 +197,10 @@ def run(action, inputs, params, context):
             or value < 0
             or int(value) != value
         ):
-            raise ValueError("Limits müssen ganze Zahlen ab 0 sein.")
+            raise ValueError("Limits must be whole numbers of 0 or more.")
         settings[key + "_limit"] = int(value)
     for key, low, high in [
         ("request_timeout", 2, 30),
-        ("run_timeout", 30, 1800),
         ("browser_timeout", 10, 120),
     ]:
         value = settings[key]
@@ -189,27 +210,27 @@ def run(action, inputs, params, context):
             or int(value) != value
             or not low <= value <= high
         ):
-            raise ValueError("Ungültiges Zeitlimit: " + key)
+            raise ValueError("Invalid timeout: " + key)
     if not any(settings["include_" + key] for key in SECTIONS):
-        raise ValueError("Mindestens einen Recherchebereich aktivieren.")
+        raise ValueError("Enable at least one research section.")
     # Keep the session only in plugin settings/stdin, never output provenance or logs.
     if not isinstance(settings["sessionid"], str) or len(settings["sessionid"]) > 4096:
-        raise ValueError("Ungültige Instagram-Sitzung.")
+        raise ValueError("Invalid Instagram session.")
     remaining = max(0, 5000 - int(context.get("node_count", 0)) - 1)
     if remaining < 5:
-        raise ValueError("Projektlimit erreicht. Ein neues Projekt verwenden.")
+        raise ValueError("Project limit reached. Use a new project.")
     result = collect(lookup, settings, context, remaining)
     return finish_result(result, inputs, settings)
 
 
 def collect(lookup, settings, context, remaining=4999, auth_only=False):
     if bool(settings.get("login_username")) != bool(settings.get("login_password")):
-        raise ValueError("Für den Login Benutzername und Passwort zusammen eingeben.")
+        raise ValueError("Enter both username and password to sign in.")
     if any(
         not isinstance(settings.get(key, ""), str) or len(settings.get(key, "")) > 4096
         for key in ("login_username", "login_password", "sessionid")
     ):
-        raise ValueError("Ungültige Instagram-Zugangsdaten.")
+        raise ValueError("Invalid Instagram credentials.")
     credentials = Path(
         context.get("credential_dir") or Path("/tmp/argus-instagram-sessions")
     )
@@ -238,15 +259,16 @@ def collect(lookup, settings, context, remaining=4999, auth_only=False):
             "auth_only": auth_only,
             "transient": context.get("transient", {}),
             "session_output": str(Path(folder) / "session.json"),
+            "browser": browser_command(),
         }
         try:
             stdout, _ = bounded_run(
                 [
-                    "/opt/argus-tools/instagram-venv/bin/python",
+                    tools.python("instagram"),
                     "-I",
-                    str(Path(__file__).with_name("_instagram_runner.py")),
+                    helper("_instagram_runner.py"),
                 ],
-                int(settings["run_timeout"]) + 15,
+                None,
                 payload,
                 max_bytes=12 * 1024 * 1024,
             )
@@ -257,13 +279,13 @@ def collect(lookup, settings, context, remaining=4999, auth_only=False):
             if checkpoint.exists():
                 result = json.loads(checkpoint.read_text())
                 result.setdefault("warnings", []).append(
-                    "Zeit- oder Prozesslimit erreicht; bisherige Ergebnisse bleiben erhalten."
+                    "Time or process limit reached; results so far are kept."
                 )
             else:
                 result = {
                     "outputs": [],
                     "warnings": [
-                        "Instagram-Abruf konnte nicht abgeschlossen werden. Sitzung und Zeitlimits in den Plugin-Einstellungen prüfen."
+                        "Instagram retrieval could not complete. Check the session and time limits in plugin settings."
                     ],
                 }
         session = Path(folder) / "session.json"
@@ -278,16 +300,14 @@ def collect(lookup, settings, context, remaining=4999, auth_only=False):
 
 def connect(action, params, context):
     if action != "login":
-        raise ValueError("Verbindungsaktion nicht verfügbar.")
+        raise ValueError("Connection action unavailable.")
     settings = {**DEFAULTS, **params}
     if not (
         settings.get("sessionid")
         or settings.get("login_username")
         and settings.get("login_password")
     ):
-        raise ValueError(
-            "Zuerst Instagram-Zugangsdaten in den Plugin-Einstellungen hinterlegen."
-        )
+        raise ValueError("Add Instagram credentials in the plugin settings first.")
     return collect({"username": "", "user_id": ""}, settings, context, auth_only=True)
 
 
@@ -299,17 +319,17 @@ def finish_result(result, inputs, settings):
     if not result.get("outputs"):
         message = (
             "; ".join(result.get("warnings", []))
-            or "Keine Daten in den gewählten Bereichen zugänglich."
+            or "No accessible data in the selected sections."
         )
         result["outputs"] = [
             {
                 "type": "error",
-                "label": "Instagram-Abruf",
+                "label": "Instagram collection",
                 "data": {
-                    "title": "Keine Instagram-Daten verfügbar",
+                    "title": "No Instagram data available",
                     "message": message,
                 },
-                "relation": "Recherchehinweis",
+                "relation": "Research information",
                 "source_input": inputs[0]["id"],
                 "source": {"tool": "Argus Instagram"},
             }
@@ -321,7 +341,7 @@ def finish_result(result, inputs, settings):
     ):
         result["failed"] = True
         result["error"] = (
-            "; ".join(result.get("warnings", [])) or "Keine Instagram-Daten verfügbar."
+            "; ".join(result.get("warnings", [])) or "No Instagram data available."
         )
     result["group_outputs"] = True
     result["log"] = json.dumps(

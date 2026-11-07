@@ -255,7 +255,7 @@ class DatasetImports:
                 if len(identifiers) == 1:
                     sheets, chosen = file_sheets, sheet
                 warnings.append(
-                    "Formeln werden nicht ausgeführt; gespeicherte Zellwerte werden importiert."
+                    "Formulas are not executed; stored cell values are imported."
                 )
                 records.extend(records_from_matrix(matrix, body.get("headers", True)))
                 continue

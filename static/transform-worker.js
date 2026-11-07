@@ -4,7 +4,7 @@ self.onmessage = function (event) {
     const fn = new Function('inputs', '"use strict";\n' + event.data.code);
     const output = fn(event.data.inputs);
     if (!Array.isArray(output))
-      throw new Error('Code muss ein Array von {type,label,data} zurückgeben.');
+      throw new Error('Code must return an array of {type, label, data}.');
     self.postMessage({ outputs: JSON.parse(JSON.stringify(output)) });
   } catch (error) {
     self.postMessage({ error: String(error.message || error) });

@@ -1,3 +1,4 @@
+import tool_stubs  # noqa: F401  (external tools count as installed)
 import io
 import json
 import shutil
@@ -121,6 +122,28 @@ class APITests(unittest.TestCase):
         cls.httpd.shutdown()
         cls.httpd.server_close()
 
+    def test_keep_alive_survives_post_bodies(self):
+        """A POST body must never be parsed as the next request (clear logs bug)."""
+        import http.client
+
+        conn = http.client.HTTPConnection("127.0.0.1", self.httpd.server_address[1])
+        headers = {
+            "Authorization": "Bearer " + app.AUTH.key,
+            "Content-Type": "application/json",
+        }
+        try:
+            for path in ("/api/system-logs/clear", "/api/logout"):
+                conn.request("POST", path, body=b"{}", headers=headers)
+                response = conn.getresponse()
+                response.read()
+                self.assertLess(response.status, 500, path)
+                conn.request("GET", "/api/system-logs?q=&offset=0", headers=headers)
+                response = conn.getresponse()
+                self.assertEqual(response.status, 200)
+                self.assertIn("lines", json.loads(response.read()))
+        finally:
+            conn.close()
+
     def call(self, path, body=None, headers=None, raw=None):
         payload = (
             raw
@@ -218,12 +241,6 @@ class APITests(unittest.TestCase):
         self.assertEqual(result["document"]["nodes"][-1]["type"], "error")
         self.assertEqual(result["document"]["runs"][0]["status"], "failed")
 
-    def test_language_packs_are_served_as_json(self):
-        for code in ("de", "en"):
-            pack = self.call("/locales/" + code + ".json")
-            self.assertEqual(pack["_meta"]["code"], code)
-            self.assertIn("Einstellungen", pack["messages"])
-
     def test_report_escapes_input(self):
         p = self.project()
         with urllib.request.urlopen(
@@ -264,17 +281,21 @@ class APITests(unittest.TestCase):
             ),
             "4",
         )
-        self.assertTrue(all((o["type"] == "value" for o in result["outputs"])))
+        self.assertTrue(
+            all(o["type"] in ("value", "datetime") for o in result["outputs"])
+        )
         self.assertTrue(
             any(
                 (
                     o["label"].endswith("ModifyDate")
-                    and o["data"] == {"value": "2026:10:13 10:00:00"}
+                    and o["type"] == "datetime"
+                    and o["data"]
+                    == {"date": "2026-10-13", "time": "10:00", "timezone": "UTC"}
+                    and o["source"]["raw_value"] == "2026:10:13 10:00:00"
                     for o in result["outputs"]
                 )
             )
         )
-        self.assertTrue(all((set(o["data"]) == {"value"} for o in result["outputs"])))
         with self.assertRaises(ValueError):
             app.resolve_file("../../server.py")
 

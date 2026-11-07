@@ -1,6 +1,5 @@
+import { statusLabel } from './labels.js';
 import layout_spec_default from '../layout-spec.json';
-import { t } from '../i18n.js';
-import { language } from '../i18n.js';
 var canvas_renderer_default = {
   name: 'canvas-renderer',
   dependencies: [
@@ -8,7 +7,6 @@ var canvas_renderer_default = {
     'graphGroupModel',
     'locationDisplayLines',
     'nodeBadgeHeight',
-    'pluginText',
     'resourceActions'
   ],
   create({
@@ -21,7 +19,6 @@ var canvas_renderer_default = {
     graphGroupModel,
     locationDisplayLines,
     nodeBadgeHeight,
-    pluginText,
     resourceActions
   }) {
     function nodeRect(node) {
@@ -34,8 +31,15 @@ var canvas_renderer_default = {
       }
       if (node.type === 'video' && node.display?.preview)
         h = layout_spec_default.videoPreviewHeight;
+      if (node.type === 'audio' && node.display?.preview)
+        h = layout_spec_default.audioPreviewHeight;
       if (node.type === 'image' && node.display?.preview)
         h = layout_spec_default.imagePreviewHeight;
+      if (node.type === 'error')
+        h = Math.max(
+          size.height,
+          size.height + (errorDisplayLines(node.data?.message, w).length - 1) * size.line
+        );
       if (node.type === 'location') {
         h = Math.max(
           size.height,
@@ -64,16 +68,17 @@ var canvas_renderer_default = {
         y: node.y,
         w,
         h,
-        inputCount:
-          node.type === 'actor'
-            ? Math.max(
-                1,
-                pluginsState.catalog
-                  .find((p) => p.id === node.data.plugin)
-                  ?.actions.find((a) => a.id === node.data.action)?.min_inputs || 1
-              )
-            : 1
+        inputCount: node.type === 'actor' ? actionInputCount(node) : 1
       };
+    }
+    /** One input socket per expected input: all of them when the action takes a few. */
+    function actionInputCount(node) {
+      const action = pluginsState.catalog
+        .find((p) => p.id === node.data.plugin)
+        ?.actions.find((a) => a.id === node.data.action);
+      const min = Math.max(1, action?.min_inputs || 1),
+        max = action?.max_inputs;
+      return max && max > min && max <= 4 ? max : min;
     }
     function dataIcon(type) {
       if (pluginsState.dataTypes.get(type)?.node.icon)
@@ -81,6 +86,7 @@ var canvas_renderer_default = {
       return (
         {
           video: 'video',
+          audio: 'audio',
           email: 'email',
           phone: 'phone',
           username: 'account',
@@ -115,20 +121,20 @@ var canvas_renderer_default = {
       );
     }
     function summary(n) {
-      if (n.type === 'database') return n.data.database_title || t('ui.choose_database');
+      if (n.type === 'database') return n.data.database_title || 'Choose database';
       if (n.type === 'actor')
         return executionState.activeActors.has(n.id)
-          ? t('ui.running')
+          ? 'Running …'
           : executionState.actorQueue.some((job) => job.id === n.id)
-            ? t('ui.queued')
-            : t(n.data.status) || t('ui.ready_7f2ffe9a');
+            ? 'Queued'
+            : statusLabel(n.data.status || 'ready');
       if (n.type === 'person')
         return [
           n.data.birth_date,
           n.data.birth_place,
           n.data.birth_country
             ? /^[A-Z]{2}$/.test(n.data.birth_country)
-              ? new Intl.DisplayNames([language], {
+              ? new Intl.DisplayNames(['en'], {
                   type: 'region'
                 }).of(n.data.birth_country)
               : n.data.birth_country
@@ -142,14 +148,9 @@ var canvas_renderer_default = {
       if (n.type === 'datetime')
         return [n.data.date, n.data.time, n.data.timezone].filter(Boolean).join(' \xB7 ');
       if (n.type === 'location')
-        return formatLocation(n.data) || n.data.formatted_address || t('ui.location');
+        return formatLocation(n.data) || n.data.formatted_address || 'Location';
       return (
-        (n.type === 'value' && n.evidence?.run_id
-          ? pluginText(
-              pluginsState.catalog.find((p) => p.id === n.evidence.plugin),
-              n.data.value
-            )
-          : n.data.value) ??
+        (n.type === 'value' && n.evidence?.run_id ? n.data.value : n.data.value) ??
         n.data.text ??
         n.data.filename ??
         Object.keys(n.data).join(', ')
@@ -169,6 +170,31 @@ var canvas_renderer_default = {
       const cache = measureEdgeText.cache || (measureEdgeText.cache = new Map());
       if (!cache.has(text)) cache.set(text, context.measureText(text).width);
       return cache.get(text);
+    }
+    /** Error message as wrapped lines, keeping its own line breaks; at most maxLines. */
+    function errorDisplayLines(message, width) {
+      const spec = layout_spec_default.error,
+        maxWidth = width - 24,
+        measure = (text) => (measureEdgeText(text) * 10) / 11,
+        lines = [];
+      for (const paragraph of String(message || '').split(/\r?\n/)) {
+        let line = '';
+        for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+          const proposed = line ? line + ' ' + word : word;
+          if (measure(proposed) <= maxWidth || !line) line = proposed;
+          else {
+            lines.push(line);
+            line = word;
+          }
+        }
+        lines.push(line);
+      }
+      while (lines.length > 1 && !lines[lines.length - 1]) lines.pop();
+      if (lines.length > spec.maxLines) {
+        lines.length = spec.maxLines;
+        lines[spec.maxLines - 1] += ' \u2026';
+      }
+      return lines.map((line) => fitNodeText(line, maxWidth, 10));
     }
     function fitNodeText(value, width, size = 13, spacing = 0) {
       const text = String(value);
@@ -200,6 +226,7 @@ var canvas_renderer_default = {
       short,
       measureEdgeText,
       fitNodeText,
+      errorDisplayLines,
       edgeBundleIds
     };
   }

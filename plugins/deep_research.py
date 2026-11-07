@@ -2,23 +2,33 @@
 
 import copy
 import json
-from pathlib import Path
 import re
 import sys
 from plugins import _extra_sources as extra, holehe, maigret
 from plugins._process import bounded_run
+from plugins._browser import browser_command
+from core import tools
 from plugins._profile import provider_key, profile_url, recipes
 from plugins._research import deduplicate, fact_outputs
 from core.provider_registry import label as provider_label, services
 from core.build_info import user_agent
 from core.errors import AppError
+from plugins._helpers import helper
 
 PLUGIN = {
     "id": "deep_research",
+    "tools": [
+        "maigret",
+        "user_scanner",
+        "blackbird",
+        "holehe",
+        "ignorant",
+        "flaresolverr",
+    ],
     "name": "Generic Deep Research",
-    "category": "Recherche",
+    "category": "Research",
     "icon": "argus",
-    "description": "Zusatzangaben gezielt zu einem Profil abrufen und als einzelne Daten-Nodes gruppieren.",
+    "description": "Fetch additional information for one profile and group individual data nodes.",
     "actions": [
         {
             "id": "lookup",
@@ -26,7 +36,7 @@ PLUGIN = {
             "inputs": ["profile"],
             "generic_profile": True,
             "external": True,
-            "external_notice": "Die Profilkennung wird nur für den ausgewählten Anbieter an die aktivierten Quellen übergeben.",
+            "external_notice": "The profile identifier is sent to enabled sources for the selected provider only.",
             "default_params": {
                 "use_argus": True,
                 "argus_browser_enabled": True,
@@ -46,7 +56,6 @@ PLUGIN = {
                 ],
                 "identifier_kind": "auto",
                 "request_timeout": 12,
-                "run_timeout": 300,
                 "max_results": 500,
             },
         }
@@ -72,7 +81,7 @@ def as_image(item):
         item = {
             **item,
             "type": "image",
-            "data": {"filename": item.get("label", "Bild"), "file_id": "", "url": url},
+            "data": {"filename": item.get("label", "Image"), "file_id": "", "url": url},
         }
     return item
 
@@ -105,7 +114,7 @@ class ProfileEnrichment:
             or len(self.inputs) != 1
             or self.inputs[0]["type"] != "profile"
         ):
-            raise ValueError("Genau ein Profil anschließen.")
+            raise ValueError("Connect exactly one profile.")
         self.profile = self.inputs[0]
         self.data = self.profile["data"]
         self.provider = provider_label(self.data.get("provider", "")).strip()
@@ -113,31 +122,26 @@ class ProfileEnrichment:
         self.url = profile_url(self.data.get("url", ""))
         if not self.provider or not (self.identifier or self.url):
             raise ValueError(
-                "Profil benötigt einen Anbieter und mindestens eine gültige Profil-URL oder einen Identifier."
+                "A profile requires a provider and at least a valid profile URL or an identifier."
             )
-        self.timeout = int(self.params.get("run_timeout", 300))
         self.request = int(self.params.get("request_timeout", 12))
         self.limit = int(self.params.get("max_results", 500))
-        if (
-            not 10 <= self.timeout <= 300
-            or not 2 <= self.request <= 30
-            or (not 1 <= self.limit <= 1000)
-        ):
-            raise ValueError("Ungültige Recherchelimits.")
+        if not 2 <= self.request <= 30 or (not 1 <= self.limit <= 1000):
+            raise ValueError("Invalid research limits.")
         self.order = self.params.get("source_order", list(TOOLS))
         if (
             not isinstance(self.order, list)
             or any((name not in TOOLS for name in self.order))
             or len(set(self.order)) != len(self.order)
         ):
-            raise ValueError("Ungültige Quellenreihenfolge.")
+            raise ValueError("Invalid source order.")
         if any(
             (
                 not isinstance(self.params.get("use_" + name, True), bool)
                 for name in TOOLS
             )
         ):
-            raise ValueError("Quellen müssen ein- oder ausgeschaltet sein.")
+            raise ValueError("Sources must be enabled or disabled.")
         self.enabled = [
             name
             for name in self.order + [n for n in TOOLS if n not in self.order]
@@ -147,8 +151,8 @@ class ProfileEnrichment:
             raise _Completed(
                 empty_result(
                     self.profile,
-                    "Keine Quelle aktiviert",
-                    "Mindestens eine Deep-Research-Quelle in den Plugin-Einstellungen aktivieren.",
+                    "No source enabled",
+                    "Enable at least one deep research source in the plugin settings.",
                     True,
                 )
             )
@@ -160,7 +164,7 @@ class ProfileEnrichment:
         self.success = 0
         self.fallback_kind = str(self.params.get("identifier_kind", "auto"))
         if self.fallback_kind not in ("auto", "username", "email", "phone", "id"):
-            raise ValueError("Identifier-Typ: auto, username, email, phone oder id.")
+            raise ValueError("Identifier type: auto, username, email, phone or id.")
         if self.fallback_kind == "auto":
             self.fallback_kind = (
                 self.saved[0]["kind"]
@@ -198,7 +202,6 @@ class ProfileEnrichment:
                 **self.params,
                 "identity_only": False,
                 "deep": True,
-                "run_timeout": self.timeout,
                 "request_timeout": self.request,
                 "max_results": min(self.limit, 300),
                 "service": self.service,
@@ -220,11 +223,11 @@ class ProfileEnrichment:
                 )
                 for self.original in self.result.get("outputs", []):
                     if self.original.get("relation") in (
-                        "Suchprotokoll",
-                        "Anbieter",
-                        "Registrierungsbefund",
-                        "Benutzername gefunden",
-                        "Profil gefunden",
+                        "Search record",
+                        "Provider",
+                        "Registration finding",
+                        "Username found",
+                        "Profile found",
                     ):
                         continue
                     self.item = copy.deepcopy(self.original)
@@ -261,19 +264,20 @@ class ProfileEnrichment:
             self.attempts += 1
             self.browser_timeout = int(self.params.get("argus_browser_timeout", 60))
             if not 10 <= self.browser_timeout <= 120:
-                raise ValueError("Browser-Zeitlimit: 10–120 Sekunden.")
+                raise ValueError("Browser time limit: 10–120 seconds.")
             self.stdout, self.stderr = bounded_run(
                 [
                     sys.executable,
                     "-I",
-                    str(Path(__file__).with_name("_argus_web_runner.py")),
+                    helper("_argus_web_runner.py"),
                 ],
-                self.timeout,
+                None,
                 {
                     "url": self.url,
                     "request_timeout": self.request,
                     "browser_enabled": self.params.get("argus_browser_enabled", True),
                     "browser_timeout": self.browser_timeout,
+                    "browser": browser_command(),
                 },
             )
             self.payload = json.loads(self.stdout)
@@ -299,11 +303,11 @@ class ProfileEnrichment:
                 self.attempts += 1
                 self.stdout, self.stderr = bounded_run(
                     [
-                        sys.executable,
+                        tools.python("maigret"),
                         "-I",
-                        str(Path(__file__).with_name("_profile_extract_runner.py")),
+                        helper("_profile_extract_runner.py"),
                     ],
-                    self.timeout,
+                    None,
                     {
                         "url": self.url,
                         "request_timeout": self.request,
@@ -329,29 +333,20 @@ class ProfileEnrichment:
                     "log": self.stdout,
                 }
             elif self.kind == "username" and self.value:
-                import maigret as package
-
-                self.package = package
-                from maigret.sites import MaigretDatabase
-
-                self.MaigretDatabase = MaigretDatabase
-                self.database = self.MaigretDatabase().load_from_path(
-                    str(Path(self.package.__file__).parent / "resources" / "data.json")
-                )
-                self.matches = [
-                    site.name
-                    for site in self.database.sites
-                    if site.name == self.service
-                ]
+                # Maigret runs in its own tool environment; read its site list directly.
+                self.database = json.loads(
+                    (
+                        tools.site_packages("maigret") / "maigret/resources/data.json"
+                    ).read_text(encoding="utf-8")
+                ).get("sites", {})
+                self.matches = [name for name in self.database if name == self.service]
                 if not self.matches and self.targets:
                     self.matches = [
-                        site.name
-                        for site in self.database.sites
-                        if site.name == self.targets[0]
+                        name for name in self.database if name == self.targets[0]
                     ]
                 if len(self.matches) != 1:
                     self.warnings.append(
-                        "Maigret: Anbieter nicht eindeutig unterstützt."
+                        "Maigret: provider not unambiguously supported."
                     )
                     return None
                 self.attempts += 1
@@ -387,8 +382,8 @@ class ProfileEnrichment:
             raise _Completed(
                 empty_result(
                     self.profile,
-                    "Keine passende Quelle",
-                    "Keine aktivierte Quelle unterstützt diese Profilkennung. Identifier-Typ prüfen oder eine öffentliche Profil-URL ergänzen.",
+                    "No supported source",
+                    "No enabled source supports this identifier. Check the identifier type or add a public profile URL.",
                     True,
                 )
             )
@@ -396,8 +391,8 @@ class ProfileEnrichment:
             raise _Completed(
                 empty_result(
                     self.profile,
-                    "Profil konnte nicht ausgelesen werden",
-                    "; ".join(self.warnings) or "Alle Quellen sind fehlgeschlagen.",
+                    "Could not read profile",
+                    "; ".join(self.warnings) or "All sources failed.",
                     True,
                     self.logs,
                 )
@@ -407,15 +402,13 @@ class ProfileEnrichment:
             self.item["group"] = self.provider
             self.item["group_id"] = "deep:" + self.profile["id"]
         if len(self.outputs) > self.limit:
-            self.warnings.append(
-                "Trefferlimit erreicht; vollständiger Abruf in den Logs."
-            )
+            self.warnings.append("Result limit reached; full retrieval is in the logs.")
         if not self.outputs:
             raise _Completed(
                 empty_result(
                     self.profile,
-                    "Keine zusätzlichen Daten gefunden",
-                    "Die ausgewählten Quellen lieferten keine Zusatzangaben. Das bedeutet nicht, dass das Profil nicht existiert."
+                    "No additional data found",
+                    "The selected sources returned no additional information. This does not mean the profile does not exist."
                     + (
                         " Hinweise: " + "; ".join(self.warnings)
                         if self.warnings
@@ -446,7 +439,7 @@ def empty_result(profile, title, message, failed=False, logs=None):
                 "type": "error",
                 "label": title,
                 "data": {"title": title, "message": message},
-                "relation": "Recherchehinweis",
+                "relation": "Research information",
                 "source_input": profile["id"],
                 "source": {"tool": "Argus", "profile": copy.deepcopy(profile["data"])},
             }

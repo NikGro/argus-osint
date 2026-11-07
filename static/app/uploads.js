@@ -1,5 +1,4 @@
 import { authorizedFetch } from '../auth.js';
-import { t } from '../i18n.js';
 var uploads_default = {
   name: 'uploads',
   dependencies: ['$', 'modalChoice', 'newNode'],
@@ -17,13 +16,13 @@ var uploads_default = {
       const data = await response.json();
       if (!response.ok) throw Error(data.error?.detail || data.error?.code || 'Upload failed');
       if (type === 'file' && data.is_image) {
-        const choice = await modalChoice(t('ui.photo_detected'), file.name, [
+        const choice = await modalChoice('Photo detected', file.name, [
           {
-            label: t('ui.use_image_node'),
+            label: 'Use image node',
             value: 'image'
           },
           {
-            label: t('ui.use_file_node'),
+            label: 'Use file node',
             value: 'file'
           }
         ]);
@@ -31,10 +30,13 @@ var uploads_default = {
         type = choice;
       }
       if (type === 'file' && data.is_video) type = 'video';
-      if (type === 'video' && !data.is_video) throw Error(t('ui.unsupported_video_file'));
+      if (type === 'file' && data.is_audio) type = 'audio';
+      if (type === 'audio' && !data.is_audio)
+        throw Error('This file is not a supported audio file (MP3, WAV, FLAC, OGG, M4A).');
+      if (type === 'video' && !data.is_video) throw Error('Unsupported video file.');
       if (type === 'image' && !data.is_image) type = 'file';
       if (workspaceState.project?.id !== pid)
-        throw Error(t('ui.open_the_original_project_to_add_the_file'));
+        throw Error('Open the original project to add the file.');
       newNode(
         type,
         file.name,
@@ -48,7 +50,7 @@ var uploads_default = {
               filename: file.name,
               mime: data.mime,
               size: data.size,
-              ...(type === 'video' ? { duration: data.duration } : {})
+              ...(['video', 'audio'].includes(type) ? { duration: data.duration } : {})
             },
         x,
         y

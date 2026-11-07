@@ -28,12 +28,6 @@ class ExtractedServiceContracts(unittest.TestCase):
             conn.execute(
                 "CREATE TABLE uploaded_files (id TEXT PRIMARY KEY, filename TEXT, mime TEXT, size INTEGER, is_image INTEGER)"
             )
-        locales = self.root / "static" / "locales"
-        locales.mkdir(parents=True)
-        for language in ("de", "en"):
-            (locales / (language + ".json")).write_text(
-                json.dumps({"_meta": {"name": language}})
-            )
         self.manager = Mock()
         self.manager.display_defaults.return_value = {}
         self.manager.installed.return_value = []
@@ -47,16 +41,13 @@ class ExtractedServiceContracts(unittest.TestCase):
         self,
     ):
         self.settings.save(
-            {
-                "language": "en",
-                "tags": [{"id": "one", "name": "Review", "color": "#abcdef"}],
-            }
+            {"tags": [{"id": "one", "name": "Review", "color": "#abcdef"}]}
         )
         with self.assertRaises(ValueError):
-            self.settings.save({"language": "missing"})
+            self.settings.save({"parallel_workers": 0})
         self.settings.save({"language": "de"})
         value = self.settings.load()
-        self.assertEqual(value["language"], "de")
+        self.assertNotIn("language", value)
         self.assertEqual(value["tags"][0]["name"], "Review")
 
     def test_upload_is_not_left_on_disk_after_a_database_failure(self):

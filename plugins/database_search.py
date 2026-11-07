@@ -4,17 +4,18 @@ import json
 import unicodedata
 from core.datasets import row_outputs
 from core.execution_context import checkpoint
+from plugins._database import column_prompt, connected_database
 
 PLUGIN = {
     "id": "database_search",
-    "name": "Datenbank durchsuchen",
+    "name": "Search database",
     "icon": "database-search",
-    "category": "Datenbanken",
-    "description": "Passende Datensätze in einer ausgewählten Spalte finden.",
+    "category": "Databases",
+    "description": "Find matching records in a selected column.",
     "actions": [
         {
             "id": "search",
-            "name": "Datenbank durchsuchen",
+            "name": "Search database",
             "inputs": ["database", "email", "phone", "username", "url", "value"],
             "min_inputs": 2,
             "max_inputs": 2,
@@ -26,7 +27,16 @@ PLUGIN = {
                 "max_results": 50,
             },
             "parameter_schema": {
-                "match_mode": {"enum": ["exact", "contains", "starts_with"]},
+                "match_mode": {
+                    "label": "Match mode",
+                    "enum": ["exact", "contains", "starts_with"],
+                    "labels": {
+                        "exact": "Exact",
+                        "contains": "Contains",
+                        "starts_with": "Starts with",
+                    },
+                },
+                "case_sensitive": {"label": "Case sensitive"},
                 "max_results": {"min": 1, "max": 200, "step": 1},
             },
             "settings_only": [],
@@ -36,74 +46,16 @@ PLUGIN = {
             ],
         }
     ],
-    "translations": {
-        "de": {
-            "Datenbank durchsuchen": "Datenbank durchsuchen",
-            "Datenbanken": "Datenbanken",
-            "match_mode": "Vergleichsmodus",
-            "case_sensitive": "Groß-/Kleinschreibung beachten",
-            "max_results": "Maximale Treffer",
-            "exact": "Exakt",
-            "contains": "Enthält",
-            "starts_with": "Beginnt mit",
-        },
-        "en": {
-            "Datenbank durchsuchen": "Search database",
-            "Datenbanken": "Databases",
-            "Passende Datensätze in einer ausgewählten Spalte finden.": "Find matching records in a selected column.",
-            "Datenbankspalte auswählen": "Choose database column",
-            "Referenzspalte": "Reference column",
-            "Spalte": "Column",
-            "Treffer": "Matches",
-            "Keine passenden Datensätze gefunden.": "No matching records found.",
-            "Trefferlimit erreicht; weitere Ergebnisse sind möglich.": "Result limit reached; additional matches may exist.",
-            "Datenbanktreffer": "Database match",
-            "match_mode": "Match mode",
-            "case_sensitive": "Case sensitive",
-            "max_results": "Maximum results",
-            "exact": "Exact",
-            "contains": "Contains",
-            "starts_with": "Starts with",
-        },
-    },
 }
-
-
-def column_prompt(database, *, images=False):
-    fields = [f for f in database["fields"] if not images or f["type"] == "image"]
-    return {
-        "outputs": [],
-        "input_request": {
-            "kind": "database_column",
-            "title": "Datenbankspalte auswählen",
-            "message": database["title"],
-            "fields": [
-                {
-                    "key": "column_id",
-                    "label": "Referenzspalte",
-                    "type": "select",
-                    "options": [{"value": f["id"], "label": f["name"]} for f in fields],
-                    "required": True,
-                }
-            ],
-        },
-    }
-
-
-def connected_database(inputs, context):
-    nodes = [n for n in inputs if n["type"] == "database"]
-    if len(nodes) != 1 or not nodes[0]["data"].get("database_id"):
-        raise ValueError("Genau eine Datenbank und eine passende Eingabe verbinden.")
-    return nodes[0], context["datasets"].snapshot(nodes[0]["data"]["database_id"])
 
 
 def run(action, inputs, params, context):
     if action != "search" or len(inputs) != 2:
-        raise ValueError("Genau eine Datenbank und eine passende Eingabe verbinden.")
+        raise ValueError("Connect exactly one database and one compatible input.")
     source, database = connected_database(inputs, context)
     query = next(n for n in inputs if n["type"] != "database")
     if query["type"] not in {"value", "email", "phone", "username", "url"}:
-        raise ValueError("Eingaben passen nicht zur Aktion.")
+        raise ValueError("Inputs are incompatible with this action.")
     field = next(
         (f for f in database["fields"] if f["id"] == params.get("column_id")), None
     )
@@ -116,10 +68,10 @@ def run(action, inputs, params, context):
         or type(limit) is not int
         or not 1 <= limit <= 200
     ):
-        raise ValueError("Ungültige Suchoption.")
+        raise ValueError("Invalid search option.")
     needle = query["data"].get("value")
     if needle is None or str(needle).strip() == "":
-        raise ValueError("Eine Suchangabe ist erforderlich.")
+        raise ValueError("A search value is required.")
 
     def normalize(value):
         text = unicodedata.normalize("NFKC", str(value)).strip()
@@ -135,7 +87,7 @@ def run(action, inputs, params, context):
     if capacity < 1:
         return {
             "outputs": [],
-            "warnings": ["Trefferlimit erreicht; weitere Ergebnisse sind möglich."],
+            "warnings": ["Result limit reached; additional matches may exist."],
         }
     for row in database["rows"]:
         checkpoint()
@@ -159,7 +111,7 @@ def run(action, inputs, params, context):
             continue
         result = row_outputs(database, row, source["id"])
         if matches >= limit or len(outputs) + len(result) > capacity:
-            warnings.append("Trefferlimit erreicht; weitere Ergebnisse sind möglich.")
+            warnings.append("Result limit reached; additional matches may exist.")
             break
         outputs.extend(result)
         matches += 1
@@ -167,13 +119,13 @@ def run(action, inputs, params, context):
         outputs = [
             {
                 "type": "value",
-                "label": "Treffer",
+                "label": "Matches",
                 "data": {"value": "0"},
                 "source_input": source["id"],
                 "source": {
                     "database_id": database["id"],
                     "field_id": field["id"],
-                    "message": "Keine passenden Datensätze gefunden.",
+                    "message": "No matching records found.",
                 },
             }
         ]

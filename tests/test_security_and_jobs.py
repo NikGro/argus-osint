@@ -1,5 +1,7 @@
 """Offline regression contracts for access, transport, history and durable execution."""
 
+import tool_stubs  # noqa: F401  (external tools count as installed)
+from core.migrations import VERSION
 import copy
 from email.message import Message
 import json
@@ -157,16 +159,6 @@ class PublicNetworkContracts(unittest.TestCase):
             resolve.assert_called_once()
             connection.connect.assert_called_once_with(("93.184.216.34", 443))
 
-    def test_missing_worker_never_falls_back_to_app_identity(self):
-        from core.isolation import invoke
-
-        with (
-            patch("core.isolation.Path.exists", return_value=False),
-            self.assertRaises(AppError) as error,
-        ):
-            invoke("community", {})
-        self.assertEqual(error.exception.code, "isolation_unavailable")
-
     def test_stdin_cannot_block_before_timeout_starts(self):
         started = time.monotonic()
         with self.assertRaises(ValueError):
@@ -230,7 +222,7 @@ class PersistenceContracts(unittest.TestCase):
         app.validate(doc)
         self.assertEqual(doc, original)
         p = app.PROJECTS.create("fixture", doc)
-        self.assertEqual(p["document"]["schema_version"], 1)
+        self.assertEqual(p["document"]["schema_version"], VERSION)
         again = app.load_project(p["id"])
         self.assertEqual(again, p)
 

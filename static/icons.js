@@ -1,4 +1,3 @@
-import { t } from './i18n.js';
 // Material Design Icons 7.4.47, Pictogrammers, Apache-2.0.
 const ICON_PATHS = {
   upload: ['M5 20H19V18H5ZM11 16H13V8L17 12L18.4 10.6L12 4L5.6 10.6L7 12L11 8Z'],
@@ -28,6 +27,11 @@ const ICON_PATHS = {
   ],
   video: [
     'M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z'
+  ],
+  audio: ['M12 3v10.55A4 4 0 1 0 14 17V7h4V3z'],
+  warning: ['M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'],
+  'audio-location': [
+    'M9 3v9.55A3.5 3.5 0 1 0 11 15.7V7h3V3zM18 9a4 4 0 0 0-4 4c0 3 4 8 4 8s4-5 4-8a4 4 0 0 0-4-4m0 2.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3'
   ],
   refresh: [
     'M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.09A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h8V3z'
@@ -218,7 +222,6 @@ function buttonContent(button, label, name, only = false, suffix = false) {
     const text = document.createElement('span');
     text.className = 'button-label';
     text.textContent = label;
-    if (button.dataset.labelKey) text.dataset.i18n = button.dataset.labelKey;
     button.append(text);
   }
   if (name && suffix) button.append(icon(name));
@@ -235,12 +238,8 @@ function buttonContent(button, label, name, only = false, suffix = false) {
 }
 function decorateStaticIcons() {
   for (const element of document.querySelectorAll('[data-icon]')) {
-    const key = element.dataset.labelKey || element.dataset.i18n;
-    if (key) {
-      element.dataset.labelKey = key;
-      element.removeAttribute('data-i18n');
-    }
-    const label = key ? t(key) : element.getAttribute('aria-label') || element.textContent;
+    const label =
+      element.dataset.labelKey || element.getAttribute('aria-label') || element.textContent;
     buttonContent(element, label, element.dataset.icon, element.hasAttribute('data-icon-only'));
   }
 }

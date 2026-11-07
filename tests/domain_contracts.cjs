@@ -29,7 +29,7 @@ test('Preview geometry reserves space without modifying stored information',asyn
 });
 test('Edited generated titles remain literal and default titles use one resolver',async()=>{
  const m=await production(),app=m.createApplication();
- const node={type:'value',label:'My exact title',data:{},evidence:{label_custom:true,label_key:'Neuer Wert',origin:'research'}};
+ const node={type:'value',label:'My exact title',data:{},evidence:{label_custom:true,label_key:'New value',origin:'research'}};
  assert.equal(app.features.catalogue.nodeTitle(node),'My exact title');
 });
 test('Exact label masks preserve route geometry for long, steep and backwards connections',async()=>{

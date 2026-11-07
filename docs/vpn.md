@@ -1,6 +1,6 @@
 # Integrated VPN
 
-ARGUS 1.0 alpha bundles OpenVPN, WireGuard (with a userspace fallback), rotation, health checks and the VPN controller in the same image. No sidecar or host package installation is required. Start the supplied `compose.yaml`; it grants the Linux capabilities and `/dev/net/tun` device needed for VPN and isolated browser/community workers.
+ARGUS bundles OpenVPN, WireGuard (with a userspace fallback), rotation, health checks and the VPN controller in the same image. No sidecar or host package installation is required. Start the supplied `compose.yaml`; it grants the Linux capabilities and `/dev/net/tun` device the VPN needs.
 
 ## Configuration
 
@@ -12,7 +12,7 @@ OpenVPN certificates and keys must be inline. Arbitrary hooks, scripts and exter
 
 Enable rotation by interval or after each tool. Connections are checked before accepting work. Unreachable profiles are skipped. While changing VPN or waiting for a working profile, queued tools wait and the toolbar shows **Waiting for VPN**.
 
-When VPN is enabled, IPv4 and IPv6 firewall rules reject ordinary egress outside the VPN interface. Only marked VPN transport packets to configured endpoints and replies to inbound ARGUS HTTP connections are allowed outside it. Docker embedded DNS is blocked; public DNS uses the tunnel. Browser and community workers use an egress proxy in the same protected namespace. If a connection drops, tools cannot continue over the ordinary interface. Existing TCP requests can fail; queued work waits for reconnection. Disabling VPN explicitly permits ordinary egress.
+When VPN is enabled, IPv4 and IPv6 firewall rules reject ordinary egress outside the VPN interface. Only marked VPN transport packets to configured endpoints and replies to inbound ARGUS HTTP connections are allowed outside it. Docker embedded DNS is blocked; public DNS uses the tunnel. Plugins, their tools and the browser run in the same network namespace, so the same rules apply to them. Tools that run in parallel share the connection; a rotation waits until none is running. If a connection drops, tools cannot continue over the ordinary interface. Existing TCP requests can fail; queued work waits for reconnection. Disabling VPN explicitly permits ordinary egress.
 
 The controller starts and restores the persisted firewall before the application starts. The application runs as an unprivileged user. If the controller exits, the supervisor stops the application. Profile state persists under `/data/.vpn-private`; back up the data volume, including the encryption keys, together.
 

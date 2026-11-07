@@ -1,7 +1,54 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, Field, Select, Check, DetailSection, Icon } from './ui/index.jsx';
 import { authorizedFetch } from '../auth.js';
-import { t } from '../i18n.js';
+
+/** Table scroller with a second horizontal scrollbar above the table, kept in sync. */
+function TableScroll({ children }) {
+  const top = useRef(null),
+    wrap = useRef(null),
+    syncing = useRef(false);
+  const [width, setWidth] = useState(0),
+    [overflow, setOverflow] = useState(false);
+  useEffect(() => {
+    const element = wrap.current;
+    if (!element) return undefined;
+    const measure = () => {
+      setWidth(element.scrollWidth);
+      setOverflow(element.scrollWidth > element.clientWidth + 1);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    if (element.firstElementChild) observer.observe(element.firstElementChild);
+    return () => observer.disconnect();
+  }, []);
+  const follow = (from, to) => () => {
+    if (syncing.current) {
+      syncing.current = false;
+      return;
+    }
+    if (to.current && to.current.scrollLeft !== from.current.scrollLeft) {
+      syncing.current = true;
+      to.current.scrollLeft = from.current.scrollLeft;
+    }
+  };
+  return (
+    <>
+      <div
+        ref={top}
+        className="database-table-topscroll"
+        hidden={!overflow}
+        aria-hidden="true"
+        onScroll={follow(top, wrap)}
+      >
+        <div style={{ width }} />
+      </div>
+      <div ref={wrap} className="database-table-wrap" onScroll={follow(wrap, top)}>
+        {children}
+      </div>
+    </>
+  );
+}
 
 const TYPES = [
   'value',
@@ -17,19 +64,19 @@ const TYPES = [
   'json'
 ];
 const labels = {
-  value: 'Wert',
+  value: 'Value',
   text: 'Text',
-  number: 'Zahl',
-  boolean: 'Ja / Nein',
-  email: 'E-Mail',
-  phone: 'Telefonnummer',
-  url: 'URL',
-  image: 'Bild',
-  file: 'Datei',
-  datetime: 'Datum / Zeit',
-  json: 'JSON / strukturierte Daten'
+  number: 'Number',
+  boolean: 'Yes / No',
+  email: 'Email',
+  phone: 'Phone number',
+  url: 'Profile URL',
+  image: 'Image',
+  file: 'File',
+  datetime: 'Date / time',
+  json: 'JSON / structured data'
 };
-const options = () => TYPES.map((value) => ({ value, label: t(labels[value]) }));
+const options = () => TYPES.map((value) => ({ value, label: labels[value] }));
 const text = (value) =>
   value == null ? '' : typeof value === 'object' ? JSON.stringify(value) : String(value);
 
@@ -43,7 +90,7 @@ async function upload(file) {
     body: file
   });
   const body = await response.json();
-  if (!response.ok) throw Error(t('ui.file_could_not_be_uploaded') + ' ' + file.name);
+  if (!response.ok) throw Error('File could not be uploaded.' + ' ' + file.name);
   return body;
 }
 
@@ -93,7 +140,7 @@ export function Databases({ app }) {
     await refresh();
   };
   async function create() {
-    const title = await c.askText(t('ui.create_database'), t('ui.name'));
+    const title = await c.askText('Create database', 'Name');
     if (!title?.trim()) return;
     const value = await c.api('/api/databases', { title, fields: [] });
     setDatabase(value);
@@ -105,8 +152,8 @@ export function Databases({ app }) {
     <main className="databases-view content-view">
       <div className="view-heading">
         <div>
-          <h1>{t('ui.databases')}</h1>
-          <p>{t('ui.manage_structured_data_and_media_together_then_search_them_in_you')}</p>
+          <h1>{'Databases'}</h1>
+          <p>{'Manage structured data and media together, then search them in your graph.'}</p>
         </div>
         <div className="action-row">
           <Button
@@ -116,10 +163,10 @@ export function Databases({ app }) {
             disabled={busy}
             onClick={() => guard(create)}
           >
-            {t('ui.create_database')}
+            {'Create database'}
           </Button>
           <Button icon="upload" disabled={busy} onClick={() => setImporting(true)}>
-            {t('ui.import')}
+            {'Import'}
           </Button>
         </div>
       </div>
@@ -134,7 +181,7 @@ export function Databases({ app }) {
               })
             }
           >
-            {t('ui.reload')}
+            {'Reload'}
           </Button>
         </p>
       )}
@@ -155,8 +202,8 @@ export function Databases({ app }) {
         />
       ) : (
         <div className="database-layout" aria-busy={busy}>
-          <aside className="database-list" aria-label={t('ui.databases')}>
-            {!items.length && <p>{t('ui.no_databases_yet_create_a_database_or_import_files')}</p>}
+          <aside className="database-list" aria-label={'Databases'}>
+            {!items.length && <p>{'No databases yet. Create a database or import files.'}</p>}
             {items.map((item) => (
               <button
                 key={item.id}
@@ -173,7 +220,8 @@ export function Databases({ app }) {
                 <span>
                   <strong>{item.title}</strong>
                   <small>
-                    {item.row_count} {t('ui.records')} · {item.fields.length} {t('ui.fields')}
+                    {item.row_count} {item.row_count === 1 ? 'record' : 'records'} ·{' '}
+                    {item.fields.length} {item.fields.length === 1 ? 'field' : 'fields'}
                   </small>
                 </span>
               </button>
@@ -183,8 +231,8 @@ export function Databases({ app }) {
             {!database ? (
               <div className="empty-state">
                 <Icon name="database" />
-                <h2>{t('ui.choose_database')}</h2>
-                <p>{t('ui.databases_can_be_used_as_search_tool_inputs_across_projects')}</p>
+                <h2>{'Choose database'}</h2>
+                <p>{'Databases can be used as search-tool inputs across projects.'}</p>
               </div>
             ) : (
               <>
@@ -197,17 +245,13 @@ export function Databases({ app }) {
                       disabled={busy}
                       onClick={() =>
                         guard(async () => {
-                          const title = await c.askText(
-                            t('ui.rename'),
-                            t('ui.name'),
-                            database.title
-                          );
+                          const title = await c.askText('Rename', 'Name', database.title);
                           if (title?.trim())
                             await mutate({ operation: 'schema', title, fields: database.fields });
                         })
                       }
                     >
-                      {t('ui.rename')}
+                      {'Rename'}
                     </Button>
                     <Button
                       icon="settings"
@@ -215,28 +259,26 @@ export function Databases({ app }) {
                       onClick={() => setFieldsOpen(!fieldsOpen)}
                       aria-expanded={fieldsOpen}
                     >
-                      {t('ui.manage_fields')}
+                      {'Manage fields'}
                     </Button>
                     <Button
                       icon="trash"
                       only
-                      className="danger-text"
+                      className="danger-filled"
                       disabled={busy}
                       onClick={() =>
                         guard(async () => {
                           if (
                             await c.askConfirm(
-                              t('ui.delete_database'),
-                              t(
-                                'ui.delete_every_record_and_field_in_this_database_existing_graph_res'
-                              )
+                              'Delete database',
+                              'Delete every record and field in this database? Existing graph results are preserved.'
                             )
                           )
                             await mutate({ operation: 'delete' });
                         })
                       }
                     >
-                      {t('ui.delete_database')}
+                      {'Delete database'}
                     </Button>
                   </div>
                 </div>
@@ -259,15 +301,15 @@ export function Databases({ app }) {
                     type="search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={t('ui.search_records')}
-                    aria-label={t('ui.search_records')}
+                    placeholder={'Search records …'}
+                    aria-label={'Search records …'}
                   />
                   <Button
                     icon="search"
                     disabled={busy}
                     onClick={() => guard(() => load(database.id, 0))}
                   >
-                    {t('ui.search')}
+                    {'Search'}
                   </Button>
                   <Button
                     icon="plus"
@@ -275,7 +317,7 @@ export function Databases({ app }) {
                     disabled={busy || !database.fields.length}
                     onClick={() => setEditor({ cells: {} })}
                   >
-                    {t('ui.add_record')}
+                    {'Add record'}
                   </Button>
                 </form>
                 {editor && (
@@ -296,16 +338,16 @@ export function Databases({ app }) {
                     }
                   />
                 )}
-                <div className="database-table-wrap">
+                <TableScroll>
                   <table className="database-table">
                     <caption className="sr-only">{database.title}</caption>
                     <thead>
                       <tr>
-                        <th>{t('ui.actions')}</th>
+                        <th>{'Actions'}</th>
                         {database.fields.map((field) => (
                           <th key={field.id}>
                             {field.name}
-                            <small>{t(labels[field.type])}</small>
+                            <small>{labels[field.type]}</small>
                           </th>
                         ))}
                       </tr>
@@ -321,7 +363,7 @@ export function Databases({ app }) {
                                 disabled={busy}
                                 onClick={() => setEditor(row)}
                               >
-                                {t('ui.edit')}
+                                {'Edit'}
                               </Button>
                               <Button
                                 only
@@ -332,8 +374,8 @@ export function Databases({ app }) {
                                   guard(async () => {
                                     if (
                                       await c.askConfirm(
-                                        t('ui.delete_record'),
-                                        t('ui.permanently_delete_this_record')
+                                        'Delete record',
+                                        'Permanently delete this record?'
                                       )
                                     )
                                       await mutate({
@@ -343,7 +385,7 @@ export function Databases({ app }) {
                                   })
                                 }
                               >
-                                {t('ui.delete_record')}
+                                {'Delete record'}
                               </Button>
                             </div>
                           </td>
@@ -356,16 +398,15 @@ export function Databases({ app }) {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </TableScroll>
                 {!database.rows.length && (
-                  <p className="empty-state">
-                    {t('ui.no_records_yet_or_no_matches_for_this_search')}
-                  </p>
+                  <p className="empty-state">{'No records yet, or no matches for this search.'}</p>
                 )}
                 <div className="database-pagination action-row">
                   <span>
-                    {database.total} {t('ui.records')} · {database.offset + 1}–
-                    {database.offset + database.rows.length}
+                    {database.total} {database.total === 1 ? 'record' : 'records'}
+                    {database.rows.length > 0 &&
+                      ` · ${database.offset + 1}–${database.offset + database.rows.length}`}
                   </span>
                   <Button
                     icon="chevron-left"
@@ -375,7 +416,7 @@ export function Databases({ app }) {
                       guard(() => load(database.id, Math.max(0, database.offset - 100)))
                     }
                   >
-                    {t('ui.previous_page')}
+                    {'Previous page'}
                   </Button>
                   <Button
                     icon="chevron-right"
@@ -383,7 +424,7 @@ export function Databases({ app }) {
                     disabled={busy || database.offset + 100 >= database.total}
                     onClick={() => guard(() => load(database.id, database.offset + 100))}
                   >
-                    {t('ui.next_page')}
+                    {'Next page'}
                   </Button>
                 </div>
               </>
@@ -407,7 +448,7 @@ function Cell({ value, type }) {
               {type === 'image' && (
                 <img src={'/api/files/' + item.file_id} loading="lazy" alt={item.filename || ''} />
               )}
-              <span>{item.filename || t('ui.open_file')}</span>
+              <span>{item.filename || 'Open file'}</span>
             </a>
           ) : (
             <span key={index}>{text(item)}</span>
@@ -417,7 +458,7 @@ function Cell({ value, type }) {
     );
   return (
     <span className="cell-value">
-      {typeof value === 'boolean' ? t(value ? 'Ja' : 'Nein') : text(value)}
+      {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : text(value)}
     </span>
   );
 }
@@ -427,27 +468,25 @@ function SchemaEditor({ app, fields, busy, onChange }) {
     [type, setType] = useState('value');
   return (
     <DetailSection className="schema-editor">
-      <h3>{t('ui.manage_fields')}</h3>
-      <p>{t('ui.field_types_remain_fixed_after_creation_create_another_field_to_u')}</p>
+      <h3>{'Manage fields'}</h3>
+      <p>
+        {'Field types remain fixed after creation. Create another field to use a different type.'}
+      </p>
       {fields.map((field) => (
         <div className="schema-row" key={field.id}>
           <span>{field.name}</span>
-          <small>{t(labels[field.type])}</small>
+          <small>{labels[field.type]}</small>
           <Button
             icon="edit"
             only
             disabled={busy}
             onClick={async () => {
-              const name = await app.commands.askText(
-                t('ui.rename_field'),
-                t('ui.name'),
-                field.name
-              );
+              const name = await app.commands.askText('Rename field', 'Name', field.name);
               if (name?.trim())
                 onChange(fields.map((f) => (f.id === field.id ? { ...f, name } : f)));
             }}
           >
-            {t('ui.rename')}
+            {'Rename'}
           </Button>
           <Button
             icon="trash"
@@ -457,22 +496,22 @@ function SchemaEditor({ app, fields, busy, onChange }) {
             onClick={async () => {
               if (
                 await app.commands.askConfirm(
-                  t('ui.delete_field'),
-                  t('ui.delete_this_field_and_its_values_from_every_record')
+                  'Delete field',
+                  'Delete this field and its values from every record?'
                 )
               )
                 onChange(fields.filter((f) => f.id !== field.id));
             }}
           >
-            {t('ui.delete_field')}
+            {'Delete field'}
           </Button>
         </div>
       ))}
       <div className="schema-add">
-        <Field label={t('ui.field_name')} value={name} onChange={setName} />
+        <Field label={'Field name'} value={name} onChange={setName} />
         <div className="react-field">
-          <label>{t('ui.data_type')}</label>
-          <Select label={t('ui.data_type')} value={type} options={options()} onChange={setType} />
+          <label>{'Data type'}</label>
+          <Select label={'Data type'} value={type} options={options()} onChange={setType} />
         </div>
         <Button
           icon="plus"
@@ -482,7 +521,7 @@ function SchemaEditor({ app, fields, busy, onChange }) {
             setName('');
           }}
         >
-          {t('ui.add_field')}
+          {'Add field'}
         </Button>
       </div>
     </DetailSection>
@@ -504,12 +543,12 @@ function RowEditor({ fields, row, busy, onSave, onCancel }) {
       setError('');
       onSave(result);
     } catch {
-      setError(t('ui.invalid_json_please_correct_the_input'));
+      setError('Invalid JSON. Please correct the input.');
     }
   }
   return (
     <form className="record-editor" onSubmit={submit}>
-      <h3>{t(row.id ? 'Datensatz bearbeiten' : 'Datensatz hinzufügen')}</h3>
+      <h3>{row.id ? 'Edit record' : 'Add record'}</h3>
       <div className="database-fields">
         {fields.map((field) =>
           ['image', 'file'].includes(field.type) ? (
@@ -522,7 +561,7 @@ function RowEditor({ fields, row, busy, onSave, onCancel }) {
                   disabled={busy || uploading}
                   onClick={() => document.getElementById('files-' + field.id).click()}
                 >
-                  {t('ui.choose_files')}
+                  {'Choose files'}
                 </Button>
                 <input
                   hidden
@@ -540,7 +579,7 @@ function RowEditor({ fields, row, busy, onSave, onCancel }) {
                       for (const file of files) {
                         const item = await upload(file);
                         if (field.type === 'image' && !item.is_image)
-                          throw Error(t('ui.choose_a_valid_image_file'));
+                          throw Error('Choose a valid image file.');
                         stored.push(item);
                       }
                       const old = cells[field.id];
@@ -562,7 +601,7 @@ function RowEditor({ fields, row, busy, onSave, onCancel }) {
                   className="danger-text"
                   onClick={() => change(field.id, null)}
                 >
-                  {t('ui.remove_files')}
+                  {'Remove files'}
                 </Button>
               </div>
             </div>
@@ -607,10 +646,10 @@ function RowEditor({ fields, row, busy, onSave, onCancel }) {
       <div className="action-row">
         <button type="submit" className="primary" disabled={busy || uploading}>
           <Icon name={uploading ? 'spinner' : 'save'} />
-          {t('ui.save')}
+          {'Save'}
         </button>
         <Button disabled={busy || uploading} onClick={onCancel}>
-          {t('ui.cancel')}
+          {'Cancel'}
         </Button>
       </div>
     </form>
@@ -677,21 +716,25 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
   return (
     <section className="import-workbench">
       <div className="database-heading">
-        <h2>{t('ui.import_data')}</h2>
+        <h2>{'Import data'}</h2>
         <Button icon="close" only disabled={busy} onClick={onCancel}>
-          {t('ui.close')}
+          {'Close'}
         </Button>
       </div>
-      <p>{t('ui.upload_files_review_the_preview_and_map_columns_records_are_writt')}</p>
+      <p>
+        {
+          'Upload files, review the preview and map columns. Records are written only when you confirm the import.'
+        }
+      </p>
       <div className="import-settings database-fields">
         <div className="react-field">
-          <label>{t('ui.destination')}</label>
+          <label>{'Destination'}</label>
           <Select
-            label={t('ui.destination')}
+            label={'Destination'}
             disabled={busy}
             value={target}
             options={[
-              { value: '', label: t('ui.new_database') },
+              { value: '', label: 'New database' },
               ...items.map((item) => ({ value: item.id, label: item.title }))
             ]}
             onChange={(value) => {
@@ -704,20 +747,20 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
             }}
           />
         </div>
-        {!target && <Field label={t('ui.new_database_name')} value={title} onChange={setTitle} />}
+        {!target && <Field label={'New database name'} value={title} onChange={setTitle} />}
         <div className="react-field">
-          <label>{t('ui.import_mode')}</label>
+          <label>{'Import mode'}</label>
           <Select
-            label={t('ui.import_mode')}
+            label={'Import mode'}
             value={mode}
             onChange={invalidate(setMode)}
             options={[
               {
                 value: 'auto',
-                label: t('ui.detect_tables_other_files_become_separate_records')
+                label: 'Detect tables; other files become separate records'
               },
-              { value: 'attachments', label: t('ui.each_file_becomes_a_new_record') },
-              { value: 'one_record', label: t('ui.all_files_in_one_record') }
+              { value: 'attachments', label: 'Each file becomes a new record' },
+              { value: 'one_record', label: 'All files in one record' }
             ]}
           />
         </div>
@@ -737,13 +780,13 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
         }}
       >
         <Icon name="upload" />
-        <label htmlFor="database-import-files">{t('ui.drop_files_here_or_choose_files')}</label>
+        <label htmlFor="database-import-files">{'Drop files here or choose files'}</label>
         <Button
           icon="upload"
           disabled={busy}
           onClick={() => document.getElementById('database-import-files').click()}
         >
-          {t('ui.choose_files')}
+          {'Choose files'}
         </Button>
         <input
           hidden
@@ -763,7 +806,11 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
             });
           }}
         />
-        <small>{t('ui.csv_tsv_xlsx_ods_json_jsonl_xml_text_images_and_arbitrary_file_at')}</small>
+        <small>
+          {
+            'CSV, TSV, XLSX, ODS, JSON, JSONL, XML, text, images and arbitrary file attachments. Up to 200 files and 10,000 records per import.'
+          }
+        </small>
       </div>
       {files.length > 0 && (
         <div className="import-file-list">
@@ -781,7 +828,7 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
                   setPreview(null);
                 }}
               >
-                {t('ui.remove')}
+                {'Remove'}
               </Button>
             </div>
           ))}
@@ -789,15 +836,15 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
       )}
       {mode === 'auto' && (
         <details className="import-options">
-          <summary>{t('ui.file_format_and_table_options')}</summary>
+          <summary>{'File format and table options'}</summary>
           <div className="database-fields">
             <Check checked={headers} onChange={invalidate(setHeaders)}>
-              {t('ui.first_table_row_contains_field_names')}
+              {'First table row contains field names'}
             </Check>
             <div className="react-field">
-              <label>{t('ui.encoding')}</label>
+              <label>{'Encoding'}</label>
               <Select
-                label={t('ui.encoding')}
+                label={'Encoding'}
                 value={encoding}
                 onChange={invalidate(setEncoding)}
                 options={['utf-8-sig', 'utf-16', 'cp1252'].map((value) => ({
@@ -807,23 +854,23 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
               />
             </div>
             <div className="react-field">
-              <label>{t('ui.delimiter')}</label>
+              <label>{'Delimiter'}</label>
               <Select
-                label={t('ui.delimiter')}
+                label={'Delimiter'}
                 value={delimiter}
                 onChange={invalidate(setDelimiter)}
                 options={[
-                  ['auto', 'Automatisch'],
-                  [',', 'Komma'],
-                  [';', 'Semikolon'],
-                  ['\t', 'Tabulator'],
-                  ['|', 'Senkrechter Strich'],
-                  ['lines', 'Text: eine Zeile pro Datensatz']
-                ].map(([value, label]) => ({ value, label: t(label) }))}
+                  ['auto', 'Automatic'],
+                  [',', 'Comma'],
+                  [';', 'Semicolon'],
+                  ['\t', 'Tab'],
+                  ['|', 'Vertical bar'],
+                  ['lines', 'Text: one line per record']
+                ].map(([value, label]) => ({ value, label: label }))}
               />
             </div>
             <Field
-              label={t('ui.json_path_to_the_record_list_optional')}
+              label={'JSON path to the record list (optional)'}
               value={recordPath}
               onChange={invalidate(setRecordPath)}
             />
@@ -832,9 +879,9 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
       )}
       {preview?.sheets.length > 1 && (
         <div className="react-field">
-          <label>{t('ui.worksheet')}</label>
+          <label>{'Worksheet'}</label>
           <Select
-            label={t('ui.worksheet')}
+            label={'Worksheet'}
             value={sheet}
             options={preview.sheets.map((value) => ({ value, label: value }))}
             onChange={(value) => {
@@ -851,10 +898,10 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
           disabled={busy || !files.length}
           onClick={() => guard(showPreview)}
         >
-          {t('ui.preview_and_mapping')}
+          {'Preview and mapping'}
         </Button>
         <Button disabled={busy} onClick={onCancel}>
-          {t('ui.cancel')}
+          {'Cancel'}
         </Button>
       </div>
       {error && (
@@ -865,9 +912,13 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
       {preview && (
         <DetailSection>
           <h3>
-            {t('ui.map_columns')} · {preview.total} {t('ui.records')}
+            {'Map columns'} · {preview.total} {preview.total === 1 ? 'record' : 'records'}
           </h3>
-          <p>{t('ui.matching_field_names_are_mapped_automatically_other_columns_can_c')}</p>
+          <p>
+            {
+              'Matching field names are mapped automatically. Other columns can create new fields or be skipped.'
+            }
+          </p>
           <div className="import-mapping">
             {mapping.map((entry, index) => (
               <div className={'mapping-row' + (entry.skip ? ' skipped' : '')} key={entry.source}>
@@ -878,11 +929,11 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
                   </small>
                 </div>
                 <Select
-                  label={t('ui.destination_field')}
+                  label={'Destination field'}
                   value={entry.skip ? '__skip' : entry.field_id || '__new'}
                   options={[
-                    { value: '__new', label: t('ui.create_new_field') },
-                    { value: '__skip', label: t('ui.do_not_import') },
+                    { value: '__new', label: 'Create new field' },
+                    { value: '__skip', label: 'Do not import' },
                     ...(destination?.fields || []).map((field) => ({
                       value: field.id,
                       label: field.name
@@ -905,14 +956,14 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
                 {!entry.field_id && !entry.skip && (
                   <>
                     <Field
-                      label={t('ui.field_name')}
+                      label={'Field name'}
                       value={entry.name}
                       onChange={(name) =>
                         setMapping(mapping.map((m, i) => (i === index ? { ...m, name } : m)))
                       }
                     />
                     <Select
-                      label={t('ui.data_type')}
+                      label={'Data type'}
                       value={entry.type}
                       options={options()}
                       onChange={(type) =>
@@ -925,9 +976,9 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
             ))}
           </div>
           <h3>
-            {t('ui.preview')} · {t('ui.first_ten_records')}
+            {'Preview'} · {'First ten records'}
           </h3>
-          <div className="database-table-wrap">
+          <TableScroll>
             <table className="database-table">
               <thead>
                 <tr>
@@ -948,9 +999,9 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
           {preview.warnings.map((w) => (
-            <p key={w}>{t(w)}</p>
+            <p key={w}>{w}</p>
           ))}
           <Button
             className="primary"
@@ -969,7 +1020,7 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
               })
             }
           >
-            {t('ui.confirm_import')}
+            {'Confirm import'}
           </Button>
         </DetailSection>
       )}

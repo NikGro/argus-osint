@@ -1,4 +1,3 @@
-import { t } from '../i18n.js';
 var clipboard_default = {
   name: 'clipboard',
   dependencies: [
@@ -123,8 +122,8 @@ var clipboard_default = {
       event.preventDefault();
       toast(
         selectionState.selected.size
-          ? selectionState.selected.size + t('ui.nodes_copied')
-          : t('ui.project_copied')
+          ? selectionState.selected.size + ' nodes copied.'
+          : 'Project copied.'
       );
     }
     async function pasteGraph(event) {
@@ -147,11 +146,11 @@ var clipboard_default = {
       try {
         const doc = payload.document;
         if (!doc || !['nodes', 'edges', 'groups', 'runs'].every((key) => Array.isArray(doc[key])))
-          throw Error(t('ui.invalid_project_data_in_clipboard'));
+          throw Error('Invalid project data in clipboard.');
         const imported = remapDocument(doc, payload.origin || payload.title);
         if (!workspaceState.project || $('workspace').hidden) {
           const created = await api('/api/projects', {
-            title: (payload.title || t('ui.pasted_project')) + t('ui.copy'),
+            title: (payload.title || 'Pasted project') + ' · Copy',
             document: imported
           });
           await openProject(created.id);
@@ -172,7 +171,7 @@ var clipboard_default = {
           render();
           inspect();
         }
-        toast(imported.nodes.length + t('ui.nodes_pasted'));
+        toast(imported.nodes.length + ' nodes pasted.');
       } catch (error) {
         toast(error.message);
       }

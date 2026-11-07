@@ -1,42 +1,50 @@
-# ARGUS 26.10.4 Beta 1
+# ARGUS 26.11.1 Beta 1
 
-This beta adds an official Compose file for hosts without seccomp support, such as Synology DSM. It includes everything from 26.10.3 Beta 1 (below). Existing data volumes remain compatible.
+ARGUS now ships as one slim container without research plugins. Install the plugins you need from the library; ARGUS downloads them with their tools, verifies them and runs several tools at once if you want. This beta also adds audio support, makes ARGUS English-only and refreshes the canvas.
 
-## Synology and hosts without seccomp
+## Read before updating
 
-- New `compose.synology.yaml` runs ARGUS unprivileged as UID 10001 with no extra capabilities. Select it with `COMPOSE_FILE=compose.synology.yaml` in `.env`; add `BIND_ADDRESS=0.0.0.0` for access from the home network.
-- On these hosts the integrated VPN, community plugins and the built-in browser stay disabled, and `/api/health` reports `worker_isolation: false`. The default `compose.yaml` is unchanged for hosts that support seccomp.
-- README and `.env.example` describe the setup.
+- **No plugins are installed after the update.** Open **Plugins → Add plugins** and install the ones you use. Their settings, saved logins and node defaults are kept and apply again.
+- **Tools are downloaded on install** into the data volume (`/data/tools`): a few hundred MB to a few GB, depending on the plugins. Keep the complete data volume, including the encryption keys.
+- **Use the updated Compose files.** The container needs fewer privileges (no `SYS_ADMIN`, no seccomp or AppArmor profile); `compose.synology.yaml` now also runs the VPN on Synology DSM.
+- **ARGUS is English-only.** The language setting and language packs are gone. Existing projects are converted once when opened: generated labels, relations, group names, errors and run warnings become English; text you typed yourself stays as written.
+- **Community plugins run without a sandbox** as the unprivileged application user and therefore have ARGUS's permissions. Install only code you trust.
 
-## Included from 26.10.3 Beta 1
+## Plugins on demand
 
-This beta hardens the worker boundary, makes the interface consistently German or English, and leaves React as the only user interface layer. Existing graphs, databases and uploaded files remain compatible. Retain the complete data volume, including encryption keys, when updating.
+- ARGUS's own plugins are downloaded from this release's source when you install them; every file is checked against its SHA-256 hash.
+- Python research tools install only from hash-pinned locks (`pip --require-hashes`). GitHub sources stay pinned to a commit and PhoneInfoga to its published checksum. Existing tools are reinstalled once from the locks.
+- The library shows each install step, errors with the installation log and a retry. Removing a plugin asks first, keeps its settings and deletes tools no other plugin needs.
 
-### Security and runtime
+## Running tools
 
-- The isolated worker proxy accepts public HTTP(S) destinations on ports 80 and 443 only, checks Unix peer credentials against the reserved worker identities and logs rejections without URL paths or secrets. Broker connect, upload and polling have separate time limits; transport failures cancel the job instead of surfacing raw socket errors.
-- Before starting services, the privileged supervisor verifies the complete worker identity, capability and seccomp transition in a disposable probe. Each worker re-checks its kernel state before running untrusted code. Failures abort startup; there is still no unrestricted fallback.
-- Community plugins stay opt-in. Adding a repository and installing a plugin each ask for confirmation, naming the repository and pinned commit and stating that ARGUS does not review community code. `SECURITY.md` describes private vulnerability reporting and the intended private, self-hosted deployment.
-- Manual cancellation is no longer swallowed by provider aggregation, deep research or Instagram collection. Narrower error recovery keeps programming defects from looking like ordinary fallback results.
-- Request headers and identifiers derive their version from `VERSION`.
+- Tools have no overall time limit anymore; they run until they finish or you cancel them. Per-request timeouts remain.
+- **Settings → Parallel tools** sets how many tools run at once; **Detect system resources** suggests a value. Parallel tools share the VPN connection, and a VPN rotation waits until no tool is running.
 
-### Interface
+## Audio
 
-- React is the only view layer. About 5,500 lines of retired imperative UI code and unused modules were removed; domain modules no longer read or write application markup.
-- German and English no longer mix: generated tool labels, warnings, errors, run states, group titles and reports are translated, and plugin text falls back to its own language. Locale contract tests guard against regressions.
-- The plugin library has an **Add community repository** button with a confirmation, spaced cards and a repository list.
-- Help is an icon button next to Settings. The interface appears only after the language pack has loaded, so no raw translation keys flash during startup.
-- Node details use one spacing unit between a label and its control and two units before the next label; the database column for Search database and DeepFace follows the same layout. DeepFace shows a translated "Maximum comparisons" label.
-- Multi-selection details separate the count, **Include all in report** and **Delete nodes** into their own sections.
-- DeepFace accepts a total timeout of 0 to disable the deadline for long database comparisons; the default remains 300 seconds.
+- New **Audio** data node with players in the node and in node details.
+- New **Trim audio** tool. **Extract metadata** now also reads audio and video files.
+- New **Dopplergeist** plugin: estimates where a recording was made from passing aircraft and historical ADS-B flight data. Connect the audio file and a date/time node with the recording start; candidates become location nodes. Flight data is cached until the plugin is removed. Dopplergeist is licensed for noncommercial use only.
 
-### Fixes and maintenance
+## Workspace
 
-- A tool failure is no longer lost when the project is saved while the tool runs; the error node, failed run and tool status are kept.
-- Reports translate type labels, group titles, relationships, run history and generated error text.
-- Tool execution and result materialization were refactored for readability without behaviour changes (verified against the previous implementation with randomized synthetic results).
-- CI runs `ruff check .`; tests that need ExifTool or Holehe skip explicitly outside the container image, while the image gate requires them.
+- The details panel stays open and shows a project overview when nothing is selected. Canvas mode is more compact, and the default zoom leaves more room for the graph.
+- Node details name the kind of node under a *Tool* or *Data* label. Selecting several nodes lets you change their shared settings (glances, quick actions, verification, tags) together.
+- Results from research and metadata tools use the matching data types — usernames, email addresses, phone numbers, links and dates — so they can feed the next tool directly.
+- Notes, error messages and transform code are edited in resizable multi-line fields; error nodes show their full message.
+- The report preview refreshes automatically and notes are always visible.
+- Wide database tables have a scrollbar above the table too.
 
-### Deployment note
+## Fixes
 
-Hosts whose kernel lacks seccomp (for example Synology DSM) cannot run the integrated VPN and isolated workers. ARGUS then starts unprivileged, as before, and reports `worker_isolation: false`.
+- *Clear system logs* no longer fails with "Unexpected token".
+- The plugin library opens without errors and loads quickly on NAS storage.
+- Plugins whose update or repair failed stay visible with a retry instead of disappearing.
+
+## Clean-up
+
+- Removed the namespace/seccomp worker isolation with its egress proxy, the outdated source manifest, duplicate Compose files and the unused VPN sidecar.
+- The plugin manager is split into catalogue, native installation, community repositories and settings upgrades. Documentation, help and the community plugin example are updated.
+
+Earlier release notes are on the [releases page](https://github.com/NikGro/argus-osint/releases).

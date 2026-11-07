@@ -1,4 +1,4 @@
-# Video tools (alpha 2)
+# Video tools
 
 Upload a video through the Video data node or drag a file into a project (maximum 128 MB). Enable **Glance: Video player** for an embedded player; **Open video** opens the stored file in a new tab. Playback depends on browser codec support; MP4/H.264/AAC and WebM are preferred. Other recognized video formats remain usable as tool inputs and downloadable files. Media is streamed with byte-range support for seeking.
 

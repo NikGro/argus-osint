@@ -22,14 +22,13 @@ def normalize(node):
     node["tags"] = list(dict.fromkeys(tags))
 
 
-def badge_height(node, width, tags=None, language="de"):
+BADGES = {"unverified": "Unverified", "unclear": "Unclear", "verified": "Verified"}
+
+
+def badge_height(node, width, tags=None):
     if node.get("type") in ("actor", "marker"):
         return 0
-    names = (
-        {"unverified": "Unverifiziert", "unclear": "Unklar", "verified": "Verifiziert"}
-        if language == "de"
-        else {"unverified": "Unverified", "unclear": "Unclear", "verified": "Verified"}
-    )
+    names = BADGES
     labels = (
         []
         if node.get("type") in ("note", "error")

@@ -1,9 +1,7 @@
 import React, { memo, useRef, useState, useEffect, useMemo } from 'react';
 import phoneCountries from '../phone-countries.js';
 import locationCountries from '../location-countries.js';
-import { language } from '../i18n.js';
-import { t, diagnostic } from '../i18n.js';
-import { providerFields, displayOptions } from '../app/labels.js';
+import { providerFields, displayOptions, statusLabel } from '../app/labels.js';
 import { hasMediaEditor, cropKeys, MediaEditor } from '../app/media-editor.js';
 import {
   Button,
@@ -20,6 +18,7 @@ import {
   Select
 } from './ui/index.jsx';
 import { Canvas } from './canvas.jsx';
+import { percentToScale, scaleToPercent, ZOOM_MIN_PERCENT, ZOOM_MAX_PERCENT } from '../app/zoom.js';
 import { workspacePreferences, saveWorkspacePreferences } from './workspace-preferences.js';
 
 export function Workspace({ app }) {
@@ -27,11 +26,9 @@ export function Workspace({ app }) {
   const upload = useRef(null);
   const layout = useRef(null);
   const [sizes, setSizes] = useState(workspacePreferences);
-  const hasDetails =
-    s.selectionState.selected.size > 0 ||
-    s.selectionState.selectedEdges.size > 0 ||
-    Boolean(app.ui.activeGroup);
-  const rightHidden = s.canvasState.rightCollapsed || !hasDetails;
+  // The detail panel stays open; without a selection it shows a project
+  // overview. Only its toggle collapses it, so it never flaps on clicks.
+  const rightHidden = s.canvasState.rightCollapsed;
   useEffect(() => {
     const observer = new ResizeObserver(() => {
       const height = document.querySelector('.toolbar')?.getBoundingClientRect().height;
@@ -41,7 +38,6 @@ export function Workspace({ app }) {
     return () => observer.disconnect();
   }, []);
   function togglePanel(key) {
-    if (key === 'rightCollapsed' && !hasDetails) return;
     s.canvasState[key] = !s.canvasState[key];
     app.redraw();
   }
@@ -94,19 +90,18 @@ export function Workspace({ app }) {
               togglePanel('leftCollapsed');
             }}
           >
-            {t('ui.tool_menu')}
+            {'Tool menu'}
           </Button>
           <Button
             id="toggleRight"
             className={'panel-toggle right' + (!rightHidden ? ' joined' : '')}
-            disabled={!hasDetails}
             icon={s.canvasState.rightCollapsed ? 'chevron-left' : 'chevron-right'}
             only
             onClick={() => {
               togglePanel('rightCollapsed');
             }}
           >
-            {t('ui.node_details')}
+            {'Details'}
           </Button>
         </section>
         <div
@@ -140,7 +135,7 @@ export function Workspace({ app }) {
         }
       />
       <p id="graphKeyboardHint" className="sr-only">
-        {t('ui.space_to_pan_ctrl_wheel_to_zoom')}
+        {'Space to pan. Ctrl + wheel to zoom.'}
       </p>
     </main>
   );
@@ -167,6 +162,12 @@ function Dropdown({ label, icon, danger, children }) {
 }
 function Toolbar({ app }) {
   const { commands: c, state: s } = app;
+  useEffect(() => {
+    // Fit and project open re-render without a viewport callback; keep the label in step.
+    const zoom = document.getElementById('zoomLevel');
+    if (zoom && document.activeElement !== zoom)
+      zoom.value = Math.round(scaleToPercent(s.canvasState.pan.scale)) + '%';
+  });
   const btn = (id, label, icon, onClick, disabled = false, only = false, cls = '') => (
     <Button
       key={id}
@@ -178,7 +179,7 @@ function Toolbar({ app }) {
       onClick={onClick}
       disabled={disabled}
     >
-      {t(label)}
+      {label}
     </Button>
   );
   const none =
@@ -206,12 +207,12 @@ function Toolbar({ app }) {
   const running = s.executionState.activeActors.size;
   const queued = s.executionState.actorQueue.length;
   return (
-    <div className={'toolbar'} role="toolbar" aria-label={t('ui.project_tools')}>
-      <div className="tool-group">{btn('back', 'Hauptmenü', 'home', c.home, false, true)}</div>
+    <div className={'toolbar'} role="toolbar" aria-label={'Project tools'}>
+      <div className="tool-group">{btn('back', 'Home', 'home', c.home, false, true)}</div>
       <div className="tool-group">
         {btn(
           'undo',
-          'Rückgängig',
+          'Undo',
           'undo',
           () => c.applyHistory('undo'),
           !s.historyState.undoStack.length,
@@ -219,7 +220,7 @@ function Toolbar({ app }) {
         )}
         {btn(
           'redo',
-          'Wiederholen',
+          'Redo',
           'redo',
           () => c.applyHistory('redo'),
           !s.historyState.redoStack.length,
@@ -227,31 +228,29 @@ function Toolbar({ app }) {
         )}
       </div>
       <div className="tool-group">
-        <Dropdown label={t('ui.group_b4c02265')} icon="group">
-          {btn('groupNodes', 'Gruppieren', 'group', c.createGroupFromSelection, !canGroup)}
+        <Dropdown label={'Group'} icon="group">
+          {btn('groupNodes', 'Group', 'group', c.createGroupFromSelection, !canGroup)}
           {btn(
             'ungroupNodes',
-            'Gruppe aufheben',
+            'Ungroup',
             'ungroup',
             c.dissolveSelectedGroups,
             !selectedGroups.length
           )}
-          {btn('detachNodes', 'Aus Gruppe lösen', 'ungroup', detach, !canDetach)}
-          {btn('expandAllGroups', 'Alle Gruppen aufklappen', 'chevron-down', () =>
-            c.setAllGroups(false)
-          )}
-          {btn('collapseAllGroups', 'Alle Gruppen einklappen', 'chevron-right', () =>
+          {btn('detachNodes', 'Detach from group', 'ungroup', detach, !canDetach)}
+          {btn('expandAllGroups', 'Expand all groups', 'chevron-down', () => c.setAllGroups(false))}
+          {btn('collapseAllGroups', 'Collapse all groups', 'chevron-right', () =>
             c.setAllGroups(true)
           )}
         </Dropdown>
-        <Dropdown label={t('ui.arrange_b6a83ebd')} icon="cleanup">
+        <Dropdown label={'Arrange'} icon="cleanup">
           {['hierarchy', 'grid', 'radial'].map((mode) =>
             btn(
               'cleanup-' + mode,
               {
-                hierarchy: 'Hierarchisch',
-                grid: 'Raster je Arbeitsschritt',
-                radial: 'Kreis je Arbeitsschritt'
+                hierarchy: 'Hierarchical',
+                grid: 'Grid per research step',
+                radial: 'Circle per research step'
               }[mode],
               'arrange',
               () => c.arrangeProject(mode)
@@ -260,10 +259,10 @@ function Toolbar({ app }) {
         </Dropdown>
       </div>
       <div className="tool-group">
-        <Dropdown label={t('ui.delete')} icon="trash" danger>
+        <Dropdown label={'Delete'} icon="trash" danger>
           {btn(
             'deleteSelected',
-            'Objekt löschen',
+            'Delete object',
             'trash',
             c.deleteSelection,
             none,
@@ -272,7 +271,7 @@ function Toolbar({ app }) {
           )}
           {btn(
             'deleteDescendants',
-            'Objekt und Nachkommen löschen',
+            'Delete object and descendants',
             'trash',
             c.deleteSelectionWithChildren,
             none,
@@ -282,24 +281,30 @@ function Toolbar({ app }) {
         </Dropdown>
       </div>
       <div className="tool-group">
-        {btn('zoomOut', 'Verkleinern', 'search-minus', () => c.zoomStep(-1), false, true)}
+        {btn('zoomOut', 'Zoom out', 'search-minus', () => c.zoomStep(-1), false, true)}
         <input
           id="zoomLevel"
-          aria-label={t('ui.zoom_percentage')}
+          aria-label={'Zoom percentage'}
           defaultValue="100%"
           onBlur={(event) => {
             const percent = Number(event.target.value.replace('%', ''));
-            if (!Number.isFinite(percent) || percent < 15 || percent > 250)
-              return c.toast(t('ui.zoom_must_be_between_15_and_250_percent'));
+            if (
+              !Number.isFinite(percent) ||
+              percent < ZOOM_MIN_PERCENT ||
+              percent > ZOOM_MAX_PERCENT
+            )
+              return c.toast(
+                `Zoom must be between ${ZOOM_MIN_PERCENT} and ${ZOOM_MAX_PERCENT} percent.`
+              );
             const box = document.getElementById('graph').getBoundingClientRect();
-            c.zoomAt(box.width / 2, box.height / 2, percent / 100);
+            c.zoomAt(box.width / 2, box.height / 2, percentToScale(percent));
           }}
           onKeyDown={(event) => {
             if (event.key === 'Enter') event.currentTarget.blur();
           }}
         />
-        {btn('zoomIn', 'Vergrößern', 'search-plus', () => c.zoomStep(1), false, true)}
-        {btn('fit', 'Zentrieren', 'center', c.centerProject)}
+        {btn('zoomIn', 'Zoom in', 'search-plus', () => c.zoomStep(1), false, true)}
+        {btn('fit', 'Fit graph', 'center', c.centerProject)}
       </div>
       <div className="tool-group">
         {btn('logs', 'Logs', 'logs', c.openLogs)}
@@ -311,12 +316,12 @@ function Toolbar({ app }) {
       <div className="tool-group execution-group">
         <div className={'execution-status' + (!running && !queued ? ' idle' : '')} role="status">
           <Icon name={running ? 'spinner' : 'clock'} />
-          {running} {t('ui.running_870fa7cc')} · {queued} {t('ui.queued')}
-          {s.executionState.vpnWaiting && <span>{t('ui.waiting_for_vpn')}</span>}
+          {running} running · {queued} queued
+          {s.executionState.vpnWaiting && <span>{'Waiting for VPN'}</span>}
         </div>
         {btn(
           'cancelActor',
-          'Tool abbrechen',
+          'Cancel tool',
           'close',
           c.cancelCurrentActor,
           !running,
@@ -357,7 +362,7 @@ function Palette({ app }) {
   const tools = s.pluginsState.catalog.flatMap((plugin) =>
     (plugin.actions || []).map((action) => ({
       id: plugin.id + ':' + action.id,
-      label: c.pluginText(plugin, action.name),
+      label: action.name,
       category: c.actionCategory(plugin, action),
       plugin,
       action
@@ -385,12 +390,12 @@ function Palette({ app }) {
     return (
       <>
         <div className="palette-heading">
-          <h2>{t(title)}</h2>
+          <h2>{title}</h2>
           <div className="palette-tools">
             {[
-              ['search', 'Suchen'],
-              ['filter', 'Filtern'],
-              ['sort', 'Sortieren']
+              ['search', 'Search'],
+              ['filter', 'Filter'],
+              ['sort', 'Sort']
             ].map(([icon, label]) => (
               <Button
                 key={icon}
@@ -401,7 +406,7 @@ function Palette({ app }) {
                 aria-expanded={!!panels[kind + icon]}
                 onClick={() => setPanels({ ...panels, [kind + icon]: !panels[kind + icon] })}
               >
-                {t(label)}
+                {label}
               </Button>
             ))}
           </div>
@@ -410,19 +415,19 @@ function Palette({ app }) {
           <input
             type="search"
             value={queries[kind]}
-            placeholder={t('ui.search_51942c20')}
+            placeholder={'Search …'}
             onChange={(event) => setQueries({ ...queries, [kind]: event.target.value })}
           />
         )}
         {panels[kind + 'sort'] && (
           <Select
-            label={t('ui.sort')}
+            label={'Sort'}
             id={kind + 'Sort'}
             value={sorts[kind]}
             options={[
               { value: 'az', label: 'A–Z' },
               { value: 'za', label: 'Z–A' },
-              { value: 'category_az', label: t('ui.by_category') }
+              { value: 'category_az', label: 'By category' }
             ]}
             onChange={(value) => setSorts({ ...sorts, [kind]: value })}
           />
@@ -442,7 +447,7 @@ function Palette({ app }) {
                   })
                 }
               >
-                {t(category)}
+                {category}
               </Check>
             ))}
           </div>
@@ -453,7 +458,7 @@ function Palette({ app }) {
             last = entry.category;
             return (
               <React.Fragment key={entry.id}>
-                {heading && <div className="palette-category-divider">{t(entry.category)}</div>}
+                {heading && <div className="palette-category-divider">{entry.category}</div>}
                 <Button
                   app={app}
                   className={
@@ -503,13 +508,13 @@ function Palette({ app }) {
   return (
     <>
       <section id="dataWindow" style={{ height, flex: '0 0 ' + height + 'px' }}>
-        {section('node', nodes, 'Daten')}
+        {section('node', nodes, 'Data')}
       </section>
       <div
         id="paletteSplit"
         role="separator"
         tabIndex={0}
-        aria-label={t('ui.resize_sections')}
+        aria-label={'Resize sections'}
         onPointerDown={(event) => {
           const handle = event.currentTarget,
             y = event.clientY,
@@ -542,6 +547,73 @@ const StableInspector = memo(
   (_previous, next) =>
     next.app.state.canvasState.drag?.kind === 'nodes' && next.app.state.canvasState.drag.moved
 );
+function ProjectOverview({ app, doc }) {
+  const { state: s, commands: c } = app;
+  const data = doc.nodes.filter((node) => node.type !== 'actor' && node.type !== 'marker');
+  const types = Object.entries(
+    data.reduce((counts, node) => ({ ...counts, [node.type]: (counts[node.type] || 0) + 1 }), {})
+  ).sort((a, b) => b[1] - a[1]);
+  const tools = doc.nodes.filter((node) => node.type === 'actor').length;
+  const running = s.executionState.activeActors.size,
+    queued = s.executionState.actorQueue.length;
+  const errors = doc.nodes.filter((node) => node.type === 'error').length;
+  const reported = doc.nodes.filter((node) => node.report).length;
+  const rows = [
+    ['Data nodes', data.length],
+    ['Tools', tools],
+    ['Connections', doc.edges.length],
+    ['Groups', doc.groups.length]
+  ];
+  return (
+    <section className="project-overview" aria-label={'Project overview'}>
+      <span className="node-kind">{'PROJECT'}</span>
+      <h2>{s.workspaceState.project?.title || 'Project'}</h2>
+      <dl className="overview-counts">
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {(running > 0 || queued > 0) && (
+        <p className="overview-note" role="status">
+          <Icon name="spinner" /> {`${running} running · ${queued} queued`}
+        </p>
+      )}
+      {errors > 0 && (
+        <p className="overview-note warning">
+          <Icon name="warning" /> {`${errors} error node${errors === 1 ? '' : 's'} in this project`}
+        </p>
+      )}
+      <p className="overview-note">
+        <Icon name="file" />{' '}
+        {reported
+          ? `${reported} node${reported === 1 ? '' : 's'} included in the report`
+          : 'No nodes included in the report yet'}
+      </p>
+      {types.length > 0 && (
+        <DetailSection>
+          <h3>{'Data by type'}</h3>
+          <ul className="overview-types">
+            {types.map(([type, count]) => (
+              <li key={type}>
+                <span>{c.dataLabel(type)}</span>
+                <span>{count}</span>
+              </li>
+            ))}
+          </ul>
+        </DetailSection>
+      )}
+      <p className="source-help">
+        {doc.nodes.length
+          ? 'Select a node, connection or group to see its details.'
+          : 'Add data from the left panel or drop files onto the canvas to start.'}
+      </p>
+    </section>
+  );
+}
+
 function Inspector({ app }) {
   const { state: s, commands: c } = app;
   const doc = s.workspaceState.project?.document;
@@ -552,10 +624,10 @@ function Inspector({ app }) {
     const members = doc.nodes.filter((node) => c.groupNodeIds(group).has(node.id));
     return (
       <>
-        <span className="node-kind">{t('ui.group_b4c02265').toUpperCase()}</span>
-        <h2>{t('ui.group_details')}</h2>
+        <span className="node-kind">{'Group'.toUpperCase()}</span>
+        <h2>{'Group details'}</h2>
         <Field
-          label={t('ui.label')}
+          label={'Label'}
           value={c.groupTitle(group)}
           onChange={(value) => {
             group.label = value;
@@ -571,7 +643,7 @@ function Inspector({ app }) {
             icon={group.collapsed ? 'chevron-right' : 'chevron-down'}
             onClick={() => c.toggleGroup(group)}
           >
-            {t(group.collapsed ? 'Aufklappen' : 'Einklappen')}
+            {group.collapsed ? 'Expand' : 'Collapse'}
           </Button>
         </DetailSection>
         <DetailSection className="node-report-section">
@@ -582,7 +654,7 @@ function Inspector({ app }) {
               c.change();
             }}
           >
-            {t('ui.include_group_in_report')}
+            {'Include group in report'}
           </Check>
         </DetailSection>
         {doc.groups.filter((child) => child.parent_id === group.id).length > 0 && (
@@ -598,17 +670,19 @@ function Inspector({ app }) {
         )}
         <DetailSection className="group-controls">
           <Button className="wide" onClick={() => c.dissolveGroup(group)} icon="ungroup">
-            {t('ui.ungroup_a7471297')}
+            {'Ungroup'}
           </Button>
         </DetailSection>
         <DetailSection className="node-delete-section">
           <Button className="danger-filled wide" icon="trash" onClick={() => c.deleteGroup(group)}>
-            {t('ui.delete_group')}
+            {'Delete group'}
           </Button>
         </DetailSection>
       </>
     );
   }
+  if (!nodes.length && !s.selectionState.selectedEdges.size)
+    return <ProjectOverview app={app} doc={doc} />;
   if (!nodes.length)
     return (
       <>
@@ -616,9 +690,9 @@ function Inspector({ app }) {
           .filter((edge) => s.selectionState.selectedEdges.has(edge.id))
           .map((edge) => (
             <section key={edge.id}>
-              <h2>{t('ui.connection_details')}</h2>
+              <h2>{'Connection details'}</h2>
               <Field
-                label={t('ui.label')}
+                label={'Label'}
                 value={edge.label}
                 onChange={(value) => {
                   edge.label = value;
@@ -631,7 +705,7 @@ function Inspector({ app }) {
                 className="danger-filled wide"
                 onClick={() => c.deleteEdges([edge.id])}
               >
-                {t('ui.delete_connection')}
+                {'Delete connection'}
               </Button>
             </section>
           ))}
@@ -641,8 +715,9 @@ function Inspector({ app }) {
     return (
       <>
         <h2>
-          {nodes.length} {t('ui.nodes_selected_c456770e')}
+          {nodes.length} {'nodes selected'}
         </h2>
+        <SharedNodeFields app={app} nodes={nodes} />
         <DetailSection className="node-report-section">
           <Check
             checked={nodes.every((node) => node.report)}
@@ -651,7 +726,7 @@ function Inspector({ app }) {
               c.change();
             }}
           >
-            {t('ui.include_all_in_report')}
+            {'Include all in report'}
           </Check>
         </DetailSection>
         <DetailSection className="node-delete-section">
@@ -660,12 +735,102 @@ function Inspector({ app }) {
             className="danger-filled wide node-delete"
             onClick={() => c.deleteNodes(nodes.map((node) => node.id))}
           >
-            {t('ui.delete_nodes')}
+            {'Delete nodes'}
           </Button>
         </DetailSection>
       </>
     );
   return <NodeDetails key={nodes[0].id} app={app} node={nodes[0]} />;
+}
+
+/** Fields every selected node has in common; a change applies to all of them. */
+function SharedNodeFields({ app, nodes }) {
+  const { commands: c, state: s } = app;
+  const changeAll = (apply) => {
+    nodes.forEach(apply);
+    nodes.forEach((node) => c.change(node.id));
+    c.render();
+  };
+  const display = (displayOptions[nodes[0].type] || []).filter(([key]) =>
+    nodes.every((node) => (displayOptions[node.type] || []).some(([other]) => other === key))
+  );
+  const tagged = nodes.every((node) => node.type !== 'actor' && node.type !== 'marker');
+  const verifiable = tagged && nodes.every((node) => !['error', 'note'].includes(node.type));
+  const allTags = s.preferencesState.appSettings.tags || [];
+  const common = allTags.filter((tag) => nodes.every((node) => (node.tags || []).includes(tag.id)));
+  const verification = new Set(nodes.map((node) => node.verification || 'unverified'));
+  return (
+    <>
+      {display.length > 0 && (
+        <section className="node-display-section">
+          <h3>{'Quick Actions & Glances'}</h3>
+          {display.map(([key, label]) => (
+            <Check
+              key={key}
+              checked={nodes.every((node) => node.display?.[key])}
+              onChange={(value) =>
+                changeAll((node) => (node.display = { ...node.display, [key]: value }))
+              }
+            >
+              {label}
+            </Check>
+          ))}
+        </section>
+      )}
+      {verifiable && (
+        <section className="verification-section">
+          <Field
+            label={'Verification'}
+            value={verification.size === 1 ? [...verification][0] : ''}
+            schema={{
+              enum: ['unverified', 'unclear', 'verified'],
+              labels: { unverified: 'Unverified', unclear: 'Unclear', verified: 'Verified' },
+              placeholder: 'Mixed'
+            }}
+            onChange={(value) => value && changeAll((node) => (node.verification = value))}
+          />
+        </section>
+      )}
+      {tagged && (
+        <section className="node-tags-section">
+          <h3>{'Tags'}</h3>
+          <div className="tag-badges">
+            {common.map((tag) => (
+              <span key={tag.id} className="tag" style={{ borderColor: tag.color }}>
+                {tag.name}
+                <Button
+                  only
+                  icon="close"
+                  className="danger-text"
+                  onClick={() =>
+                    changeAll(
+                      (node) => (node.tags = (node.tags || []).filter((id) => id !== tag.id))
+                    )
+                  }
+                >
+                  {'Remove from all'}
+                </Button>
+              </span>
+            ))}
+          </div>
+          <Select
+            label={'Add tag to all'}
+            placeholder={'Add tag to all …'}
+            value=""
+            options={allTags
+              .filter((tag) => !common.includes(tag))
+              .map((tag) => ({ value: tag.id, label: tag.name }))}
+            onChange={(id) =>
+              id &&
+              changeAll((node) => {
+                if (!(node.tags || []).includes(id)) node.tags = [...(node.tags || []), id];
+              })
+            }
+          />
+        </section>
+      )}
+    </>
+  );
 }
 
 function NodeDetails({ app, node }) {
@@ -717,8 +882,8 @@ function NodeDetails({ app, node }) {
   );
   return (
     <>
-      <span className="node-kind">{c.dataLabel(node.type).toUpperCase()}</span>
-      <h2>{t('ui.node_details')}</h2>
+      <span className="node-kind">{actor ? 'TOOL' : 'DATA'}</span>
+      <h2>{actor ? action?.name || plugin?.name || c.actorTitle(node) : c.dataLabel(node.type)}</h2>
       {actor && (
         <DetailSection className="tool-run-section">
           <Button
@@ -740,21 +905,19 @@ function NodeDetails({ app, node }) {
             }
             onClick={() => c.run(node)}
           >
-            {t(
-              running || preparing
-                ? 'Wird ausgeführt …'
-                : queued
-                  ? 'In Warteschlange'
-                  : s.executionState.activeActors.size
-                    ? 'Zur Warteschlange hinzufügen'
-                    : 'Tool ausführen'
-            )}
+            {running || preparing
+              ? 'Running …'
+              : queued
+                ? 'Queued'
+                : s.executionState.activeActors.size
+                  ? 'Add to queue'
+                  : 'Run tool'}
           </Button>
         </DetailSection>
       )}
       <DetailSection className={'node-title-section' + (actor ? ' actor-title' : '')}>
         <Field
-          label={t('ui.title')}
+          label={'Title'}
           value={c.nodeTitle(node)}
           onChange={(value) => {
             node.label = value;
@@ -784,7 +947,7 @@ function NodeDetails({ app, node }) {
         )}
       {node.type === 'email' && (
         <Field
-          label={t('ui.email')}
+          label={'Email'}
           value={node.data.value || ''}
           schema={{ type: 'email' }}
           onChange={(value) => commit('value', value)}
@@ -794,45 +957,40 @@ function NodeDetails({ app, node }) {
       {node.type === 'location' && (
         <div className="country-input">
           <Field
-            label={t('ui.country')}
+            label={'Country'}
             value={node.data.country_code || ''}
             schema={{
               enum: ['', ...locationCountries],
               labels: Object.fromEntries(
                 ['', ...locationCountries].map((code) => [
                   code,
-                  code
-                    ? new Intl.DisplayNames([language], { type: 'region' }).of(code)
-                    : t('ui.any')
+                  code ? new Intl.DisplayNames(['en'], { type: 'region' }).of(code) : 'Any'
                 ])
               )
             }}
             onChange={(code) => {
               node.data.country_code = code;
               node.data.country = code
-                ? new Intl.DisplayNames([language], { type: 'region' }).of(code)
+                ? new Intl.DisplayNames(['en'], { type: 'region' }).of(code)
                 : '';
               c.change(node.id);
             }}
           />
-          <Field label={t('ui.code')} value={node.data.country_code || ''} disabled />
+          <Field label={'Code'} value={node.data.country_code || ''} disabled />
         </div>
       )}
       {node.type === 'datetime' && <DateTimeFields node={node} commit={commit} />}
       {node.type === 'profile' && (
         <>
           <Field
-            label={t('ui.provider')}
+            label={'Provider'}
             value={
               s.pluginsState.providerIndex.has(c.providerSearchKey(node.data.provider))
                 ? c.providerName(node.data.provider)
-                : t('ui.other_custom_fbc668fd')
+                : 'Other / Custom'
             }
             schema={{
-              enum: [
-                ...s.pluginsState.providerCatalogue.map((item) => item.name),
-                t('ui.other_custom_fbc668fd')
-              ]
+              enum: [...s.pluginsState.providerCatalogue.map((item) => item.name), 'Other / Custom']
             }}
             onChange={(value) =>
               commit(
@@ -845,7 +1003,7 @@ function NodeDetails({ app, node }) {
           {(!s.pluginsState.providerIndex.has(c.providerSearchKey(node.data.provider)) ||
             String(node.data.provider).startsWith('custom:')) && (
             <Field
-              label={t('ui.custom_provider')}
+              label={'Custom provider'}
               value={String(node.data.provider || '').replace(/^custom:/, '')}
               onChange={(value) => commit('provider', 'custom:' + value)}
             />
@@ -854,11 +1012,18 @@ function NodeDetails({ app, node }) {
       )}
       <Fields
         values={data}
-        schema={action?.parameter_schema}
+        schema={
+          actor
+            ? action?.parameter_schema
+            : node.type === 'note'
+              ? { text: { multiline: true } }
+              : node.type === 'error'
+                ? { message: { multiline: true } }
+                : undefined
+        }
         sections={action?.parameter_sections}
-        translate={(text) => c.pluginText(plugin || c.nodePlugin(node.type), text)}
         exclude={exclude}
-        label={(key) => c.pluginText(plugin || c.nodePlugin(node.type), c.fieldName(key))}
+        label={(key) => c.fieldName(key)}
         onChange={commit}
         help={action?.parameter_help}
       />
@@ -874,7 +1039,7 @@ function NodeDetails({ app, node }) {
       )}
       {action?.research_profiles && (
         <section className="tool-search-profiles">
-          <h3>{t('ui.search_profiles_for_this_search')}</h3>
+          <h3>{'Search profiles for this search'}</h3>
           {Object.entries(action.research_profiles)
             .filter(([provider]) => action.default_params['use_' + provider] !== false)
             .map(([provider, catalog]) => (
@@ -901,7 +1066,7 @@ function NodeDetails({ app, node }) {
       {['note', 'marker'].includes(node.type) && (
         <section>
           <ColorField
-            label={t('ui.color')}
+            label={'Color'}
             value={node.appearance?.color || '#ffcc70'}
             onChange={(color) => {
               if (/^#[0-9a-f]{6}$/i.test(color)) {
@@ -913,7 +1078,7 @@ function NodeDetails({ app, node }) {
           {['width', 'height'].map((key) => (
             <Field
               key={key}
-              label={t(key === 'width' ? 'Breite' : 'Höhe')}
+              label={key === 'width' ? 'Width' : 'Height'}
               value={node.appearance?.[key] || (key === 'width' ? 320 : 180)}
               schema={{
                 min: key === 'width' ? 200 : 120,
@@ -930,7 +1095,7 @@ function NodeDetails({ app, node }) {
       )}
       {(displayOptions[node.type] || []).length > 0 && (
         <section className="node-display-section">
-          <h3>{t('ui.quick_actions_glances')}</h3>
+          <h3>{'Quick Actions & Glances'}</h3>
           {c.resourceActions(node).map((item) => (
             <Button
               app={app}
@@ -939,7 +1104,7 @@ function NodeDetails({ app, node }) {
               icon={item.icon}
               onClick={() => c.openNodeResource(node, item.provider)}
             >
-              {t(item.label)}
+              {item.label}
             </Button>
           ))}
           {(displayOptions[node.type] || []).map(([key, label]) => (
@@ -951,13 +1116,18 @@ function NodeDetails({ app, node }) {
                 c.change(node.id);
               }}
             >
-              {t(label)}
+              {label}
             </Check>
           ))}
         </section>
       )}
       {node.type === 'video' && fileURL && (
         <MediaFrame className="media-frame preview" src={fileURL} video />
+      )}
+      {node.type === 'audio' && fileURL && (
+        <audio className="audio-preview" controls preload="metadata" src={fileURL}>
+          {'Your browser cannot play this audio file.'}
+        </audio>
       )}
       {node.type === 'image' && fileURL && (
         <MediaFrame className="media-frame preview" src={fileURL} alt={node.label} />
@@ -970,14 +1140,14 @@ function NodeDetails({ app, node }) {
           {!['error', 'note'].includes(node.type) && (
             <section className="verification-section">
               <Field
-                label={t('ui.verification')}
+                label={'Verification'}
                 value={node.verification || 'unverified'}
                 schema={{
                   enum: ['unverified', 'unclear', 'verified'],
                   labels: {
-                    unverified: t('ui.unverified'),
-                    unclear: t('ui.unclear'),
-                    verified: t('ui.verified')
+                    unverified: 'Unverified',
+                    unclear: 'Unclear',
+                    verified: 'Verified'
                   }
                 }}
                 onChange={(value) => {
@@ -988,7 +1158,7 @@ function NodeDetails({ app, node }) {
             </section>
           )}
           <section className="node-tags-section">
-            <h3>{t('ui.tags')}</h3>
+            <h3>{'Tags'}</h3>
             <div className="tag-badges">
               {(node.tags || []).map((id) => {
                 const tag = s.preferencesState.appSettings.tags?.find((item) => item.id === id);
@@ -1005,7 +1175,7 @@ function NodeDetails({ app, node }) {
                           c.change(node.id);
                         }}
                       >
-                        {t('ui.remove')}
+                        {'Remove'}
                       </Button>
                     </span>
                   )
@@ -1013,8 +1183,8 @@ function NodeDetails({ app, node }) {
               })}
             </div>
             <Select
-              label={t('ui.add_tag')}
-              placeholder={t('ui.add_tag_7d178046')}
+              label={'Add tag'}
+              placeholder={'Add tag …'}
               value=""
               options={availableTags.map((tag) => ({ value: tag.id, label: tag.name }))}
               onChange={(id) => {
@@ -1035,7 +1205,7 @@ function NodeDetails({ app, node }) {
             c.change(node.id);
           }}
         >
-          {t('ui.include_in_report')}
+          {'Include in report'}
         </Check>
       </DetailSection>
       <Provenance value={node.evidence} />
@@ -1045,10 +1215,10 @@ function NodeDetails({ app, node }) {
         .reverse()
         .map((run) => (
           <section key={run.id} className={'run ' + run.status}>
-            <strong>{t(run.status)}</strong>
-            {run.error && <p>{diagnostic(run.error)}</p>}
+            <strong>{statusLabel(run.status)}</strong>
+            {run.error && <p>{run.error}</p>}
             {run.warnings?.map((warning, index) => (
-              <p key={index}>{diagnostic(warning)}</p>
+              <p key={index}>{warning}</p>
             ))}
           </section>
         ))}
@@ -1059,7 +1229,7 @@ function NodeDetails({ app, node }) {
           className="danger-filled wide node-delete"
           onClick={() => c.deleteNodes([node.id])}
         >
-          {t('ui.delete_node')}
+          {'Delete node'}
         </Button>
       </DetailSection>
     </>
@@ -1074,7 +1244,7 @@ function Provenance({ value }) {
       open={open}
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >
-      <summary>{t('ui.source_origin')}</summary>
+      <summary>{'Source / Origin'}</summary>
       {open && <Facts value={value} />}
     </details>
   );
@@ -1099,9 +1269,9 @@ function DatabaseReference({ app, node, onChange }) {
   }, [app]);
   return (
     <DetailSection>
-      <label>{t('ui.database')}</label>
+      <label>{'Database'}</label>
       <Select
-        label={t('ui.choose_database')}
+        label={'Choose database'}
         value={node.data.database_id}
         options={items.map((item) => ({ value: item.id, label: item.title }))}
         onChange={(id) => {
@@ -1112,7 +1282,7 @@ function DatabaseReference({ app, node, onChange }) {
         }}
       />
       {error && <p role="alert">{error}</p>}
-      {!items.length && !error && <p>{t('ui.create_or_import_databases_from_the_main_menu')}</p>}
+      {!items.length && !error && <p>{'Create or import databases from the main menu.'}</p>}
     </DetailSection>
   );
 }
@@ -1139,9 +1309,9 @@ function DatabaseColumn({ app, node, source, onChange }) {
   );
   return (
     <div className="react-field">
-      <label>{t('ui.reference_column')}</label>
+      <label>{'Reference column'}</label>
       <Select
-        label={t('ui.reference_column')}
+        label={'Reference column'}
         value={node.data.params?.column_id || ''}
         options={available.map((field) => ({ value: field.id, label: field.name }))}
         onChange={onChange}
@@ -1154,7 +1324,7 @@ function PhoneField({ app, node, commit }) {
   const parsed = app.commands.splitPhoneNumber(node.data.value, node.display?.phoneRegion),
     [region, setRegion] = useState(parsed.region || ''),
     [number, setNumber] = useState(parsed.national || '');
-  const names = new Intl.DisplayNames([language], { type: 'region' });
+  const names = new Intl.DisplayNames(['en'], { type: 'region' });
   function update(value, nextRegion = region) {
     let national = value,
       selected = nextRegion;
@@ -1170,10 +1340,10 @@ function PhoneField({ app, node, commit }) {
   }
   return (
     <div className="react-field">
-      <label>{t('ui.phone_number')}</label>
+      <label>{'Phone number'}</label>
       <div className="phone-input">
         <Select
-          label={t('ui.country_calling_code')}
+          label={'Country calling code'}
           value={region}
           displayValue={phoneCountries[region]?.code || '+'}
           options={[
@@ -1189,7 +1359,7 @@ function PhoneField({ app, node, commit }) {
         />
         <input
           type="tel"
-          aria-label={t('ui.phone_number')}
+          aria-label={'Phone number'}
           value={number}
           onChange={(event) => update(event.target.value)}
         />
@@ -1236,19 +1406,19 @@ function DateTimeFields({ node, commit }) {
   return (
     <>
       <Field
-        label={t('ui.date')}
+        label={'Date'}
         value={node.data.date || ''}
         schema={{ type: 'date' }}
         onChange={(value) => commit('date', value)}
       />
       <Field
-        label={t('ui.time')}
+        label={'Time'}
         value={node.data.time || ''}
         schema={{ type: 'time' }}
         onChange={(value) => commit('time', value)}
       />
       <Field
-        label={t('ui.time_zone')}
+        label={'Time zone'}
         value={node.data.timezone || 'UTC'}
         schema={{ enum: zones, labels: zoneLabels }}
         onChange={(value) => commit('timezone', value)}
