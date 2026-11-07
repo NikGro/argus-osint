@@ -662,11 +662,17 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
           <text x="12" y="40" fill="#e4ecf7" fontSize="13">
             {c.fitNodeText(c.nodeTitle(node), b.w - 24, 13)}
           </text>
-          {node.type !== 'location' && (
+          {!['location', 'error'].includes(node.type) && (
             <text x="12" y="60" fill="#95a9c1" fontSize="10">
-              {c.short(node.type === 'error' ? node.data.message : c.summary(node), 42)}
+              {c.short(c.summary(node), 42)}
             </text>
           )}
+          {node.type === 'error' &&
+            c.errorDisplayLines(node.data.message, b.w).map((line, i) => (
+              <text key={i} x="12" y={60 + i * 14} fontSize="10" fill="#95a9c1">
+                {line}
+              </text>
+            ))}
           {node.type === 'location' &&
             c
               .locationDisplayLines(node.data, b.w)

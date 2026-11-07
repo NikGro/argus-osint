@@ -22,6 +22,14 @@ def node_bounds(node, preferences=None):
         height = LAYOUT["videoPreviewHeight"]
     if node["type"] == "image" and display.get("preview"):
         height = LAYOUT["imagePreviewHeight"]
+    if node["type"] == "error":
+        # Mirrors errorDisplayLines in the frontend: own line breaks, then wrapping.
+        message = str(node.get("data", {}).get("message") or "")
+        lines = sum(
+            max(1, -(-len(part) // size["charsPerLine"]))
+            for part in message.splitlines() or [""]
+        )
+        height = size["height"] + size["line"] * (min(size["maxLines"], lines) - 1)
     if node["type"] == "location":
         from core.node_policy import formatted_address
 

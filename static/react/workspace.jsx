@@ -1012,7 +1012,15 @@ function NodeDetails({ app, node }) {
       )}
       <Fields
         values={data}
-        schema={action?.parameter_schema}
+        schema={
+          actor
+            ? action?.parameter_schema
+            : node.type === 'note'
+              ? { text: { multiline: true } }
+              : node.type === 'error'
+                ? { message: { multiline: true } }
+                : undefined
+        }
         sections={action?.parameter_sections}
         exclude={exclude}
         label={(key) => c.fieldName(key)}

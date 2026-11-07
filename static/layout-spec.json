@@ -13,7 +13,10 @@
   },
   "error": {
     "width": 300,
-    "height": 112
+    "height": 112,
+    "line": 14,
+    "maxLines": 8,
+    "charsPerLine": 44
   },
   "note": {
     "width": 320,

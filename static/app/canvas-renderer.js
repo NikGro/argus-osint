@@ -33,6 +33,11 @@ var canvas_renderer_default = {
         h = layout_spec_default.videoPreviewHeight;
       if (node.type === 'image' && node.display?.preview)
         h = layout_spec_default.imagePreviewHeight;
+      if (node.type === 'error')
+        h = Math.max(
+          size.height,
+          size.height + (errorDisplayLines(node.data?.message, w).length - 1) * size.line
+        );
       if (node.type === 'location') {
         h = Math.max(
           size.height,
@@ -164,6 +169,31 @@ var canvas_renderer_default = {
       if (!cache.has(text)) cache.set(text, context.measureText(text).width);
       return cache.get(text);
     }
+    /** Error message as wrapped lines, keeping its own line breaks; at most maxLines. */
+    function errorDisplayLines(message, width) {
+      const spec = layout_spec_default.error,
+        maxWidth = width - 24,
+        measure = (text) => (measureEdgeText(text) * 10) / 11,
+        lines = [];
+      for (const paragraph of String(message || '').split(/\r?\n/)) {
+        let line = '';
+        for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+          const proposed = line ? line + ' ' + word : word;
+          if (measure(proposed) <= maxWidth || !line) line = proposed;
+          else {
+            lines.push(line);
+            line = word;
+          }
+        }
+        lines.push(line);
+      }
+      while (lines.length > 1 && !lines[lines.length - 1]) lines.pop();
+      if (lines.length > spec.maxLines) {
+        lines.length = spec.maxLines;
+        lines[spec.maxLines - 1] += ' \u2026';
+      }
+      return lines.map((line) => fitNodeText(line, maxWidth, 10));
+    }
     function fitNodeText(value, width, size = 13, spacing = 0) {
       const text = String(value);
       const measure = (label) =>
@@ -194,6 +224,7 @@ var canvas_renderer_default = {
       short,
       measureEdgeText,
       fitNodeText,
+      errorDisplayLines,
       edgeBundleIds
     };
   }

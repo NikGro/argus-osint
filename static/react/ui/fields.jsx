@@ -3,6 +3,14 @@ import { Button, Check } from './controls.jsx';
 import { Select } from './select.jsx';
 import { DateTimeInput, ColorSwatch } from './pickers.jsx';
 
+/** Initial textarea height: the text's own lines plus wrapping, within 3–14 rows. */
+function multilineRows(text, minimum) {
+  const lines = String(text)
+    .split('\n')
+    .reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / 38)), 0);
+  return Math.min(14, Math.max(minimum, lines + 1));
+}
+
 export function Field({
   label,
   value,
@@ -105,8 +113,12 @@ export function Field({
           }))}
           onChange={onChange}
         />
-      ) : object || multiline ? (
-        <textarea {...shared} rows={object ? 4 : 3} spellCheck={false} />
+      ) : object || multiline || schema.multiline ? (
+        <textarea
+          {...shared}
+          rows={object ? 4 : multilineRows(display, schema.multiline ? 4 : 3)}
+          spellCheck={!!schema.multiline}
+        />
       ) : numeric && schema.control === 'range' ? (
         <div className="range-field">
           <input

@@ -2,6 +2,54 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button, Field, Select, Check, DetailSection, Icon } from './ui/index.jsx';
 import { authorizedFetch } from '../auth.js';
 
+/** Table scroller with a second horizontal scrollbar above the table, kept in sync. */
+function TableScroll({ children }) {
+  const top = useRef(null),
+    wrap = useRef(null),
+    syncing = useRef(false);
+  const [width, setWidth] = useState(0),
+    [overflow, setOverflow] = useState(false);
+  useEffect(() => {
+    const element = wrap.current;
+    if (!element) return undefined;
+    const measure = () => {
+      setWidth(element.scrollWidth);
+      setOverflow(element.scrollWidth > element.clientWidth + 1);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    if (element.firstElementChild) observer.observe(element.firstElementChild);
+    return () => observer.disconnect();
+  }, []);
+  const follow = (from, to) => () => {
+    if (syncing.current) {
+      syncing.current = false;
+      return;
+    }
+    if (to.current && to.current.scrollLeft !== from.current.scrollLeft) {
+      syncing.current = true;
+      to.current.scrollLeft = from.current.scrollLeft;
+    }
+  };
+  return (
+    <>
+      <div
+        ref={top}
+        className="database-table-topscroll"
+        hidden={!overflow}
+        aria-hidden="true"
+        onScroll={follow(top, wrap)}
+      >
+        <div style={{ width }} />
+      </div>
+      <div ref={wrap} className="database-table-wrap" onScroll={follow(wrap, top)}>
+        {children}
+      </div>
+    </>
+  );
+}
+
 const TYPES = [
   'value',
   'text',
@@ -290,7 +338,7 @@ export function Databases({ app }) {
                     }
                   />
                 )}
-                <div className="database-table-wrap">
+                <TableScroll>
                   <table className="database-table">
                     <caption className="sr-only">{database.title}</caption>
                     <thead>
@@ -350,7 +398,7 @@ export function Databases({ app }) {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </TableScroll>
                 {!database.rows.length && (
                   <p className="empty-state">{'No records yet, or no matches for this search.'}</p>
                 )}
@@ -930,7 +978,7 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
           <h3>
             {'Preview'} · {'First ten records'}
           </h3>
-          <div className="database-table-wrap">
+          <TableScroll>
             <table className="database-table">
               <thead>
                 <tr>
@@ -951,7 +999,7 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
           {preview.warnings.map((w) => (
             <p key={w}>{w}</p>
           ))}

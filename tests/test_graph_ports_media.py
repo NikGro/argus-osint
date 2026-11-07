@@ -28,6 +28,15 @@ class GraphPortContracts(unittest.TestCase):
         self.assertEqual(node_bounds(node)[2:], (500, 300))
         self.assertEqual(badge_height(node, 500), 0)
 
+    def test_error_node_grows_with_message_lines(self):
+        short = {"type": "error", "data": {"message": "Failed"}}
+        long = {
+            "type": "error",
+            "data": {"message": "First line\nSecond line\n\nThird"},
+        }
+        self.assertEqual(node_bounds(short)[3], 112)
+        self.assertEqual(node_bounds(long)[3], 112 + 3 * 14)
+
     def test_non_factual_nodes_have_no_verification_badge(self):
         for kind in ("error", "note"):
             self.assertEqual(badge_height({"type": kind}, 320), 0)

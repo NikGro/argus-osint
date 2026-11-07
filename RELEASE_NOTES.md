@@ -25,11 +25,11 @@ ARGUS now starts as a slim all-in-one container without research plugins. You in
 ## Interface
 
 - **Canvas:** the detail panel stays open and shows a project overview (counts, running tools, error nodes, report selection, data by type) when nothing is selected; only its toggle collapses it. Header, toolbar and side panels are more compact in canvas mode. *100 %* zoom is now a smaller working size (the former 70 %), leaving more room on the canvas; zoom goes up to 300 %.
-- **Nodes:** tools that take a fixed set of inputs show one input socket per input.
+- **Nodes:** tools that take a fixed set of inputs show one input socket per input. Error nodes show their full message over several lines (keeping its line breaks) and grow to fit; note text and error messages are edited in a resizable multi-line box in the details panel.
 - **Multiple selection:** besides *Include all in report* and *Delete*, the details panel offers the fields the selected nodes share — Quick Actions & Glances toggles, verification and tags — and applies changes to all of them.
 - **Plugin library:** shows a loading state, hides the installed list while open, and puts *Add community repository* on the same row as *Close library*. Groups are named *Native plugins* and *Community plugins*. Tool sizes are measured once at installation instead of on every request, so the library opens quickly on NAS disks.
 - **Report:** notes are always visible and the preview refreshes automatically; the report shows a readable timestamp. *Include in report* is highlighted in node details.
-- **Databases:** actions align with the page title; deleting a database uses a red button.
+- **Databases:** actions align with the page title; deleting a database uses a red button. Wide tables have a horizontal scrollbar above the table as well as below.
 
 ## Fixes
 
