@@ -31,6 +31,8 @@ var canvas_renderer_default = {
       }
       if (node.type === 'video' && node.display?.preview)
         h = layout_spec_default.videoPreviewHeight;
+      if (node.type === 'audio' && node.display?.preview)
+        h = layout_spec_default.audioPreviewHeight;
       if (node.type === 'image' && node.display?.preview)
         h = layout_spec_default.imagePreviewHeight;
       if (node.type === 'error')

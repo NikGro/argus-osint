@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 from plugins._process import bounded_run
+from plugins._typed import typed_fact
 
 PLUGIN = {
     "id": "metadata",
@@ -100,11 +101,16 @@ def run(action, inputs, params, context):
         )
         group = "Metadata · " + str(node.get("label") or metadata["System:FileName"])
         for attribute, value in attributes(metadata):
+            kind, data = (
+                typed_fact(attribute, value)
+                if value not in (None, "")
+                else ("value", {"value": attribute_text(value)})
+            )
             outputs.append(
                 {
-                    "type": "value",
+                    "type": kind,
                     "label": attribute,
-                    "data": {"value": attribute_text(value)},
+                    "data": data,
                     "source_input": node["id"],
                     "group": group,
                     "group_id": node["id"],

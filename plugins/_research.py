@@ -4,6 +4,7 @@ import copy
 import json
 import re
 from core.errors import AppError
+from plugins._typed import typed_fact
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 
@@ -48,17 +49,14 @@ def fact_outputs(value, label, common, path=()):
         ]
     if value is None or value == "":
         return []
-    text = str(value)
-    url = urlsplit(text)
+    kind, data = typed_fact(".".join((label, *path)), value)
     return [
         {
             **common,
-            "type": (
-                "url" if url.scheme in ("http", "https") and url.hostname else "value"
-            ),
+            "type": kind,
             "label": " · ".join((label, *path)),
             "fact_key": ".".join((label, *path)),
-            "data": {"value": text},
+            "data": data,
             "relation": common.get("relation", "Profile information"),
         }
     ]

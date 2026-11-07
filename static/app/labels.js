@@ -152,6 +152,7 @@ var providerFields = {
   phoneinfoga: ['disabled_scanners', 'numverify_api_key', 'googlecse_api_key', 'googlecse_cx']
 };
 var displayOptions = {
+  audio: [['preview', 'Glance: Audio player']],
   video: [
     ['preview', 'Glance: Video player'],
     ['videoButton', 'Quick Action: Open video']

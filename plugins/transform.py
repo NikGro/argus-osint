@@ -9,6 +9,9 @@ PLUGIN = {
             "inputs": ["*"],
             "execution": "browser",
             "external": False,
+            "parameter_schema": {
+                "code": {"label": "JavaScript", "multiline": True, "code": True}
+            },
         }
     ],
 }

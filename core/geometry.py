@@ -20,6 +20,8 @@ def node_bounds(node, preferences=None):
         width, height = appearance.get("width", width), appearance.get("height", height)
     if node["type"] == "video" and display.get("preview"):
         height = LAYOUT["videoPreviewHeight"]
+    if node["type"] == "audio" and display.get("preview"):
+        height = LAYOUT["audioPreviewHeight"]
     if node["type"] == "image" and display.get("preview"):
         height = LAYOUT["imagePreviewHeight"]
     if node["type"] == "error":

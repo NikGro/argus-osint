@@ -116,8 +116,10 @@ export function Field({
       ) : object || multiline || schema.multiline ? (
         <textarea
           {...shared}
-          rows={object ? 4 : multilineRows(display, schema.multiline ? 4 : 3)}
-          spellCheck={!!schema.multiline}
+          rows={object ? 4 : multilineRows(display, schema.code ? 8 : schema.multiline ? 4 : 3)}
+          spellCheck={!!schema.multiline && !schema.code}
+          className={schema.code ? 'code-input' : undefined}
+          wrap={schema.code ? 'off' : undefined}
         />
       ) : numeric && schema.control === 'range' ? (
         <div className="range-field">

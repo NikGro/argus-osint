@@ -49,22 +49,18 @@ PLUGIN = {
             "name": "Estimate recording location",
             "icon": "audio-location",
             "inputs": ["audio", "datetime"],
-            "min_inputs": 1,
+            "min_inputs": 2,
             "max_inputs": 2,
             "external": True,
             "default_params": {
-                "recording_start": "",
-                "timezone": "Europe/Berlin",
                 "start_uncertainty_minutes": 0,
                 "country": "DE",
                 "bounds": "",
                 "download_data": True,
                 "max_candidates": 5,
             },
-            "parameter_help": "Enter the recording start as 2026-11-05 14:30 or connect a date/time node. Optional search area as west, south, east, north in decimal degrees. Downloading the flight data can take many gigabytes and hours; downloaded data stays cached until the plugin is removed.",
+            "parameter_help": "Connect the audio file and a date/time node with the recording start. Optional search area as west, south, east, north in decimal degrees. Downloading the flight data can take many gigabytes and hours; downloaded data stays cached until the plugin is removed.",
             "parameter_schema": {
-                "recording_start": {"label": "Recording start"},
-                "timezone": {"label": "Time zone"},
                 "start_uncertainty_minutes": {
                     "label": "Latest start (+ minutes)",
                     "min": 0,
@@ -87,19 +83,17 @@ PLUGIN = {
 
 
 def recording_window(inputs, params):
-    """UTC start window from a connected date/time node or the parameters."""
+    """UTC start window from the connected date/time node."""
     node = next((n for n in inputs if n["type"] == "datetime"), None)
-    if node:
-        text = (
-            node["data"].get("date", "") + " " + node["data"].get("time", "")
-        ).strip()
-        zone = node["data"].get("timezone") or "UTC"
-    else:
-        text = str(params.get("recording_start") or "").strip()
-        zone = str(params.get("timezone") or "UTC").strip()
+    text = (
+        (node["data"].get("date", "") + " " + node["data"].get("time", "")).strip()
+        if node
+        else ""
+    )
+    zone = (node["data"].get("timezone") if node else "") or "UTC"
     if not text:
         raise ValueError(
-            "Recording start missing: connect a date/time node or enter the recording start."
+            "Recording start missing: connect a date/time node with the date and time the recording started."
         )
     try:
         start = datetime.fromisoformat(text.replace(" ", "T", 1))

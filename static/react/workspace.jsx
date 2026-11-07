@@ -882,8 +882,8 @@ function NodeDetails({ app, node }) {
   );
   return (
     <>
-      <span className="node-kind">{c.dataLabel(node.type).toUpperCase()}</span>
-      <h2>{'Node details'}</h2>
+      <span className="node-kind">{actor ? 'TOOL' : 'DATA'}</span>
+      <h2>{actor ? action?.name || plugin?.name || c.actorTitle(node) : c.dataLabel(node.type)}</h2>
       {actor && (
         <DetailSection className="tool-run-section">
           <Button

@@ -698,6 +698,19 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
               />
             </foreignObject>
           )}
+          {node.type === 'audio' && node.display?.preview && node.data.file_id && (
+            <foreignObject x="12" y="72" width={b.w - 24} height="40">
+              <audio
+                className="node-audio"
+                controls
+                preload="metadata"
+                src={'/api/files/' + node.data.file_id}
+                onPointerDown={(event) => event.stopPropagation()}
+                onPointerUp={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
+              />
+            </foreignObject>
+          )}
           {node.type === 'location' && node.display?.map && c.mapsUrl(node, true) && (
             <foreignObject
               x="12"

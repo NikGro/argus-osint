@@ -649,7 +649,7 @@
         "name": "Extract metadata"
       },
       "files": {
-        "plugins/metadata.py": "971208204b4d5ee0cd761bc53700ed789b9e8337a607357dc19bd8fe961877c7"
+        "plugins/metadata.py": "187b0ffee24d6ff0e1583993750e23509f304fc510b35728d44ba0f63fbc6f26"
       },
       "id": "metadata",
       "module": "plugins/metadata.py",
@@ -925,9 +925,7 @@
               "country": "DE",
               "download_data": true,
               "max_candidates": 5,
-              "recording_start": "",
-              "start_uncertainty_minutes": 0,
-              "timezone": "Europe/Berlin"
+              "start_uncertainty_minutes": 0
             },
             "external": true,
             "icon": "audio-location",
@@ -937,9 +935,9 @@
               "datetime"
             ],
             "max_inputs": 2,
-            "min_inputs": 1,
+            "min_inputs": 2,
             "name": "Estimate recording location",
-            "parameter_help": "Enter the recording start as 2026-11-05 14:30 or connect a date/time node. Optional search area as west, south, east, north in decimal degrees. Downloading the flight data can take many gigabytes and hours; downloaded data stays cached until the plugin is removed.",
+            "parameter_help": "Connect the audio file and a date/time node with the recording start. Optional search area as west, south, east, north in decimal degrees. Downloading the flight data can take many gigabytes and hours; downloaded data stays cached until the plugin is removed.",
             "parameter_schema": {
               "bounds": {
                 "label": "Search area (optional)"
@@ -963,17 +961,11 @@
                 "min": 1,
                 "step": 1
               },
-              "recording_start": {
-                "label": "Recording start"
-              },
               "start_uncertainty_minutes": {
                 "label": "Latest start (+ minutes)",
                 "max": 720,
                 "min": 0,
                 "step": 1
-              },
-              "timezone": {
-                "label": "Time zone"
               }
             }
           }
@@ -985,7 +977,7 @@
         "name": "Locate audio with Dopplergeist"
       },
       "files": {
-        "plugins/dopplergeist.py": "a8e6f25c1065b4e781406df4839b278b57dbcdec142bc59612bcd0fb9467ca5b"
+        "plugins/dopplergeist.py": "c2c28665a9b867379e0f37efab632e6377e0e45573b81b5ee4971950bcaa6b1f"
       },
       "id": "dopplergeist",
       "module": "plugins/dopplergeist.py",
@@ -1030,7 +1022,14 @@
             "inputs": [
               "*"
             ],
-            "name": "JavaScript transform"
+            "name": "JavaScript transform",
+            "parameter_schema": {
+              "code": {
+                "code": true,
+                "label": "JavaScript",
+                "multiline": true
+              }
+            }
           }
         ],
         "description": "JavaScript in a browser worker; turn inputs into data nodes.",
@@ -1038,7 +1037,7 @@
         "name": "Data transform"
       },
       "files": {
-        "plugins/transform.py": "01ecc4dafed8b20c9240a6843880aa271371b362f15d0c1667c5f14608316495"
+        "plugins/transform.py": "c6d2f3a2c1cd8ee786178dc9a14aa92b15e2cb2d8d539a5237215b4474175e0b"
       },
       "id": "transform",
       "module": "plugins/transform.py",

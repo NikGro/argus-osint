@@ -39,5 +39,6 @@
     "width": 300,
     "height": 76
   },
-  "videoPreviewHeight": 220
+  "videoPreviewHeight": 220,
+  "audioPreviewHeight": 124
 }

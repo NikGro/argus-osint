@@ -17,6 +17,11 @@ NODE = {
     "label": "Fixture recording",
     "data": {"file_id": "f" * 32, "filename": "fixture.mp3", "mime": "audio/mpeg"},
 }
+BERLIN_MOMENT = {
+    "id": "d0",
+    "type": "datetime",
+    "data": {"date": "2026-01-15", "time": "14:30", "timezone": "Europe/Berlin"},
+}
 
 
 class Dopplergeist(unittest.TestCase):
@@ -45,10 +50,9 @@ class Dopplergeist(unittest.TestCase):
         with patch.object(dopplergeist, "bounded_run", side_effect=fake):
             out = dopplergeist.run(
                 "locate",
-                inputs or [NODE],
+                [NODE, BERLIN_MOMENT] if inputs is None else inputs,
                 {
                     **dopplergeist.PLUGIN["actions"][0]["default_params"],
-                    "recording_start": "2026-01-15 14:30",
                     **(params or {}),
                 },
                 self.context,
@@ -112,7 +116,6 @@ class Dopplergeist(unittest.TestCase):
         _, calls = self.run_with(
             {"schema_version": 1, "job_id": "job1", "status": "inconclusive"},
             {
-                "recording_start": "",
                 "start_uncertainty_minutes": 30,
                 "bounds": "13, 52, 14, 53",
             },
@@ -125,15 +128,26 @@ class Dopplergeist(unittest.TestCase):
         )
 
     def test_invalid_input_is_rejected_before_running(self):
-        for params in (
-            {"recording_start": ""},
-            {"recording_start": "yesterday"},
-            {"timezone": "Mars/Base"},
-            {"bounds": "1, 2, 3"},
-            {"country": "XX"},
-        ):
+        for params in ({"bounds": "1, 2, 3"}, {"country": "XX"}):
             with self.subTest(params=params), self.assertRaises(ValueError):
                 self.run_with({"status": "failed"}, params)
+        for moment in (
+            None,
+            {**BERLIN_MOMENT, "data": {"date": "yesterday", "time": ""}},
+            {
+                **BERLIN_MOMENT,
+                "data": {**BERLIN_MOMENT["data"], "timezone": "Mars/Base"},
+            },
+        ):
+            with self.subTest(moment=moment), self.assertRaises(ValueError):
+                self.run_with(
+                    {"status": "failed"}, inputs=[NODE] + ([moment] if moment else [])
+                )
+
+    def test_start_time_comes_only_from_the_node(self):
+        action = dopplergeist.PLUGIN["actions"][0]
+        self.assertNotIn("recording_start", action["default_params"])
+        self.assertEqual((action["min_inputs"], action["max_inputs"]), (2, 2))
 
 
 @unittest.skipUnless(shutil.which("ffmpeg"), "FFmpeg absent locally")
