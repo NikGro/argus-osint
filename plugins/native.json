@@ -873,6 +873,54 @@
         "actions": [
           {
             "default_params": {
+              "end_seconds": 10.0,
+              "start_seconds": 0.0
+            },
+            "external": false,
+            "icon": "audio",
+            "id": "trim",
+            "inputs": [
+              "audio"
+            ],
+            "max_inputs": 1,
+            "min_inputs": 1,
+            "name": "Trim audio",
+            "parameter_schema": {
+              "end_seconds": {
+                "label": "End (seconds)",
+                "max": 86400,
+                "min": 0.01,
+                "secret": false,
+                "step": 0.01
+              },
+              "start_seconds": {
+                "label": "Start (seconds)",
+                "max": 86400,
+                "min": 0,
+                "secret": false,
+                "step": 0.01
+              }
+            }
+          }
+        ],
+        "category": "Media",
+        "description": "Trim an audio file into a new copy.",
+        "icon": "audio",
+        "id": "audio",
+        "name": "Audio tools"
+      },
+      "files": {
+        "plugins/audio.py": "3dd548f170f92157ad42a0ba14cad397ffc9eb639a86e56280a690f40558eb3e"
+      },
+      "id": "audio",
+      "module": "plugins/audio.py",
+      "tools": []
+    },
+    {
+      "descriptor": {
+        "actions": [
+          {
+            "default_params": {
               "bounds": "",
               "country": "DE",
               "download_data": true,
