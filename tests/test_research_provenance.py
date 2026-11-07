@@ -472,7 +472,8 @@ class RevisionSources(unittest.TestCase):
             self.assertTrue(
                 any(
                     (
-                        "Title" in o["label"] and o["data"]["value"] == "Fixture PDF"
+                        "Title" in o["label"]
+                        and o["data"].get("value") == "Fixture PDF"
                         for o in result["outputs"]
                     )
                 )
@@ -481,8 +482,16 @@ class RevisionSources(unittest.TestCase):
                 {o["group_id"] for o in result["outputs"]}, {"image", "pdf"}
             )
             self.assertTrue(
-                all((set(o["data"]) == {"value"} for o in result["outputs"]))
+                all(
+                    set(o["data"]) == {"value"}
+                    or (
+                        o["type"] == "datetime"
+                        and set(o["data"]) == {"date", "time", "timezone"}
+                    )
+                    for o in result["outputs"]
+                )
             )
+            self.assertTrue(any(o["type"] == "datetime" for o in result["outputs"]))
             self.assertEqual(before, {p: p.read_bytes() for p in before})
 
     def test_metadata_list_elements_and_original_file_names(self):
@@ -684,14 +693,17 @@ class UploadAndDocumentTests(unittest.TestCase):
             )
             self.assertTrue(
                 any(
-                    (o["data"]["value"] == "Fixture Office" for o in result["outputs"])
+                    (
+                        o["data"].get("value") == "Fixture Office"
+                        for o in result["outputs"]
+                    )
                 ),
                 json.dumps(result, ensure_ascii=False),
             )
             self.assertTrue(
                 any(
                     (
-                        "SampleRate" in o["label"] and o["data"]["value"] == "8000"
+                        "SampleRate" in o["label"] and o["data"].get("value") == "8000"
                         for o in result["outputs"]
                     )
                 )

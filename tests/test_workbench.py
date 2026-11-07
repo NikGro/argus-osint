@@ -281,17 +281,21 @@ class APITests(unittest.TestCase):
             ),
             "4",
         )
-        self.assertTrue(all((o["type"] == "value" for o in result["outputs"])))
+        self.assertTrue(
+            all(o["type"] in ("value", "datetime") for o in result["outputs"])
+        )
         self.assertTrue(
             any(
                 (
                     o["label"].endswith("ModifyDate")
-                    and o["data"] == {"value": "2026:10:13 10:00:00"}
+                    and o["type"] == "datetime"
+                    and o["data"]
+                    == {"date": "2026-10-13", "time": "10:00", "timezone": "UTC"}
+                    and o["source"]["raw_value"] == "2026:10:13 10:00:00"
                     for o in result["outputs"]
                 )
             )
         )
-        self.assertTrue(all((set(o["data"]) == {"value"} for o in result["outputs"])))
         with self.assertRaises(ValueError):
             app.resolve_file("../../server.py")
 
