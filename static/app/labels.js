@@ -1,4 +1,21 @@
+/** Readable names for run and node states stored as codes. */
+var statusLabels = {
+  ready: 'Ready',
+  completed: 'Completed',
+  failed: 'Failed',
+  cancelled: 'Cancelled',
+  interrupted: 'Interrupted',
+  needs_input: 'Input required',
+  needs_selection: 'Selection required',
+  manual: 'Manual'
+};
+function statusLabel(status) {
+  return statusLabels[status] || String(status ?? '');
+}
 var fieldNames = {
+  column_id: 'Reference column',
+  title: 'Title',
+  message: 'Message',
   crop_enabled: 'Crop image area',
   crop_x: 'Horizontal position (0–1)',
   crop_y: 'Vertical position (0–1)',
@@ -153,4 +170,4 @@ var displayOptions = {
     ['osmButton', 'Quick Action: OpenStreetMap']
   ]
 };
-export { fieldNames, nodeLabels, transformExample, providerFields, displayOptions };
+export { statusLabel, fieldNames, nodeLabels, transformExample, providerFields, displayOptions };

@@ -1,7 +1,7 @@
 import React, { memo, useRef, useState, useEffect, useMemo } from 'react';
 import phoneCountries from '../phone-countries.js';
 import locationCountries from '../location-countries.js';
-import { providerFields, displayOptions } from '../app/labels.js';
+import { providerFields, displayOptions, statusLabel } from '../app/labels.js';
 import { hasMediaEditor, cropKeys, MediaEditor } from '../app/media-editor.js';
 import {
   Button,
@@ -1038,7 +1038,7 @@ function NodeDetails({ app, node }) {
         .reverse()
         .map((run) => (
           <section key={run.id} className={'run ' + run.status}>
-            <strong>{run.status}</strong>
+            <strong>{statusLabel(run.status)}</strong>
             {run.error && <p>{run.error}</p>}
             {run.warnings?.map((warning, index) => (
               <p key={index}>{warning}</p>

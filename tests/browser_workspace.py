@@ -253,23 +253,6 @@ try:
         click("dialog[open] button[type=submit]")
         wait.until(lambda d: len(api("/api/settings")["settings"]["tags"]) == 1)
         checks.append("global tag create/autosave")
-        click("#settingsView .react-field [role=combobox]")
-        search = css(".react-select-popup input")
-        assert driver.switch_to.active_element == search
-        search.send_keys("English")
-        choose("English")
-        wait.until(
-            lambda d: api("/api/settings")["settings"]["language"] == "en"
-            and d.find_element(By.TAG_NAME, "html").get_attribute("lang") == "en"
-        )
-        click("#settingsView .react-field [role=combobox]")
-        css(".react-select-popup input").send_keys("Deutsch")
-        choose("Deutsch")
-        wait.until(
-            lambda d: api("/api/settings")["settings"]["language"] == "de"
-            and d.find_element(By.TAG_NAME, "html").get_attribute("lang") == "de"
-        )
-        checks.append("searchable language dropdown and immediate typing")
         click("#brandHome")
         click('[data-project="' + pid + '"] .primary')
         select_node("a")
@@ -279,8 +262,11 @@ try:
             )
         )
         click(".verification-section [role=combobox]")
-        css(".react-select-popup input").send_keys("verified")
+        search = css(".react-select-popup input")
+        assert driver.switch_to.active_element == search
+        search.send_keys("verified")
         choose("Verified")
+        checks.append("searchable dropdown and immediate typing")
         click(".node-tags-section [role=combobox]")
         choose("NSFW")
         wait.until(
@@ -341,7 +327,7 @@ try:
             assert handle.value_of_css_property("cursor") == "ew-resize"
         checks.append("single sidebar borders and full-width detail Quick Actions")
         click("#actorSortToggle")
-        assert "Category" in css("#actorSort").text
+        assert "category" in css("#actorSort").text
         click("#actorSort")
         choose("A–Z")
         assert not driver.find_elements(

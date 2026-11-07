@@ -1,3 +1,4 @@
+import { fieldNames } from '../../app/labels.js';
 import React, { useRef, useState, useEffect } from 'react';
 import { Button, Check } from './controls.jsx';
 import { Field } from './fields.jsx';
@@ -72,7 +73,7 @@ export function Modal({ app }) {
         {request.fields?.map((field) => (
           <Field
             key={field.key}
-            label={field.label || field.key}
+            label={fieldNames[field.label] || field.label || fieldNames[field.key] || field.key}
             value={
               values[field.key] ??
               field.default ??

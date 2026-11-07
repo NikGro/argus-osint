@@ -1,3 +1,4 @@
+import { statusLabel } from './labels.js';
 import layout_spec_default from '../layout-spec.json';
 var canvas_renderer_default = {
   name: 'canvas-renderer',
@@ -118,7 +119,7 @@ var canvas_renderer_default = {
           ? 'Running …'
           : executionState.actorQueue.some((job) => job.id === n.id)
             ? 'Queued'
-            : n.data.status || 'ready';
+            : statusLabel(n.data.status || 'ready');
       if (n.type === 'person')
         return [
           n.data.birth_date,

@@ -35,4 +35,3 @@ def real(tool):
         return False
     marker = tools.directory(tool) / tools.MARKER
     return not json.loads(marker.read_text()).get("stub")
-

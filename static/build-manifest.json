@@ -3,7 +3,7 @@
     "static/app/actors.js": "45bc49aa28b362ca433ed3b50f28371030416aaaec3505ed977556ef924345b0",
     "static/app/api.js": "20a397dc9b684b12f3f3ef98830b4aecd598b0dd489baa97c7afe9bc01c9efaf",
     "static/app/canvas-input.js": "c80cf5aaf3d6b914e1ef127304cd6c1b4876e6db7a7f5831d361db0b8fea5ef3",
-    "static/app/canvas-renderer.js": "2ca08d953663d7ce7168fb00f5d22248e4ebb3bc2ad484aedf2bd9d89bf5af5f",
+    "static/app/canvas-renderer.js": "fbcfbc6f7beb1d7683442854b5d46eccb104a354e675d0a201e0cf2c453a66fb",
     "static/app/catalogue.js": "93b3116aeb83052e08c64e897f0008e2a25b03b24b734bfdd289ec988087287c",
     "static/app/clipboard.js": "578f07e642e324d4a6f7979a979a08fc1d250a36f450c0dccf1e566f13db3f13",
     "static/app/fields.js": "95fcd595c830b50d3dbc039e88a58929903b349ec29cba17efac3016fa1c37ff",
@@ -11,7 +11,7 @@
     "static/app/groups.js": "bb86c057b9bbeeacfca3b25265713ab1f0f2deee379fa352738694b88cc35d1b",
     "static/app/history.js": "9026ec6d373a32e8af26cf2097349344da45f5febfeb5501da89996206f09789",
     "static/app/inspector.js": "b685088a73e2ace0c01d403815c39eac5289d09404dfbb5a62cc2b3461fea889",
-    "static/app/labels.js": "800a94a7f62577ae5d627182d2d0ddc2662e694e7e034d5bb68b2d29f6f19ca6",
+    "static/app/labels.js": "59100930e08cb4c1d42a038147af485efe1614f14bcfb001513abb74b7bbbb33",
     "static/app/layout.js": "9020165282c7f7150b4676f851ffc57c19a3634962821ec31c57fffd29e1b201",
     "static/app/location-fields.js": "3964d7d4316c3a11a8dc86254cf4fb61693392614864915faf10d6f75ecae15d",
     "static/app/media-editor.js": "ae394b4fe7f22bbcac8527e67eaf21a0a62eda3bac383134081080022f227612",
@@ -56,12 +56,12 @@
     "static/react/ui/fields.jsx": "2aadc16e1255b05d8234cc6363622dc1e1aff6c181e895c0f4e0059ae2523078",
     "static/react/ui/index.jsx": "ae798ccdc0666dd6d4f273e7cdc704b7a61018f7a2f9b6ff9002fdb244ec1fd3",
     "static/react/ui/layout.jsx": "8d578a55619840062652f568b126b7f372d56ed60ad7348a540c784e00f82ae8",
-    "static/react/ui/modal.jsx": "4aa319f94b34d5582d606b6db1dda59accbd18e995ed02f092f67e40b2b09371",
+    "static/react/ui/modal.jsx": "74392f1202b8aa9773a2076c564ca99b6595598f8a605faabd40f4aa1edd4cce",
     "static/react/ui/pickers.jsx": "37d358a264a8764fed17e0d17e0c77c34e76365bbbf2d19bdcbd0a370ad1d856",
     "static/react/ui/select.jsx": "dff151c470d59fcd998effe9b5eee6c40d00407e760fed639fab66257761f6cb",
     "static/react/ui/sortable.jsx": "62f4109790729bc189bcddff60ef9eda87c1d3c271ac7c7834da6bc08b1ecf21",
     "static/react/workspace-preferences.js": "2663601b83ee85aa4acdb26ae96da6dd49dadfc663715c4c3ab1e3a92116f7af",
-    "static/react/workspace.jsx": "a4688e2788de74f7b3ab7ad2273e151ab47152ca0e415f474144f919fddb4e13",
+    "static/react/workspace.jsx": "90b59e6bbade0352fe59131d1b56c1910544c42ae0bd8018112f078fd7f0db33",
     "static/react-LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
     "static/react-dom-LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
     "static/report.css": "ea5e9866fcdd65ac036662e8c2f6299447c016b68a12235d296e1fb47570336d",
@@ -70,5 +70,5 @@
     "static/transform-worker.js": "4dbc02cf88b93040f6f91513b3f83820cf600af8f75a423d2cfbd9b58a191028",
     "static/version.js": "bcf65d6f87bff8565e58f58045d840fc878f328e3a3bd3c6dbc48993670161da"
   },
-  "bundle_sha256": "97151b3a654f5f6eb59c69d9339229b914a828dd3003d99e8b22d4dc43efa7dd"
+  "bundle_sha256": "0fe59ddb89d3708c61db154193522bc2bfba150d34a655b5f305dc745770f965"
 }
