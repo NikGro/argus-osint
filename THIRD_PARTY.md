@@ -33,14 +33,21 @@ No third-party research-engine source tree, installed Python environment, downlo
 
 DeepFace model weights are downloaded by upstream on a user's first relevant execution. ARGUS does not preload weights, instantiate models or run image comparisons during installation. Check the chosen model's own terms before redistributing weights or a cache.
 
-Direct pins reduce drift; transitive Python packages, base images and Debian repositories are not a complete hermetic lock or full license/security bill of materials. Retain the packages' installed license/copyright files and the complete upstream checkouts/notices when redistributing a build. This alpha source publication does not include a prebuilt image.
+Direct pins reduce drift; transitive Python packages, base images and Debian repositories are not a complete hermetic lock or full license/security bill of materials. Retain the packages' installed license/copyright files and the complete upstream checkouts/notices when redistributing a build. This beta source publication does not include a prebuilt image.
 
-## Video processing
+## Video and audio processing
 
-- [FFmpeg](https://ffmpeg.org/) — Debian executable for probing, extraction and H.264/AAC trimming. Debian builds may include GPL components such as libx264; see `/usr/share/doc/ffmpeg/copyright` and upstream license/configuration. These terms apply independently of ARGUS MIT code.
+- [FFmpeg](https://ffmpeg.org/) — Debian executable for probing, extraction and H.264/AAC video and audio trimming. Debian builds may include GPL components such as libx264; see `/usr/share/doc/ffmpeg/copyright` and upstream license/configuration. These terms apply independently of ARGUS MIT code.
 - [OpenCV](https://opencv.org/) and NumPy — installed as the media tool for ARGUS CPU alignment and fusion.
 - [Jamy-L/Handheld-Multi-Frame-Super-Resolution](https://github.com/Jamy-L/Handheld-Multi-Frame-Super-Resolution) was evaluated but is not bundled or executed by this CPU workflow.
 - Canvas geometry follows [n8n behavior](https://github.com/n8n-io/n8n/blob/master/packages/frontend/editor-ui/src/features/workflows/canvas/components/elements/edges/utils/getEdgeRenderData.ts) and Vue Flow: forward Bezier curves and rounded backwards detours. ARGUS geometry is implemented locally; no n8n source is bundled.
+
+## Maps and online services
+
+- Map previews load tiles from [OpenStreetMap](https://www.openstreetmap.org/copyright) (© OpenStreetMap contributors, ODbL) through ARGUS and show the attribution. Follow the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
+- Place normalization uses [Photon by Komoot](https://photon.komoot.io/) and optionally a [Nominatim](https://nominatim.org/) endpoint you configure; both serve OpenStreetMap data under their own terms.
+- Dopplergeist reads historical ADS-B flight data from [adsb.lol](https://adsb.lol/) (ODbL); downloaded data keeps its own terms.
+- Username site lists come from [WhatsMyName](https://github.com/WebBreacher/WhatsMyName) (CC BY-SA 4.0) where a plugin uses it.
 
 ## React interface
 

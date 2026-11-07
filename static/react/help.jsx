@@ -12,7 +12,7 @@ const chapters = [
       ],
       [
         'Keep your files',
-        'Upload images, videos and files. Project files stay associated with the project. Editing tools create copies and preserve original files.'
+        'Upload images, videos, audio and other files. Project files stay associated with the project. Editing tools create copies and preserve original files.'
       ],
       [
         'Archives and backups',
@@ -38,7 +38,7 @@ const chapters = [
       ],
       [
         'Execution and results',
-        'Select a tool and press Run tool. Further jobs enter the queue. Output nodes retain their provenance. Warnings and failures may also appear as error nodes, even when partial results are available.'
+        'Select a tool and press Run tool. Several tools can run at once (Settings → Parallel tools); further jobs wait in the queue. Output nodes retain their provenance. Warnings and failures may also appear as error nodes, even when partial results are available.'
       ]
     ]
   ],
@@ -78,7 +78,7 @@ const chapters = [
     [
       [
         'Previews and cropping',
-        'Glances show images, videos and maps on the canvas. Quick actions open the resource in a new tab. Video cropping uses a shared time-range control and a graphical crop area.'
+        'Glances show images, videos, audio players and maps on the canvas. Quick actions open the resource in a new tab. Video and audio trimming use a shared time-range control; videos and photos also have a graphical crop area.'
       ],
       [
         'Locations',
@@ -96,7 +96,7 @@ const chapters = [
       ],
       [
         'Create a report',
-        'Open Report from the toolbar, add notes and refresh the preview. Print / save as PDF creates a report on white A4 paper. Nested data uses field paths without increasing indentation.'
+        'Open Report from the toolbar and add notes; the preview updates automatically. Print / save as PDF creates a report on white A4 paper. Nested data uses field paths without increasing indentation.'
       ]
     ]
   ],
@@ -104,6 +104,10 @@ const chapters = [
     'configuration',
     'Plugins, VPN and logs',
     [
+      [
+        'Install plugins',
+        "ARGUS starts without research plugins. Open Plugins → Add plugins and install what you need; ARGUS downloads the plugin and its tools. Community repositories can be added there too; their code runs with ARGUS's permissions, so add only code you trust."
+      ],
       [
         'Settings and defaults',
         'Plugin settings separate global configuration from defaults for new tool runs. Configure sources and their order there; search profiles can be changed for a specific search.'

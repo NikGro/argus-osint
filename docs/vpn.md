@@ -1,6 +1,6 @@
 # Integrated VPN
 
-ARGUS 1.0 alpha bundles OpenVPN, WireGuard (with a userspace fallback), rotation, health checks and the VPN controller in the same image. No sidecar or host package installation is required. Start the supplied `compose.yaml`; it grants the Linux capabilities and `/dev/net/tun` device the VPN needs.
+ARGUS bundles OpenVPN, WireGuard (with a userspace fallback), rotation, health checks and the VPN controller in the same image. No sidecar or host package installation is required. Start the supplied `compose.yaml`; it grants the Linux capabilities and `/dev/net/tun` device the VPN needs.
 
 ## Configuration
 

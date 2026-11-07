@@ -49,7 +49,7 @@ export function Settings({ app }) {
         <h1>{'Settings'}</h1>
       </div>
       <section className="settings-form">
-        <p>{'Address lookups are controlled through the installed Photon plugin.'}</p>
+        <p>{'Address lookups are configured in the Normalize and complete place plugin.'}</p>
         <p>{'Configure Quick Actions and Glances in the corresponding data plugin.'}</p>
         <section className="global-tag-settings">
           <h2>{'Global tags'}</h2>

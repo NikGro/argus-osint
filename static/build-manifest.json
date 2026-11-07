@@ -48,11 +48,11 @@
     "static/react/canvas.jsx": "9bdfeb2e0bec906920d9f4eb5a3f715bf411cff511b29fdcf33631d6065e85b1",
     "static/react/controller.js": "b5f706e627d5a83a1fbebde09c462d7a4508a91781ad71dcd9b38a46c41290b1",
     "static/react/databases.jsx": "8f458fca797f95daace0dca5a70b15307698fcfbf68a8e050753d888f8621242",
-    "static/react/help.jsx": "d41febe50cb1bea1e2c664d442e7976574e2e35bb3fb6ec4ada90587b25066f1",
+    "static/react/help.jsx": "9f616e8d06bd580275eaa554b8bd6dca6cb5d71de6ba11724d3f6cbaddd3ef47",
     "static/react/main.jsx": "1cdde57c012298c0471ea05279ee4350afce9b5ca123afd9e3520e19d15e4944",
     "static/react/plugins.jsx": "5fc074de11015988b237c417d1762227d805d2b7ccafa1d49e311f0068a274c4",
     "static/react/report.jsx": "d78b0cee0d3e5ab47d3b0dcb9635eef897406e30889a485291c75428aa988cf2",
-    "static/react/settings.jsx": "dde6b721112f9cf53718d4b2e3343709bd5582fa3340686ae1f72439eba2e094",
+    "static/react/settings.jsx": "c0bb7958fb8d4d530e0016a3f9e41b00d59e2c11cb7579dbaeef7844440d4582",
     "static/react/ui/controls.jsx": "f2af21f5da021ba036f40bdc68cfbff0ff9a8cdc692464f9aaa8e3bf46df5769",
     "static/react/ui/fields.jsx": "b6b2835041d276364260d673c3a1d2bfe50cfd410884f34ffbb80c628549dafd",
     "static/react/ui/index.jsx": "ae798ccdc0666dd6d4f273e7cdc704b7a61018f7a2f9b6ff9002fdb244ec1fd3",
@@ -69,7 +69,7 @@
     "static/scheduler-LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
     "static/style.css": "3f470677c7e45160c8d8f61a041aba0f0cdf4f6b47e64eb0fe267bc8dcc49234",
     "static/transform-worker.js": "4dbc02cf88b93040f6f91513b3f83820cf600af8f75a423d2cfbd9b58a191028",
-    "static/version.js": "bcf65d6f87bff8565e58f58045d840fc878f328e3a3bd3c6dbc48993670161da"
+    "static/version.js": "8053943ae82230e47bc83f31ffe21e890d7b5faa2979c18ca7452a828668676d"
   },
-  "bundle_sha256": "25a40cb51042f2543615c1844c82099b5ea38bb741a9e8908898125f34cac03e"
+  "bundle_sha256": "0f516e908251c273cfc8a118471b269f4c7948c1303d8379e2fdd7b17f87b7f0"
 }
