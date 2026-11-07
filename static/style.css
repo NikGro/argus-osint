@@ -775,8 +775,8 @@ main:not(#workspace) {
 .node .dock {
   fill: #192537;
   stroke: #ff9d45;
-  stroke-width: 1.5;
-  stroke-opacity: 0.8;
+  stroke-width: 1.25;
+  stroke-opacity: 0.45;
   cursor: crosshair;
   transition: fill 0.12s;
 }
@@ -784,18 +784,23 @@ main:not(#workspace) {
 .node:focus-within .dock,
 .node.connection-source .dock,
 .node.connection-near .dock {
+  stroke-opacity: 0.7;
+}
+.node .dock:hover {
   stroke-opacity: 1;
 }
 .node .dock:hover {
   fill: #ff9d45;
 }
 .node.actor .dock {
+  fill: #163029;
   stroke: var(--actor-accent);
 }
 .node.actor .dock:hover {
   fill: var(--actor-accent);
 }
 .node.error .dock {
+  fill: #321d27;
   stroke: var(--danger);
 }
 .phone-input {

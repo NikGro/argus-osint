@@ -775,7 +775,7 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
                 data-port={side}
                 cx={point.x + point.nx * PORT_DOCK_OFFSET}
                 cy={point.y}
-                r="4.5"
+                r="3.5"
                 onPointerDown={(event) => {
                   if (event.button > 0) return;
                   event.preventDefault();
