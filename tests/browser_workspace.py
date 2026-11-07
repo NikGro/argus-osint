@@ -17,7 +17,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.service import Service
 import shutil
-from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 
 ROOT = Path(__file__).resolve().parents[1]
 temp = tempfile.TemporaryDirectory()
@@ -225,11 +225,27 @@ def choose(label):
 
 def select_node(id):
     click("#fit")
-    element = css('.node[data-id="' + id + '"] > .node-frame')
-    box = element.rect
-    ActionChains(driver).move_to_element_with_offset(
-        element, -box["width"] / 2 + 40, -box["height"] / 2 + 20
-    ).click().perform()
+    selected = '.node[data-id="' + id + '"].selected'
+    # Top-left first (clear of glances); the node centre if a group frame took the click.
+    for dx, dy in ((40, 20), (None, None)):
+        element = css('.node[data-id="' + id + '"] > .node-frame')
+        box = element.rect
+        chain = ActionChains(driver)
+        if dx is None:
+            chain.move_to_element(element)
+        else:
+            chain.move_to_element_with_offset(
+                element, -box["width"] / 2 + dx, -box["height"] / 2 + dy
+            )
+        chain.click().perform()
+        try:
+            WebDriverWait(driver, 3).until(
+                lambda d: d.find_elements(By.CSS_SELECTOR, selected)
+            )
+            return
+        except TimeoutException:
+            driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+    raise AssertionError("Node could not be selected: " + id)
 
 
 def select_group(id):
