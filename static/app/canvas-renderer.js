@@ -61,16 +61,17 @@ var canvas_renderer_default = {
         y: node.y,
         w,
         h,
-        inputCount:
-          node.type === 'actor'
-            ? Math.max(
-                1,
-                pluginsState.catalog
-                  .find((p) => p.id === node.data.plugin)
-                  ?.actions.find((a) => a.id === node.data.action)?.min_inputs || 1
-              )
-            : 1
+        inputCount: node.type === 'actor' ? actionInputCount(node) : 1
       };
+    }
+    /** One input socket per expected input: all of them when the action takes a few. */
+    function actionInputCount(node) {
+      const action = pluginsState.catalog
+        .find((p) => p.id === node.data.plugin)
+        ?.actions.find((a) => a.id === node.data.action);
+      const min = Math.max(1, action?.min_inputs || 1),
+        max = action?.max_inputs;
+      return max && max > min && max <= 4 ? max : min;
     }
     function dataIcon(type) {
       if (pluginsState.dataTypes.get(type)?.node.icon)

@@ -636,6 +636,8 @@
             "id": "extract",
             "inputs": [
               "image",
+              "video",
+              "audio",
               "file"
             ],
             "name": "Extract metadata"
@@ -647,7 +649,7 @@
         "name": "Extract metadata"
       },
       "files": {
-        "plugins/metadata.py": "c4612c93e13b3c4ef9899959202afcf9a11a2771cc68eb25a6aedba921961edb"
+        "plugins/metadata.py": "971208204b4d5ee0cd761bc53700ed789b9e8337a607357dc19bd8fe961877c7"
       },
       "id": "metadata",
       "module": "plugins/metadata.py",

@@ -13,7 +13,7 @@ PLUGIN = {
         {
             "id": "extract",
             "name": "Extract metadata",
-            "inputs": ["image", "file"],
+            "inputs": ["image", "video", "audio", "file"],
             "external": False,
         }
     ],
@@ -78,7 +78,7 @@ def run(action, inputs, params, context):
         )
         rows = json.loads(stdout)
         if not isinstance(rows, list) or len(rows) != 1:
-            raise ValueError("Unlesbare Metadatenausgabe.")
+            raise ValueError("Unreadable metadata output.")
         metadata = {
             k: v
             for k, v in rows[0].items()

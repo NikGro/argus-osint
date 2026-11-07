@@ -1,5 +1,7 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import { Icon, MediaFrame, MapPreview } from './ui/index.jsx';
+import { MIN_SCALE } from '../app/zoom.js';
+import { nodeOutline, PORT_DOCK_OFFSET } from '../app/node-outline.js';
 
 export function Canvas({ app }) {
   const { commands: c, state: s } = app;
@@ -26,7 +28,7 @@ export function Canvas({ app }) {
           resizeView = { ...previousSize, pan: { ...pan } };
         const base = resizeView;
         const scale = Math.max(
-          0.15,
+          MIN_SCALE,
           base.pan.scale * Math.min(1, width / base.width, height / base.height)
         );
         const factor = scale / base.pan.scale;
@@ -548,10 +550,17 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
         }
       }}
     >
-      <rect
-        width={b.w}
-        height={b.h}
-        rx="10"
+      <path
+        className="node-frame"
+        d={nodeOutline(
+          b.w,
+          b.h,
+          10,
+          node.type === 'marker'
+            ? []
+            : Array.from({ length: count }, (_, index) => (b.h * (index + 1)) / (count + 1)),
+          node.type === 'marker' ? [] : [b.h / 2]
+        )}
         style={
           note
             ? { fill: color, stroke: selected || linked ? 'var(--selection)' : color }
@@ -763,9 +772,9 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
                 className="dock"
                 data-node={node.id}
                 data-port={side}
-                cx={point.x}
+                cx={point.x + point.nx * PORT_DOCK_OFFSET}
                 cy={point.y}
-                r="5"
+                r="4"
                 onPointerDown={(event) => {
                   if (event.button > 0) return;
                   event.preventDefault();

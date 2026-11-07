@@ -1,3 +1,4 @@
+import { ZOOM_BASE } from './zoom.js';
 function createState() {
   return {
     workspaceState: {
@@ -27,7 +28,7 @@ function createState() {
       pan: {
         x: 60,
         y: 70,
-        scale: 1
+        scale: ZOOM_BASE
       },
       drag: null,
       keyboardNode: null,

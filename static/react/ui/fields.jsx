@@ -98,6 +98,7 @@ export function Field({
           label={label}
           value={value}
           disabled={disabled}
+          placeholder={schema.placeholder}
           options={schema.enum.map((item) => ({
             value: item,
             label: schema.labels?.[item] || String(item)

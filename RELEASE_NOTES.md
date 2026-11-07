@@ -19,11 +19,14 @@ ARGUS now starts as a slim all-in-one container without research plugins. You in
 ## Audio and Dopplergeist
 
 - New **Audio** data node (MP3, WAV, FLAC, OGG, M4A) with a player in the node details. Dropped audio files become audio nodes; MP3s with cover art are no longer mistaken for videos.
-- New plugin **Locate audio with Dopplergeist**: estimates where a recording was made from passing aircraft and historical ADS-B flight tracks. Takes the recording start from its parameters or a connected date/time node; candidates become location nodes, an inconclusive analysis becomes an error node with the reason. Flight data (often many gigabytes) is cached until the plugin is removed. Dopplergeist is licensed for private, noncommercial use only.
+- New plugin **Locate audio with Dopplergeist**: estimates where a recording was made from passing aircraft and historical ADS-B flight tracks. Takes the recording start from its parameters or a connected date/time node; candidates become location nodes, an inconclusive analysis becomes an error node with the reason. Flight data (often many gigabytes) is cached until the plugin is removed. Dopplergeist is licensed for private, noncommercial use only. The tool node shows two input sockets (audio and date/time).
+- New tool **Trim audio**: cuts a time range into a new AAC copy, with a player and start/end controls in the tool details. **Extract metadata** now also accepts audio and video nodes.
 
 ## Interface
 
-- **Canvas:** the detail panel stays open and shows a project overview (counts, running tools, error nodes, report selection, data by type) when nothing is selected; only its toggle collapses it. Header, toolbar and side panels are more compact in canvas mode.
+- **Canvas:** the detail panel stays open and shows a project overview (counts, running tools, error nodes, report selection, data by type) when nothing is selected; only its toggle collapses it. Header, toolbar and side panels are more compact in canvas mode. *100 %* zoom is now a smaller working size (the former 70 %), leaving more room on the canvas; zoom goes up to 300 %.
+- **Nodes:** connector sockets are always visible and sit in rounded humps that are part of the node outline; the outline itself is thinner and quieter. Tools that take a fixed set of inputs show one socket per input.
+- **Multiple selection:** besides *Include all in report* and *Delete*, the details panel offers the fields the selected nodes share — Quick Actions & Glances toggles, verification and tags — and applies changes to all of them.
 - **Plugin library:** shows a loading state, hides the installed list while open, and puts *Add community repository* on the same row as *Close library*. Groups are named *Native plugins* and *Community plugins*. Tool sizes are measured once at installation instead of on every request, so the library opens quickly on NAS disks.
 - **Report:** notes are always visible and the preview refreshes automatically; the report shows a readable timestamp. *Include in report* is highlighted in node details.
 - **Databases:** actions align with the page title; deleting a database uses a red button.

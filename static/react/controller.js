@@ -1,6 +1,7 @@
 /** UI-independent command registry. React supplies view callbacks; domains keep their stores. */
 import * as features from '../main.js';
 import { flushSync } from 'react-dom';
+import { scaleToPercent } from '../app/zoom.js';
 
 export function createController() {
   const state = features.createState();
@@ -128,7 +129,7 @@ export function createController() {
         .getElementById('grid')
         ?.setAttribute('patternTransform', `translate(${x} ${y}) scale(${scale})`);
       const zoom = document.getElementById('zoomLevel');
-      if (zoom) zoom.value = Math.round(scale * 100) + '%';
+      if (zoom) zoom.value = Math.round(scaleToPercent(scale)) + '%';
     },
     selectEdge(id, add = false) {
       const selection = state.selectionState,

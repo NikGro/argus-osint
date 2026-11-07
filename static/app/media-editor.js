@@ -8,7 +8,7 @@ export const cropKeys = ['crop_enabled', 'crop_x', 'crop_y', 'crop_width', 'crop
 export function hasMediaEditor(node) {
   return (
     node.type === 'actor' &&
-    ((node.data.plugin === 'video' && node.data.action === 'trim') ||
+    ((['video', 'audio'].includes(node.data.plugin) && node.data.action === 'trim') ||
       node.data.plugin === 'image_crop')
   );
 }
@@ -16,7 +16,9 @@ const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const clock = (value) => `${Math.floor(value / 60)}:${(value % 60).toFixed(2).padStart(5, '0')}`;
 
 export function MediaEditor({ node, source, onChange }) {
-  const video = node.data.plugin === 'video';
+  const audio = node.data.plugin === 'audio',
+    timed = audio || node.data.plugin === 'video',
+    video = timed && !audio;
   const [params, setParams] = useState({
     crop_enabled: !video,
     crop_x: 0,
@@ -58,7 +60,7 @@ export function MediaEditor({ node, source, onChange }) {
     media.current.currentTime = end;
   }
   function loaded(event) {
-    if (!video) return;
+    if (!timed) return;
     const length = event.currentTarget.duration;
     if (!Number.isFinite(length) || length <= 0) return;
     setDuration(length);
@@ -98,9 +100,11 @@ export function MediaEditor({ node, source, onChange }) {
       h(
         'p',
         null,
-        video
-          ? 'Connect a video to select its time range and crop.'
-          : 'Connect an image to select its crop.'
+        audio
+          ? 'Connect an audio file to select its time range.'
+          : video
+            ? 'Connect a video to select its time range and crop.'
+            : 'Connect an image to select its crop.'
       )
     );
   const url = '/api/files/' + source.data.file_id;
@@ -135,28 +139,41 @@ export function MediaEditor({ node, source, onChange }) {
     : null;
   return h(
     'section',
-    { className: 'media-editor', 'aria-label': 'Media crop editor' },
-    h('h3', null, video ? 'Time range & crop' : 'Photo crop'),
-    h(
-      'div',
-      { className: 'media-crop-stage' },
-      h(video ? BrowserVideo : 'img', {
+    { className: 'media-editor', 'aria-label': audio ? 'Audio range editor' : 'Media crop editor' },
+    h('h3', null, audio ? 'Time range' : video ? 'Time range & crop' : 'Photo crop'),
+    audio &&
+      h('audio', {
         ref: media,
         src: url,
-        alt: video ? undefined : source.label,
-        controls: false,
-        preload: video ? 'metadata' : undefined,
+        preload: 'metadata',
+        className: 'media-audio',
         onLoadedMetadata: loaded,
         onLoadedData: () => setError(''),
         onPlay: () => setPlaying(true),
         onPause: () => setPlaying(false),
-        playsInline: video ? true : undefined,
         onError: () => setError('Media preview unavailable. Open the original file.')
       }),
-      rectangle
-    ),
+    !audio &&
+      h(
+        'div',
+        { className: 'media-crop-stage' },
+        h(video ? BrowserVideo : 'img', {
+          ref: media,
+          src: url,
+          alt: video ? undefined : source.label,
+          controls: false,
+          preload: video ? 'metadata' : undefined,
+          onLoadedMetadata: loaded,
+          onLoadedData: () => setError(''),
+          onPlay: () => setPlaying(true),
+          onPause: () => setPlaying(false),
+          playsInline: video ? true : undefined,
+          onError: () => setError('Media preview unavailable. Open the original file.')
+        }),
+        rectangle
+      ),
     error && h('p', { role: 'alert' }, error),
-    video &&
+    timed &&
       h(
         React.Fragment,
         null,
@@ -241,38 +258,39 @@ export function MediaEditor({ node, source, onChange }) {
           )
         )
       ),
-    h(
-      'section',
-      { className: 'media-crop-settings' },
+    !audio &&
       h(
-        'label',
-        { className: 'checkbox-label' },
-        h('input', {
-          type: 'checkbox',
-          checked: params.crop_enabled,
-          onChange: (event) => update({ crop_enabled: event.target.checked })
-        }),
-        'Crop image area'
-      ),
-      params.crop_enabled &&
+        'section',
+        { className: 'media-crop-settings' },
         h(
-          React.Fragment,
-          null,
+          'label',
+          { className: 'checkbox-label' },
+          h('input', {
+            type: 'checkbox',
+            checked: params.crop_enabled,
+            onChange: (event) => update({ crop_enabled: event.target.checked })
+          }),
+          'Crop image area'
+        ),
+        params.crop_enabled &&
           h(
-            'p',
-            { className: 'help' },
-            'Move the crop with the mouse or resize its lower-right corner.'
-          ),
-          h(
-            'button',
-            {
-              type: 'button',
-              onClick: () => update({ crop_x: 0, crop_y: 0, crop_width: 1, crop_height: 1 })
-            },
-            'Reset crop'
+            React.Fragment,
+            null,
+            h(
+              'p',
+              { className: 'help' },
+              'Move the crop with the mouse or resize its lower-right corner.'
+            ),
+            h(
+              'button',
+              {
+                type: 'button',
+                onClick: () => update({ crop_x: 0, crop_y: 0, crop_width: 1, crop_height: 1 })
+              },
+              'Reset crop'
+            )
           )
-        )
-    )
+      )
   );
 }
 

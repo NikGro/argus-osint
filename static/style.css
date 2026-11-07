@@ -722,24 +722,29 @@ main:not(#workspace) {
   padding: 10px 0;
   border-top: 1px solid var(--line);
 }
-.node > rect:first-child {
+.node > .node-frame {
   fill: #192537;
   stroke: #ff9d45;
-  stroke-width: 1.5;
+  stroke-width: 1;
+  stroke-opacity: 0.42;
 }
-.node.actor > rect:first-child {
+.node.actor > .node-frame {
   fill: #163029;
   stroke: var(--actor-accent);
 }
-.node.error > rect:first-child {
+.node.error > .node-frame {
   fill: #321d27;
   stroke: var(--danger);
 }
-.node.selected > rect:first-child,
-.node.linked > rect:first-child,
-.node.drop-target > rect:first-child {
+.node.selected > .node-frame,
+.node.linked > .node-frame,
+.node.drop-target > .node-frame {
   stroke: var(--selection);
-  stroke-width: 2.5;
+  stroke-width: 2;
+  stroke-opacity: 1;
+}
+.node:hover > .node-frame {
+  stroke-opacity: 0.75;
 }
 .node .node-hover-area {
   fill: transparent;
@@ -748,10 +753,10 @@ main:not(#workspace) {
 .node text {
   pointer-events: none;
 }
-.node.note:not(.selected):not(.linked):not(:focus-visible) > rect:first-child {
+.node.note:not(.selected):not(.linked):not(:focus-visible) > .node-frame {
   stroke-width: 1;
 }
-.node.marker > rect:first-child {
+.node.marker > .node-frame {
   fill-opacity: 0.18;
   stroke-opacity: 0.5;
 }
@@ -768,17 +773,18 @@ main:not(#workspace) {
   cursor: nwse-resize;
 }
 .node .dock {
-  opacity: 0;
   fill: #192537;
   stroke: #ff9d45;
-  stroke-width: 2;
+  stroke-width: 1.5;
+  stroke-opacity: 0.8;
   cursor: crosshair;
+  transition: fill 0.12s;
 }
 .node:hover .dock,
 .node:focus-within .dock,
 .node.connection-source .dock,
 .node.connection-near .dock {
-  opacity: 1;
+  stroke-opacity: 1;
 }
 .node .dock:hover {
   fill: #ff9d45;
@@ -1879,12 +1885,13 @@ body.workspace-mode #app > header {
 .node:focus-visible {
   outline: none;
 }
-.node:focus-visible > rect:first-child {
+.node:focus-visible > .node-frame {
   stroke: var(--selection);
-  stroke-width: 2.5;
+  stroke-width: 2;
+  stroke-opacity: 1;
 }
-.node.marker.selected > rect:first-child,
-.node.marker.linked > rect:first-child {
+.node.marker.selected > .node-frame,
+.node.marker.linked > .node-frame {
   stroke-opacity: 1;
 }
 .plugin-expand {

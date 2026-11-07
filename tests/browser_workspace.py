@@ -225,7 +225,7 @@ def choose(label):
 
 def select_node(id):
     click("#fit")
-    element = css('.node[data-id="' + id + '"] > rect:first-child')
+    element = css('.node[data-id="' + id + '"] > .node-frame')
     box = element.rect
     ActionChains(driver).move_to_element_with_offset(
         element, -box["width"] / 2 + 40, -box["height"] / 2 + 20

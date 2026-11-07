@@ -18,6 +18,7 @@ import {
   Select
 } from './ui/index.jsx';
 import { Canvas } from './canvas.jsx';
+import { percentToScale, scaleToPercent, ZOOM_MIN_PERCENT, ZOOM_MAX_PERCENT } from '../app/zoom.js';
 import { workspacePreferences, saveWorkspacePreferences } from './workspace-preferences.js';
 
 export function Workspace({ app }) {
@@ -161,6 +162,12 @@ function Dropdown({ label, icon, danger, children }) {
 }
 function Toolbar({ app }) {
   const { commands: c, state: s } = app;
+  useEffect(() => {
+    // Fit and project open re-render without a viewport callback; keep the label in step.
+    const zoom = document.getElementById('zoomLevel');
+    if (zoom && document.activeElement !== zoom)
+      zoom.value = Math.round(scaleToPercent(s.canvasState.pan.scale)) + '%';
+  });
   const btn = (id, label, icon, onClick, disabled = false, only = false, cls = '') => (
     <Button
       key={id}
@@ -281,10 +288,16 @@ function Toolbar({ app }) {
           defaultValue="100%"
           onBlur={(event) => {
             const percent = Number(event.target.value.replace('%', ''));
-            if (!Number.isFinite(percent) || percent < 15 || percent > 250)
-              return c.toast('Zoom must be between 15 and 250 percent.');
+            if (
+              !Number.isFinite(percent) ||
+              percent < ZOOM_MIN_PERCENT ||
+              percent > ZOOM_MAX_PERCENT
+            )
+              return c.toast(
+                `Zoom must be between ${ZOOM_MIN_PERCENT} and ${ZOOM_MAX_PERCENT} percent.`
+              );
             const box = document.getElementById('graph').getBoundingClientRect();
-            c.zoomAt(box.width / 2, box.height / 2, percent / 100);
+            c.zoomAt(box.width / 2, box.height / 2, percentToScale(percent));
           }}
           onKeyDown={(event) => {
             if (event.key === 'Enter') event.currentTarget.blur();
@@ -704,6 +717,7 @@ function Inspector({ app }) {
         <h2>
           {nodes.length} {'nodes selected'}
         </h2>
+        <SharedNodeFields app={app} nodes={nodes} />
         <DetailSection className="node-report-section">
           <Check
             checked={nodes.every((node) => node.report)}
@@ -727,6 +741,96 @@ function Inspector({ app }) {
       </>
     );
   return <NodeDetails key={nodes[0].id} app={app} node={nodes[0]} />;
+}
+
+/** Fields every selected node has in common; a change applies to all of them. */
+function SharedNodeFields({ app, nodes }) {
+  const { commands: c, state: s } = app;
+  const changeAll = (apply) => {
+    nodes.forEach(apply);
+    nodes.forEach((node) => c.change(node.id));
+    c.render();
+  };
+  const display = (displayOptions[nodes[0].type] || []).filter(([key]) =>
+    nodes.every((node) => (displayOptions[node.type] || []).some(([other]) => other === key))
+  );
+  const tagged = nodes.every((node) => node.type !== 'actor' && node.type !== 'marker');
+  const verifiable = tagged && nodes.every((node) => !['error', 'note'].includes(node.type));
+  const allTags = s.preferencesState.appSettings.tags || [];
+  const common = allTags.filter((tag) => nodes.every((node) => (node.tags || []).includes(tag.id)));
+  const verification = new Set(nodes.map((node) => node.verification || 'unverified'));
+  return (
+    <>
+      {display.length > 0 && (
+        <section className="node-display-section">
+          <h3>{'Quick Actions & Glances'}</h3>
+          {display.map(([key, label]) => (
+            <Check
+              key={key}
+              checked={nodes.every((node) => node.display?.[key])}
+              onChange={(value) =>
+                changeAll((node) => (node.display = { ...node.display, [key]: value }))
+              }
+            >
+              {label}
+            </Check>
+          ))}
+        </section>
+      )}
+      {verifiable && (
+        <section className="verification-section">
+          <Field
+            label={'Verification'}
+            value={verification.size === 1 ? [...verification][0] : ''}
+            schema={{
+              enum: ['unverified', 'unclear', 'verified'],
+              labels: { unverified: 'Unverified', unclear: 'Unclear', verified: 'Verified' },
+              placeholder: 'Mixed'
+            }}
+            onChange={(value) => value && changeAll((node) => (node.verification = value))}
+          />
+        </section>
+      )}
+      {tagged && (
+        <section className="node-tags-section">
+          <h3>{'Tags'}</h3>
+          <div className="tag-badges">
+            {common.map((tag) => (
+              <span key={tag.id} className="tag" style={{ borderColor: tag.color }}>
+                {tag.name}
+                <Button
+                  only
+                  icon="close"
+                  className="danger-text"
+                  onClick={() =>
+                    changeAll(
+                      (node) => (node.tags = (node.tags || []).filter((id) => id !== tag.id))
+                    )
+                  }
+                >
+                  {'Remove from all'}
+                </Button>
+              </span>
+            ))}
+          </div>
+          <Select
+            label={'Add tag to all'}
+            placeholder={'Add tag to all …'}
+            value=""
+            options={allTags
+              .filter((tag) => !common.includes(tag))
+              .map((tag) => ({ value: tag.id, label: tag.name }))}
+            onChange={(id) =>
+              id &&
+              changeAll((node) => {
+                if (!(node.tags || []).includes(id)) node.tags = [...(node.tags || []), id];
+              })
+            }
+          />
+        </section>
+      )}
+    </>
+  );
 }
 
 function NodeDetails({ app, node }) {

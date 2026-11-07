@@ -1,3 +1,4 @@
+import { ZOOM_BASE } from './zoom.js';
 var layout_default = {
   name: 'layout',
   dependencies: [
@@ -252,14 +253,14 @@ var layout_default = {
         return {
           x: width / 2,
           y: height / 2,
-          scale: 1
+          scale: ZOOM_BASE
         };
       const left = Math.min(...rects.map((r) => r.x)),
         top = Math.min(...rects.map((r) => r.y)),
         right = Math.max(...rects.map((r) => r.x + r.w)),
         bottom = Math.max(...rects.map((r) => r.y + r.h));
       const scale = Math.min(
-        1.1,
+        1.1 * ZOOM_BASE,
         Math.max(1, width - 2 * padding) / Math.max(1, right - left),
         Math.max(1, height - 2 * padding) / Math.max(1, bottom - top)
       );
