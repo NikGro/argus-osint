@@ -39,7 +39,7 @@ function createState() {
       pinchGesture: null,
       gestureBlocked: false,
       leftCollapsed: false,
-      rightCollapsed: true
+      rightCollapsed: false
     },
     executionState: {
       preflighting: /* @__PURE__ */ new Set(),

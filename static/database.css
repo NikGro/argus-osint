@@ -20,6 +20,13 @@
   color: var(--muted);
   margin: 8px 0 0;
 }
+/* Database actions line up with the page title, not between title and lead. */
+.databases-view > .view-heading {
+  align-items: flex-start;
+}
+.databases-view > .view-heading > .action-row {
+  min-height: calc(32px * 1.25);
+}
 .action-row {
   display: flex;
   align-items: center;

@@ -216,7 +216,7 @@ export function Databases({ app }) {
                     <Button
                       icon="trash"
                       only
-                      className="danger-text"
+                      className="danger-filled"
                       disabled={busy}
                       onClick={() =>
                         guard(async () => {
@@ -356,8 +356,9 @@ export function Databases({ app }) {
                 )}
                 <div className="database-pagination action-row">
                   <span>
-                    {database.total} {'Records'} · {database.offset + 1}–
-                    {database.offset + database.rows.length}
+                    {database.total} {database.total === 1 ? 'record' : 'records'}
+                    {database.rows.length > 0 &&
+                      ` · ${database.offset + 1}–${database.offset + database.rows.length}`}
                   </span>
                   <Button
                     icon="chevron-left"
@@ -863,7 +864,7 @@ function ImportWizard({ app, items, initial, onComplete, onCancel }) {
       {preview && (
         <DetailSection>
           <h3>
-            {'Map columns'} · {preview.total} {'Records'}
+            {'Map columns'} · {preview.total} {preview.total === 1 ? 'record' : 'records'}
           </h3>
           <p>
             {

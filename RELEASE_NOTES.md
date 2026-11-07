@@ -21,10 +21,18 @@ ARGUS now starts as a slim all-in-one container without research plugins. You in
 - New **Audio** data node (MP3, WAV, FLAC, OGG, M4A) with a player in the node details. Dropped audio files become audio nodes; MP3s with cover art are no longer mistaken for videos.
 - New plugin **Locate audio with Dopplergeist**: estimates where a recording was made from passing aircraft and historical ADS-B flight tracks. Takes the recording start from its parameters or a connected date/time node; candidates become location nodes, an inconclusive analysis becomes an error node with the reason. Flight data (often many gigabytes) is cached until the plugin is removed. Dopplergeist is licensed for private, noncommercial use only.
 
+## Interface
+
+- **Canvas:** the detail panel stays open and shows a project overview (counts, running tools, error nodes, report selection, data by type) when nothing is selected; only its toggle collapses it. Header, toolbar and side panels are more compact in canvas mode.
+- **Plugin library:** shows a loading state, hides the installed list while open, and puts *Add community repository* on the same row as *Close library*. Groups are named *Native plugins* and *Community plugins*. Tool sizes are measured once at installation instead of on every request, so the library opens quickly on NAS disks.
+- **Report:** notes are always visible and the preview refreshes automatically; the report shows a readable timestamp. *Include in report* is highlighted in node details.
+- **Databases:** actions align with the page title; deleting a database uses a red button.
+
 ## Fixes
 
 - **Clear system logs** no longer shows an "Unexpected token" error. The request body was left unread, so the next request on the same connection failed; ARGUS now closes such connections.
 - Settings and help in the header are spaced like the other buttons.
+- Opening the plugin library no longer shows "y.filter is not a function".
 - Plugins whose update or repair failed no longer disappear silently; the plugins page points to the library to retry.
 
 ## Clean-up

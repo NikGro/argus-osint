@@ -69,9 +69,8 @@ export function createController() {
       redraw();
     },
     inspectorAvailability(key) {
-      if (key && key !== state.selectionState.inspectorSelectionKey)
-        state.canvasState.rightCollapsed = false;
-      if (!key) state.canvasState.rightCollapsed = true;
+      // The detail panel no longer opens and closes with the selection; only
+      // its toggle collapses it (an empty selection shows the project overview).
       state.selectionState.inspectorSelectionKey = key;
       redraw();
     },

@@ -9,19 +9,33 @@ export function Plugins({ app }) {
   const hasTools = s.pluginsState.catalog.some((plugin) => plugin.actions?.length);
   const [query, setQuery] = useState(''),
     [library, setLibrary] = useState(!hasTools),
-    [attention, setAttention] = useState({ installing: 0, failed: 0 });
+    [attention, setAttention] = useState({ installing: 0, failed: 0 }),
+    [libraryVersion, setLibraryVersion] = useState(0);
   // Installed plugins whose update or repair is running or failed are not in
   // the catalogue until they work again; say so instead of hiding them.
   useEffect(() => {
     if (app.ui.view !== 'pluginsView' || library) return;
     app.safely(async () => {
-      const items = await c.api('/api/plugin-library');
+      const { plugins: items } = await c.api('/api/plugin-library');
       setAttention({
         installing: items.filter((item) => item.progress?.state === 'installing').length,
         failed: items.filter((item) => item.progress?.state === 'failed').length
       });
     });
   }, [app.ui.view, library]);
+  async function addRepository() {
+    const url = await c.askText('Add community repository', 'Repository URL', '');
+    if (!url?.trim()) return;
+    if (
+      !(await c.askConfirm(
+        'Add community repository',
+        'The repository makes its plugins visible in the library; nothing is installed yet. Add only sources whose author you know and whose code you can review before installing.'
+      ))
+    )
+      return;
+    await c.api('/api/repositories/add', { url: url.trim() });
+    setLibraryVersion((version) => version + 1);
+  }
   return (
     <main id="pluginsView" hidden={app.ui.view !== 'pluginsView'}>
       <div className="intro">
@@ -45,9 +59,19 @@ export function Plugins({ app }) {
         >
           {library ? 'Close library' : 'Add plugins'}
         </Button>
+        {library && (
+          <Button
+            app={app}
+            icon="plus"
+            className="push-end"
+            onClick={() => app.safely(addRepository)}
+          >
+            {'Add community repository'}
+          </Button>
+        )}
       </section>
-      {library && <Library app={app} query={query} />}
-      <div id="pluginList" className="plugin-list">
+      {library && <Library app={app} query={query} version={libraryVersion} />}
+      <div id="pluginList" className="plugin-list" hidden={library}>
         {[true, false].map((tools) => (
           <section key={String(tools)} className="installed-plugin-section">
             <h2>{tools ? 'Tools' : 'Data nodes'}</h2>
@@ -575,9 +599,10 @@ function LibraryPlugin({ app, plugin, reload }) {
   );
 }
 
-function Library({ app, query }) {
+function Library({ app, query, version }) {
   const { commands: c } = app;
-  const [data, setData] = useState({ plugins: [], repositories: [] });
+  const [data, setData] = useState({ plugins: [], repositories: [] }),
+    [loaded, setLoaded] = useState(false);
   const installing = useRef(new Set());
   const load = async () => {
     const next = await c.api('/api/plugin-library');
@@ -588,30 +613,18 @@ function Library({ app, query }) {
     if ([...installing.current].some((id) => !active.has(id))) await c.refreshCatalog();
     installing.current = active;
     setData(next);
+    setLoaded(true);
     app.redraw();
   };
   useEffect(() => {
     app.safely(load);
-  }, []);
+  }, [version]);
   const busy = data.plugins.some((plugin) => plugin.progress?.state === 'installing');
   useEffect(() => {
     if (!busy) return;
     const timer = setInterval(() => app.safely(load), 1500);
     return () => clearInterval(timer);
   }, [busy]);
-  async function addRepository() {
-    const url = await c.askText('Add community repository', 'Repository URL', '');
-    if (!url?.trim()) return;
-    if (
-      !(await c.askConfirm(
-        'Add community repository',
-        'The repository makes its plugins visible in the library; nothing is installed yet. Add only sources whose author you know and whose code you can review before installing.'
-      ))
-    )
-      return;
-    await c.api('/api/repositories/add', { url: url.trim() });
-    await load();
-  }
   const visible = data.plugins.filter(
     (plugin) => plugin.origin !== 'builtin' || plugin.actions?.length || !plugin.installed
   );
@@ -619,14 +632,14 @@ function Library({ app, query }) {
     (c.pluginDisplayName(plugin) + ' ' + plugin.id).toLowerCase().includes(query.toLowerCase());
   return (
     <section className="plugin-library" id="pluginLibrary">
-      <div className="plugin-library-header">
-        <h2>{'Plugin library'}</h2>
-        <Button app={app} icon="plus" onClick={addRepository}>
-          {'Add community repository'}
-        </Button>
-      </div>
+      <h2>{'Plugin library'}</h2>
+      {!loaded && (
+        <p className="library-loading" role="status" aria-busy="true">
+          <Icon name="spinner" /> {'Loading plugins …'}
+        </p>
+      )}
       {[
-        ['ARGUS plugins', visible.filter((p) => p.origin !== 'community')],
+        ['Native plugins', visible.filter((p) => p.origin !== 'community')],
         ['Community plugins', visible.filter((p) => p.origin === 'community')]
       ].map(
         ([title, plugins]) =>

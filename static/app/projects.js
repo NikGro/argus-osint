@@ -40,7 +40,6 @@ var projects_default = {
       };
       show('workspace');
       selectionState.inspectorSelectionKey = '';
-      canvasState.rightCollapsed = true;
       panelVisibility();
       updateStatus();
       workspaceState.lastServerSnapshot = structuredClone(workspaceState.project.document);

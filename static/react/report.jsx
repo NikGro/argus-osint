@@ -1,10 +1,34 @@
-import React, { useState } from 'react';
-import { Button, Field } from './ui/index.jsx';
+import React, { useEffect, useRef, useState } from 'react';
+import { Button, Field, Icon } from './ui/index.jsx';
+
+// Notes are typed continuously; wait for a pause before re-rendering the report.
+const PREVIEW_DELAY = 800;
 
 export function Report({ app }) {
   const [revision, setRevision] = useState(0),
     [busy, setBusy] = useState(false);
+  const timer = useRef(null);
   const project = app.state.workspaceState.project;
+
+  async function refresh() {
+    setBusy(true);
+    try {
+      await app.commands.save();
+      setRevision((value) => value + 1);
+    } finally {
+      setBusy(false);
+    }
+  }
+  function refreshSoon() {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => app.safely(refresh), PREVIEW_DELAY);
+  }
+  // Opening the report shows the current project state, unsaved edits included.
+  useEffect(() => {
+    app.safely(refresh);
+    return () => clearTimeout(timer.current);
+  }, [project.id]);
+
   return (
     <main id="reportView" className="report-view">
       <div className="report-controls">
@@ -15,25 +39,15 @@ export function Report({ app }) {
             </Button>
             <h1>{'Report'}</h1>
           </div>
-          <Button
-            app={app}
-            icon={busy ? 'spinner' : 'refresh'}
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                await app.commands.save();
-                setRevision((value) => value + 1);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {'Refresh preview'}
-          </Button>
+          <span className="report-status" role="status" aria-live="polite">
+            {busy && (
+              <>
+                <Icon name="spinner" /> {'Updating preview …'}
+              </>
+            )}
+          </span>
         </div>
-        <details className="report-notes">
-          <summary>{'Report notes'}</summary>
+        <section className="report-notes">
           <Field
             label={'Report notes'}
             multiline
@@ -41,9 +55,10 @@ export function Report({ app }) {
             onChange={(value) => {
               project.document.report_notes = value;
               app.commands.change();
+              refreshSoon();
             }}
           />
-        </details>
+        </section>
         <p>{'The preview uses softer contrast. Printing uses white A4 paper.'}</p>
       </div>
       <iframe

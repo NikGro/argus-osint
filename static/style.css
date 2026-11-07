@@ -377,6 +377,15 @@ main:not(#workspace) {
 .home-tools input {
   max-width: 420px;
 }
+.home-tools .push-end {
+  margin-left: auto;
+}
+.library-loading {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+}
 .home-tabs {
   display: flex;
   gap: 8px;
@@ -982,6 +991,90 @@ main:not(#workspace) {
 .worker-controls > :first-child {
   flex: 0 1 220px;
   margin-bottom: 0;
+}
+.project-overview h2 {
+  margin-bottom: 16px;
+}
+.overview-counts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.overview-counts div {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.overview-counts dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.overview-counts dd {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+.overview-note {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+.overview-note.warning {
+  color: var(--warning, var(--accent));
+}
+.overview-types {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.overview-types li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.overview-types li span:last-child {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+/* Canvas mode trades some chrome for drawing space. */
+body.workspace-mode {
+  --header-height: 52px;
+  --control-height: 32px;
+}
+body.workspace-mode header {
+  padding: 0 20px;
+}
+body.workspace-mode .toolbar {
+  padding: 6px 8px;
+}
+body.workspace-mode .toolbar button,
+body.workspace-mode .toolbar summary {
+  min-height: 28px;
+  height: 28px;
+  padding: 3px 7px;
+}
+body.workspace-mode .tool-group {
+  padding: 0 8px;
+}
+body.workspace-mode #inspector {
+  padding: 16px;
+}
+body.workspace-mode #palette {
+  padding: 6px;
+}
+.report-notes {
+  margin: 0 0 8px;
+}
+.report-status {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: var(--control-height);
+  color: var(--muted);
 }
 .plugin-attention {
   display: flex;
@@ -1830,6 +1923,20 @@ body.workspace-mode #app > header {
 }
 #inspector .node-report-section .checkbox-label {
   margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  font-weight: 600;
+  cursor: pointer;
+}
+/* Whether a finding goes into the report is a deliberate decision: make it visible. */
+#inspector .node-report-section .checkbox-label:has(input:checked) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+#inspector .node-report-section input[type='checkbox'] {
+  accent-color: var(--accent);
 }
 .country-input > .react-field {
   align-content: start;

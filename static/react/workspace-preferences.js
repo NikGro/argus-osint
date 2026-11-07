@@ -1,5 +1,5 @@
 const key = 'argus.workspace.layout';
-const defaults = { leftWidth: 220, rightWidth: 320, paletteHeight: 435 };
+const defaults = { leftWidth: 220, rightWidth: 300, paletteHeight: 435 };
 export function workspacePreferences() {
   try {
     const saved = JSON.parse(localStorage.getItem(key) || '{}');

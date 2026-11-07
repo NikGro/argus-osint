@@ -103,10 +103,30 @@ def status():
         tool: {
             "installed": installed(tool),
             "label": recipe.label,
-            "size": _size(directory(tool)) if installed(tool) else 0,
+            "size": installed_size(tool) if installed(tool) else 0,
         }
         for tool, recipe in RECIPES.items()
     }
+
+
+def installed_size(tool):
+    """Size on disk, measured once at installation and kept in the marker.
+
+    Walking tens of thousands of files on every library request made the
+    plugin library slow on NAS disks; older markers are measured once.
+    """
+    marker = directory(tool) / MARKER
+    try:
+        value = json.loads(marker.read_text())
+    except (OSError, ValueError):
+        return 0
+    if not isinstance(value.get("size"), int):
+        value["size"] = _size(directory(tool))
+        try:
+            marker.write_text(json.dumps(value))
+        except OSError:
+            pass  # read-only tool directory: measured again next time
+    return value["size"]
 
 
 def _size(path):
@@ -327,7 +347,9 @@ def install(tool, log=lambda line: None):
         except Exception:
             shutil.rmtree(path, ignore_errors=True)
             raise
-        (path / MARKER).write_text(json.dumps({"version": recipe.version}))
+        (path / MARKER).write_text(
+            json.dumps({"version": recipe.version, "size": _size(path)})
+        )
         return True
 
 

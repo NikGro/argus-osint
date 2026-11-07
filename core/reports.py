@@ -101,6 +101,17 @@ def tr(text):
     return STATUS.get(text, text)
 
 
+def readable_time(value):
+    """ISO timestamp as "7 Nov 2026, 10:58 UTC"; anything else unchanged."""
+    from datetime import datetime, timezone
+
+    try:
+        moment = datetime.fromisoformat(str(value)).astimezone(timezone.utc)
+    except ValueError:
+        return str(value)
+    return f"{moment.day} {moment:%b %Y, %H:%M} UTC"
+
+
 def render_report(project, preferences, descriptors, generated_at):
 
     doc = project["document"]
@@ -131,7 +142,7 @@ def render_report(project, preferences, descriptors, generated_at):
         + "</button><span>ARGUS · "
         + esc(tr("Research report"))
         + '</span></div><script src="/print.js"></script><main class="report-sheet">',
-        f"<h1>{esc(project['title'])}</h1><p>Argus · {esc(tr("Research report"))} · {esc(generated_at)}</p><p>{esc(doc.get('report_notes', ''))}</p>",
+        f"<h1>{esc(project['title'])}</h1><p>ARGUS · {esc(tr("Research report"))} · {esc(readable_time(generated_at))}</p><p>{esc(doc.get('report_notes', ''))}</p>",
     ]
     if not selected:
         parts.append(
@@ -210,7 +221,7 @@ def render_report(project, preferences, descriptors, generated_at):
 
         title = node_title(node)
         parts.append(
-            f"""<section class="report-node"><small>{esc(type_label(node['type']))} · {esc(' / '.join(groups))}</small><h2>{esc(title)}</h2>"""
+            f"""<section class="report-node"><small>{esc(" · ".join([type_label(node['type']), *([" / ".join(groups)] if groups else [])]))}</small><h2>{esc(title)}</h2>"""
         )
         if node["type"] == "image" and node["data"].get("file_id"):
             parts.append(

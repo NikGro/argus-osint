@@ -25,11 +25,9 @@ export function Workspace({ app }) {
   const upload = useRef(null);
   const layout = useRef(null);
   const [sizes, setSizes] = useState(workspacePreferences);
-  const hasDetails =
-    s.selectionState.selected.size > 0 ||
-    s.selectionState.selectedEdges.size > 0 ||
-    Boolean(app.ui.activeGroup);
-  const rightHidden = s.canvasState.rightCollapsed || !hasDetails;
+  // The detail panel stays open; without a selection it shows a project
+  // overview. Only its toggle collapses it, so it never flaps on clicks.
+  const rightHidden = s.canvasState.rightCollapsed;
   useEffect(() => {
     const observer = new ResizeObserver(() => {
       const height = document.querySelector('.toolbar')?.getBoundingClientRect().height;
@@ -39,7 +37,6 @@ export function Workspace({ app }) {
     return () => observer.disconnect();
   }, []);
   function togglePanel(key) {
-    if (key === 'rightCollapsed' && !hasDetails) return;
     s.canvasState[key] = !s.canvasState[key];
     app.redraw();
   }
@@ -97,14 +94,13 @@ export function Workspace({ app }) {
           <Button
             id="toggleRight"
             className={'panel-toggle right' + (!rightHidden ? ' joined' : '')}
-            disabled={!hasDetails}
             icon={s.canvasState.rightCollapsed ? 'chevron-left' : 'chevron-right'}
             only
             onClick={() => {
               togglePanel('rightCollapsed');
             }}
           >
-            {'Node details'}
+            {'Details'}
           </Button>
         </section>
         <div
@@ -538,6 +534,73 @@ const StableInspector = memo(
   (_previous, next) =>
     next.app.state.canvasState.drag?.kind === 'nodes' && next.app.state.canvasState.drag.moved
 );
+function ProjectOverview({ app, doc }) {
+  const { state: s, commands: c } = app;
+  const data = doc.nodes.filter((node) => node.type !== 'actor' && node.type !== 'marker');
+  const types = Object.entries(
+    data.reduce((counts, node) => ({ ...counts, [node.type]: (counts[node.type] || 0) + 1 }), {})
+  ).sort((a, b) => b[1] - a[1]);
+  const tools = doc.nodes.filter((node) => node.type === 'actor').length;
+  const running = s.executionState.activeActors.size,
+    queued = s.executionState.actorQueue.length;
+  const errors = doc.nodes.filter((node) => node.type === 'error').length;
+  const reported = doc.nodes.filter((node) => node.report).length;
+  const rows = [
+    ['Data nodes', data.length],
+    ['Tools', tools],
+    ['Connections', doc.edges.length],
+    ['Groups', doc.groups.length]
+  ];
+  return (
+    <section className="project-overview" aria-label={'Project overview'}>
+      <span className="node-kind">{'PROJECT'}</span>
+      <h2>{s.workspaceState.project?.title || 'Project'}</h2>
+      <dl className="overview-counts">
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {(running > 0 || queued > 0) && (
+        <p className="overview-note" role="status">
+          <Icon name="spinner" /> {`${running} running · ${queued} queued`}
+        </p>
+      )}
+      {errors > 0 && (
+        <p className="overview-note warning">
+          <Icon name="warning" /> {`${errors} error node${errors === 1 ? '' : 's'} in this project`}
+        </p>
+      )}
+      <p className="overview-note">
+        <Icon name="file" />{' '}
+        {reported
+          ? `${reported} node${reported === 1 ? '' : 's'} included in the report`
+          : 'No nodes included in the report yet'}
+      </p>
+      {types.length > 0 && (
+        <DetailSection>
+          <h3>{'Data by type'}</h3>
+          <ul className="overview-types">
+            {types.map(([type, count]) => (
+              <li key={type}>
+                <span>{c.dataLabel(type)}</span>
+                <span>{count}</span>
+              </li>
+            ))}
+          </ul>
+        </DetailSection>
+      )}
+      <p className="source-help">
+        {doc.nodes.length
+          ? 'Select a node, connection or group to see its details.'
+          : 'Add data from the left panel or drop files onto the canvas to start.'}
+      </p>
+    </section>
+  );
+}
+
 function Inspector({ app }) {
   const { state: s, commands: c } = app;
   const doc = s.workspaceState.project?.document;
@@ -605,6 +668,8 @@ function Inspector({ app }) {
       </>
     );
   }
+  if (!nodes.length && !s.selectionState.selectedEdges.size)
+    return <ProjectOverview app={app} doc={doc} />;
   if (!nodes.length)
     return (
       <>
