@@ -1,5 +1,4 @@
 import ArgusRouting from '../graph-routing.js';
-import { socketRect } from './node-outline.js';
 import {
   clampScale,
   scaleToPercent,
@@ -445,7 +444,7 @@ var canvas_input_default = {
         cancelConnection();
         return;
       }
-      const from = portPosition(socketRect(nodeRect(source)), canvasState.connecting.port),
+      const from = portPosition(nodeRect(source), canvasState.connecting.port),
         to = target?.port || {
           ...point,
           nx: -from.nx,

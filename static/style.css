@@ -725,8 +725,7 @@ main:not(#workspace) {
 .node > .node-frame {
   fill: #192537;
   stroke: #ff9d45;
-  stroke-width: 1;
-  stroke-opacity: 0.42;
+  stroke-width: 1.5;
 }
 .node.actor > .node-frame {
   fill: #163029;
@@ -740,11 +739,7 @@ main:not(#workspace) {
 .node.linked > .node-frame,
 .node.drop-target > .node-frame {
   stroke: var(--selection);
-  stroke-width: 2;
-  stroke-opacity: 1;
-}
-.node:hover > .node-frame {
-  stroke-opacity: 0.75;
+  stroke-width: 2.5;
 }
 .node .node-hover-area {
   fill: transparent;
@@ -773,34 +768,28 @@ main:not(#workspace) {
   cursor: nwse-resize;
 }
 .node .dock {
+  opacity: 0;
   fill: #192537;
   stroke: #ff9d45;
-  stroke-width: 1.25;
-  stroke-opacity: 0.45;
+  stroke-width: 2;
   cursor: crosshair;
-  transition: fill 0.12s;
 }
 .node:hover .dock,
 .node:focus-within .dock,
 .node.connection-source .dock,
 .node.connection-near .dock {
-  stroke-opacity: 0.7;
-}
-.node .dock:hover {
-  stroke-opacity: 1;
+  opacity: 1;
 }
 .node .dock:hover {
   fill: #ff9d45;
 }
 .node.actor .dock {
-  fill: #163029;
   stroke: var(--actor-accent);
 }
 .node.actor .dock:hover {
   fill: var(--actor-accent);
 }
 .node.error .dock {
-  fill: #321d27;
   stroke: var(--danger);
 }
 .phone-input {
@@ -1895,8 +1884,7 @@ body.workspace-mode #app > header {
 }
 .node:focus-visible > .node-frame {
   stroke: var(--selection);
-  stroke-width: 2;
-  stroke-opacity: 1;
+  stroke-width: 2.5;
 }
 .node.marker.selected > .node-frame,
 .node.marker.linked > .node-frame {

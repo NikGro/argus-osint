@@ -1,7 +1,6 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import { Icon, MediaFrame, MapPreview } from './ui/index.jsx';
 import { MIN_SCALE } from '../app/zoom.js';
-import { nodeOutline, socketRect, PORT_DOCK_OFFSET } from '../app/node-outline.js';
 
 export function Canvas({ app }) {
   const { commands: c, state: s } = app;
@@ -144,10 +143,9 @@ export function Canvas({ app }) {
           ]);
         const obstacles = contextObstacles.get(visual.context);
         const label = edge.label || '';
-        const socket = (end) => (end.key.startsWith('node:') ? socketRect(end.rect) : end.rect);
         const route = c.routeConnection(
-          socket(visual.a),
-          socket(visual.b),
+          visual.a.rect,
+          visual.b.rect,
           label,
           obstacles,
           occupied,
@@ -551,17 +549,11 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
         }
       }}
     >
-      <path
+      <rect
         className="node-frame"
-        d={nodeOutline(
-          b.w,
-          b.h,
-          10,
-          node.type === 'marker'
-            ? []
-            : Array.from({ length: count }, (_, index) => (b.h * (index + 1)) / (count + 1)),
-          node.type === 'marker' ? [] : [b.h / 2]
-        )}
+        width={b.w}
+        height={b.h}
+        rx="10"
         style={
           note
             ? { fill: color, stroke: selected || linked ? 'var(--selection)' : color }
@@ -773,9 +765,9 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
                 className="dock"
                 data-node={node.id}
                 data-port={side}
-                cx={point.x + point.nx * PORT_DOCK_OFFSET}
+                cx={point.x}
                 cy={point.y}
-                r="3.5"
+                r="5"
                 onPointerDown={(event) => {
                   if (event.button > 0) return;
                   event.preventDefault();
