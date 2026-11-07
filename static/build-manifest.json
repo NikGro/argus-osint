@@ -2,7 +2,7 @@
   "sources": {
     "static/app/actors.js": "45bc49aa28b362ca433ed3b50f28371030416aaaec3505ed977556ef924345b0",
     "static/app/api.js": "20a397dc9b684b12f3f3ef98830b4aecd598b0dd489baa97c7afe9bc01c9efaf",
-    "static/app/canvas-input.js": "b09d03e4684287c6a392ce7f8f6003d368efcb49f684560d6a7b181a51467450",
+    "static/app/canvas-input.js": "baa92c8abed6175a8b06961f0dd2a3ec55224b1f50c59bb70920dc408c51145f",
     "static/app/canvas-renderer.js": "ed4db2b2d7e4b9c7bce6b34445ddd24884c2852ddd330a0eba79ccdef51db3ed",
     "static/app/catalogue.js": "93b3116aeb83052e08c64e897f0008e2a25b03b24b734bfdd289ec988087287c",
     "static/app/clipboard.js": "578f07e642e324d4a6f7979a979a08fc1d250a36f450c0dccf1e566f13db3f13",
@@ -16,7 +16,7 @@
     "static/app/location-fields.js": "3964d7d4316c3a11a8dc86254cf4fb61693392614864915faf10d6f75ecae15d",
     "static/app/media-editor.js": "9f1bc08bd90597e6b4fb127309bd46e34b1c41972c9eb533f061ef32f52c6e61",
     "static/app/node-commands.js": "91b37c778b787b01673a1b0d533ac007d79c18f1e2b8497928e80a5f8f3e1936",
-    "static/app/node-outline.js": "f685398067e61d5357a75b9d4c05e441d61a5271b6e997b4dfae788992f96555",
+    "static/app/node-outline.js": "ae1874bae25444d4de60b913f1ebc8db1a182bf1764a5327e39d023b9eec359b",
     "static/app/palette.js": "436d82d769b95152a5db756401972cd04ea12e2ff2d7d2802728a8013efff4f8",
     "static/app/persistence.js": "fa55acb47fe94a16f5c8071e0da0bd86b3c4d7d197e9e30a7d6003d02e9827b0",
     "static/app/projects.js": "8d29847e9d71a845baf388426693370db6d89b568cb45b6e2f8d369ce7bd0043",
@@ -46,7 +46,7 @@
     "static/mdi-LICENSE.txt": "3bae6305bcaa6d10219b999f65c342034c2d40b1c0e8567fa08605e73ccba829",
     "static/phone-countries.js": "0da3c7e17ced007d952d6cca4e80a407f70e65150c4b86d76d0789593940f6dc",
     "static/print.js": "07e7e770f55cd3e5e726cd379e3cdc68f2e5f1789c0c8debaf6a089e807f5fd1",
-    "static/react/canvas.jsx": "74b25d012707b81777b164f279ca71c241d1b48c7de87ee6fde5643727477728",
+    "static/react/canvas.jsx": "78a5897c47c7cfcfa071088a747feae4cbd6a719ff74f04a4f20c7848f1acf2f",
     "static/react/controller.js": "b5f706e627d5a83a1fbebde09c462d7a4508a91781ad71dcd9b38a46c41290b1",
     "static/react/databases.jsx": "1242707bee1d75248db5b93d567f019307ebc848528474aaac3363ab1c605006",
     "static/react/help.jsx": "d41febe50cb1bea1e2c664d442e7976574e2e35bb3fb6ec4ada90587b25066f1",
@@ -68,9 +68,9 @@
     "static/react-dom-LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
     "static/report.css": "ea5e9866fcdd65ac036662e8c2f6299447c016b68a12235d296e1fb47570336d",
     "static/scheduler-LICENSE.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
-    "static/style.css": "5a6fa64cd97cc7a1535f0fe5ea28cd0127df7e8e4899dc83590d1f6bafd5b212",
+    "static/style.css": "b4cd6d3f0ec983ecd8436b2540e8b7f06d0fe115d8b7b1e30caa3d3939271267",
     "static/transform-worker.js": "4dbc02cf88b93040f6f91513b3f83820cf600af8f75a423d2cfbd9b58a191028",
     "static/version.js": "bcf65d6f87bff8565e58f58045d840fc878f328e3a3bd3c6dbc48993670161da"
   },
-  "bundle_sha256": "e70642c1344ccb3174a109f4446b88074561eefd8372bf898c4e48995ded5d87"
+  "bundle_sha256": "1382a77c561ef8332d44d760af145e819f7dbf40e9c8a5a420f0de6fe7f5c3bf"
 }

@@ -1066,6 +1066,9 @@ body.workspace-mode .toolbar summary {
 body.workspace-mode .tool-group {
   padding: 0 8px;
 }
+body.workspace-mode .tool-group:first-child {
+  padding-left: 0;
+}
 body.workspace-mode #inspector {
   padding: 16px;
 }

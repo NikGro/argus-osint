@@ -1,6 +1,6 @@
 """Offline synthetic audio only."""
 
-import tool_stubs  # external tools count as installed
+import tool_stubs  # noqa: F401  external tools count as installed
 from pathlib import Path
 import shutil
 import subprocess

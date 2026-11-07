@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import { Icon, MediaFrame, MapPreview } from './ui/index.jsx';
 import { MIN_SCALE } from '../app/zoom.js';
-import { nodeOutline, PORT_DOCK_OFFSET } from '../app/node-outline.js';
+import { nodeOutline, socketRect, PORT_DOCK_OFFSET } from '../app/node-outline.js';
 
 export function Canvas({ app }) {
   const { commands: c, state: s } = app;
@@ -144,9 +144,10 @@ export function Canvas({ app }) {
           ]);
         const obstacles = contextObstacles.get(visual.context);
         const label = edge.label || '';
+        const socket = (end) => (end.key.startsWith('node:') ? socketRect(end.rect) : end.rect);
         const route = c.routeConnection(
-          visual.a.rect,
-          visual.b.rect,
+          socket(visual.a),
+          socket(visual.b),
           label,
           obstacles,
           occupied,
@@ -774,7 +775,7 @@ const GraphNode = memo(function GraphNode({ app, node, bounds: b, selected, link
                 data-port={side}
                 cx={point.x + point.nx * PORT_DOCK_OFFSET}
                 cy={point.y}
-                r="4"
+                r="4.5"
                 onPointerDown={(event) => {
                   if (event.button > 0) return;
                   event.preventDefault();

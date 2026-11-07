@@ -2,9 +2,9 @@
  * Node frame outline: a rounded rectangle with one rounded hump per connector port.
  * The hump is part of the same stroke, so the dock circle sits inside the frame.
  */
-export const PORT_HUMP_DEPTH = 10;
-export const PORT_DOCK_OFFSET = 4;
-const HUMP_HALF = 13;
+export const PORT_HUMP_DEPTH = 14;
+export const PORT_DOCK_OFFSET = 7;
+const HUMP_HALF = 18;
 
 function humpHalf(ports, h) {
   const ys = [...ports].sort((a, b) => a - b);
@@ -18,7 +18,7 @@ export function nodeOutline(w, h, r, leftYs = [], rightYs = []) {
   r = Math.max(0, Math.min(r, w / 2, h / 2));
   const d = PORT_HUMP_DEPTH,
     f = (n) => Math.round(n * 100) / 100;
-  const keep = (ys) => ys.filter((y) => y - HUMP_HALF >= r - 2 && y + HUMP_HALF <= h - r + 2);
+  const keep = (ys) => ys.filter((y) => y >= r + 4 && y <= h - r - 4);
   const right = keep(rightYs).sort((a, b) => a - b),
     left = keep(leftYs).sort((a, b) => b - a);
   const ra = humpHalf(right, h),
@@ -34,4 +34,9 @@ export function nodeOutline(w, h, r, leftYs = [], rightYs = []) {
       `V${f(y + la)}C0 ${f(y + la * 0.45)} ${f(-d)} ${f(y + la * 0.7)} ${f(-d)} ${f(y)}` +
       `C${f(-d)} ${f(y - la * 0.7)} 0 ${f(y - la * 0.45)} 0 ${f(y - la)}`;
   return p + `V${f(r)}A${f(r)} ${f(r)} 0 0 1 ${f(r)} 0Z`;
+}
+
+/** Node rect widened by the humps, so connections end on the outside of a hump. */
+export function socketRect(rect) {
+  return { ...rect, x: rect.x - PORT_HUMP_DEPTH, w: rect.w + 2 * PORT_HUMP_DEPTH };
 }
